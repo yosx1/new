@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Speech Recognition</title>
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: transparent;
+    margin: 0;
+    padding: 0;
+  }
+
+  #menu-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+
+  .menu-link {
+    padding: 10px 20px;
+    margin: 0 10px;
+    text-decoration: none;
+    color: #ffffff;
+    font-size: 16px;
+    background-color: #007bff;
+    border-radius: 20px;
+    transition: background-color 0.3s ease;
+  }
+
+  .menu-link:hover {
+    background-color: #0056b3;
+    color: #fff;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.8);
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: background-color 0.3s ease;
+  }
+
+  .container-listening {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+
+  h1 {
+    color: #333;
+  }
+
+  .button-container {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 20px;
+  }
+
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  button:hover {
+    background-color: #0056b3;
+  }
+
+  .select-container {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  select {
+    padding: 10px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    outline: none;
+  }
+
+  select:focus {
+    border-color: #007bff;
+  }
+
+  #recognizedSpeech {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #f9f9f9;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    width: 90%;
+    font-size: 16px;
+    color: #333;
+    outline: none;
+    overflow-y: auto;
+    text-align: left;
+    height: 200px;
+    overflow-x: hidden;
+    margin: 0 auto;
+  }
+
+  .highlight {
+    color: red;
+    font-weight: bold;
+  }
+
+  .footer {
+    margin-top: 50px;
+    text-align: center;
+    font-size: 14px;
+    color: #333;
+  }
+</style>
+</head>
+<body>
+<div id="menu-container">
+  <a href="main.html" class="menu-link">Home</a>
+  <a href="contact.html" class="menu-link">Contact</a>
+  <a href="user.html" class="menu-link">Back to User Page</a>
+</div>
+
+<div class="container" id="container">
+  <h1>Speech Recognition</h1>
+
+  <div class="select-container">
+    <label for="languageSelect">Select Language:</label>
+    <select id="languageSelect">
+      <option value="en-US">English</option>
+      <option value="ar-SA">Arabic</option>
+      <option value="es-ES">Spanish</option>
+      <option value="fr-FR">French</option>
+      <option value="de-DE">German</option>
+    </select>
+  </div>
+
+  <div>
+    <p>Recognized Speech:</p>
+    <div id="recognizedSpeech"></div>
+  </div>
+
+  <div class="button-container">
+    <button id="toggleRecognition">Start Recognition</button>
+    <button id="clearText">Clear Text</button>
+    <button id="saveText">Save Text</button>
+  </div>
+</div>
+
+<div class="footer">
+  Supervisor: Asst. Lec. Ali Adnan <br>
+  Students: Yousif Kadhim, Sajad Sabah
+</div>
+
+<script>
+  const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition)();
+  recognition.lang = 'en-US';
+  recognition.interimResults = true;
+  let recognizing = false;
+  const container = document.getElementById("container");
+
+  document.getElementById("toggleRecognition").addEventListener("click", function() {
+    if (recognizing) {
+      recognition.stop();
+      recognizing = false;
+      document.getElementById("toggleRecognition").textContent = "Start Recognition";
+      container.classList.remove("container-listening");
+    } else {
+      startRecognition();
+      recognizing = true;
+      document.getElementById("toggleRecognition").textContent = "Stop Recognition";
+      container.classList.add("container-listening");
+    }
+  });
+
+  document.getElementById("clearText").addEventListener("click", function() {
+    document.getElementById("recognizedSpeech").innerHTML = '';
+  });
+
+  document.getElementById("saveText").addEventListener("click", function() {
+    const recognizedSpeech = document.getElementById("recognizedSpeech").innerText;
+    const blob = new Blob([recognizedSpeech], { type: "text/plain;charset=utf-8" });
+    saveAs(blob, "recognized_speech.txt");
+  });
+
+  document.getElementById("languageSelect").addEventListener("change", function() {
+    recognition.lang = this.value;
+  });
+
+  function highlightWords(text, words) {
+    let highlightedText = text;
+    words.forEach(word => {
+      highlightedText = highlightedText.replace(new RegExp(`(${word})`, 'gi'), '<span class="highlight">$1</span>');
+    });
+    return highlightedText;
+  }
+
+  recognition.onresult = function(event) {
+    const result = event.results[event.results.length - 1];
+    if (result.isFinal) {
+      const transcript = result[0].transcript;
+      const highlightedTranscript = highlightWords(transcript, ["specific", "anotherword","خطر","محدد"]);
+      document.getElementById("recognizedSpeech").innerHTML += highlightedTranscript + " ";
+    }
+  };
+
+  recognition.onerror = function(event) {
+    console.error('Speech recognition error:', event.error);
+  };
+
+  recognition.onend = function() {
+    if (recognizing) {
+      startRecognition();
+    }
+  };
+
+  function startRecognition() {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+      .then(function(userStream) {
+        recognition.start();
+      })
+      .catch(function(error) {
+        console.error('Error accessing microphone:', error);
+      });
+  }
+</script>
+</body>
+</html>
