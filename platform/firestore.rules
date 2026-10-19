@@ -1,0 +1,224 @@
+rules_version = '2';
+
+// Cold Run Readiness – Karbala Cement Plant.
+// The Spark (free) plan has no Cloud Functions, so every permission and workflow guard lives here.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- helpers ----------
+    function signedIn() { return request.auth != null; }
+    function userPath(uid) { return /databases/$(database)/documents/users/$(uid); }
+    function me() { return get(userPath(request.auth.uid)).data; }
+    function active() { return signedIn() && exists(userPath(request.auth.uid)) && me().active == true; }
+    function role() { return me().role; }
+    function hasRole(roles) { return active() && role() in roles; }
+    function staff() { return active() && role() != 'viewer'; }
+    function leads() { return ['supervisor', 'manager', 'admin']; }
+    function disciplines() { return ['mechanical', 'electrical', 'instrumentation', 'production']; }
+    function setupPath() { return /databases/$(database)/documents/config/setup; }
+    function settings() { return get(/databases/$(database)/documents/config/settings).data; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+    function unchanged(keys) { return !changed().hasAny(keys); }
+
+    // ---------- bootstrap & configuration ----------
+    match /config/setup {
+      allow read: if true;
+      allow create: if signedIn() && !exists(setupPath())
+        && request.resource.data.adminUid == request.auth.uid
+        && getAfter(userPath(request.auth.uid)).data.role == 'admin';
+      allow update, delete: if false;
+    }
+    match /config/settings {
+      allow read: if active();
+      allow write: if hasRole(['admin']);
+    }
+
+    // ---------- users & devices ----------
+    match /users/{uid} {
+      allow read: if signedIn() && (uid == request.auth.uid || active());
+      allow create: if hasRole(['admin'])
+        || (uid == request.auth.uid && !exists(setupPath())
+            && getAfter(setupPath()).data.adminUid == request.auth.uid
+            && request.resource.data.role == 'admin' && request.resource.data.active == true);
+      allow update: if hasRole(['admin'])
+        || (uid == request.auth.uid && active() && changed().hasOnly(['lang', 'phone', 'name']));
+      allow delete: if false;
+    }
+
+    match /devices/{id} {
+      function own() { return signedIn() && id.matches(request.auth.uid + '_.*'); }
+      allow read: if own() || hasRole(['admin']);
+      allow create: if own() && request.resource.data.uid == request.auth.uid && request.resource.data.revoked == false;
+      allow update: if hasRole(['admin'])
+        || (own() && request.resource.data.uid == resource.data.uid && unchanged(['revoked', 'revokedBy']));
+      allow delete: if hasRole(['admin']);
+    }
+
+    // ---------- master data ----------
+    match /departments/{id} { allow read: if active(); allow write: if hasRole(['admin']); }
+    match /equipment/{id}   { allow read: if active(); allow write: if hasRole(['admin']); }
+
+    match /templates/{id} {
+      allow read: if active();
+      allow write: if hasRole(['admin']);
+      match /versions/{v} {
+        allow read: if active();
+        allow create: if hasRole(['admin']) && request.resource.data.createdBy == request.auth.uid;
+        allow update, delete: if false; // published versions are immutable
+      }
+    }
+
+    match /documents/{id} {
+      allow read: if hasRole(['admin']) || (active() && resource.data.visibleTo.hasAny(['all', role()]));
+      allow create, update: if hasRole(leads());
+      allow delete: if hasRole(['admin']);
+    }
+
+    match /counters/{id} {
+      allow read: if staff();
+      allow write: if staff() && request.resource.data.value ==
+        (resource == null ? 1 : resource.data.value + 1);
+    }
+
+    // ---------- inspections ----------
+    match /inspections/{id} {
+      function approvalKeyAllowed(k) {
+        return k == role()
+          || (k == 'final' && hasRole(leads()))
+          || (k in disciplines() && hasRole(['manager', 'admin']));
+      }
+      function approvalKeyOk(keys, k) {
+        let next = request.resource.data.approvals;
+        return !(k in keys) || (approvalKeyAllowed(k) && (!(k in next) || next[k].by == request.auth.uid));
+      }
+      function approvalsOk() {
+        let keys = request.resource.data.approvals.diff(resource.data.approvals).affectedKeys();
+        return keys.size() == 0
+          // leads may clear all approvals when rejecting / reopening
+          || (hasRole(leads()) && request.resource.data.approvals.size() == 0)
+          || (keys.size() == 1 && keys.hasOnly(['mechanical', 'electrical', 'instrumentation', 'production', 'final'])
+              && approvalKeyOk(keys, 'mechanical') && approvalKeyOk(keys, 'electrical')
+              && approvalKeyOk(keys, 'instrumentation') && approvalKeyOk(keys, 'production')
+              && approvalKeyOk(keys, 'final'));
+      }
+      function overrideOk() {
+        return unchanged(['override'])
+          || (role() in settings().overrideRoles
+              && request.resource.data.override.by == request.auth.uid
+              && request.resource.data.override.justification.size() >= 10);
+      }
+      function statusOk() {
+        let s = request.resource.data.summary;
+        let next = request.resource.data.status;
+        let prev = resource.data.status;
+        // Final approval: only leads, only with their own final sign-off, never with open critical
+        // items unless a documented override exists.
+        return (next != 'approved' || prev == 'approved'
+                || (hasRole(leads())
+                    && request.resource.data.approvals.final.decision == 'approved'
+                    && request.resource.data.approvals.final.by == request.auth.uid
+                    && s.mandatoryPending == 0 && s.pending == 0
+                    && ((s.criticalFail == 0 && s.openCritical == 0) || request.resource.data.override != null)))
+          && (prev != 'approved' || next == 'approved' || hasRole(leads()));
+      }
+      function infoFields() {
+        return ['title', 'workOrder', 'remarks', 'shift', 'supervisorUid', 'productionEngUid',
+                'maintenanceEngUid', 'assignedUids', 'inspectionDate', 'maintenanceCompletedAt', 'maintenanceType'];
+      }
+
+      allow read: if active();
+      allow create: if hasRole(leads())
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status in ['draft', 'maintenance_completed']
+        && request.resource.data.approvals.size() == 0
+        && request.resource.data.override == null
+        && request.resource.data.docVersion == 1;
+      allow update: if staff()
+        && request.resource.data.docVersion == resource.data.docVersion + 1
+        && unchanged(['code', 'createdBy', 'createdAt', 'checklist', 'templateId', 'templateVersion',
+                      'requiredApprovals', 'equipmentId', 'departmentId'])
+        && (hasRole(leads()) || !changed().hasAny(infoFields()))
+        && approvalsOk() && overrideOk() && statusOk();
+      allow delete: if hasRole(['admin']) && resource.data.status == 'draft';
+
+      match /results/{itemId} {
+        function inspection() { return get(/databases/$(database)/documents/inspections/$(id)).data; }
+        function mayExecute() {
+          return request.resource.data.discipline == role() || hasRole(['supervisor', 'admin']);
+        }
+        allow read: if active();
+        allow create: if staff() && mayExecute() && inspection().status != 'approved'
+          && request.resource.data.inspectorUid == request.auth.uid
+          && request.resource.data.rev == 1;
+        // rev must advance by exactly one: an offline edit based on an older version is rejected
+        // instead of silently overwriting a colleague's result.
+        allow update: if staff() && inspection().status != 'approved'
+          && request.resource.data.rev == resource.data.rev + 1
+          && request.resource.data.discipline == resource.data.discipline
+          && ((mayExecute() && request.resource.data.inspectorUid == request.auth.uid)
+              || (hasRole(leads()) && changed().hasOnly(['supervisorComment', 'rev', 'supervisorUid'])));
+        allow delete: if false;
+      }
+    }
+
+    // ---------- defects & corrective actions ----------
+    match /defects/{id} {
+      function lead() { return hasRole(leads()); }
+      function inPool() { return role() == resource.data.pool; }
+      function closeOk() {
+        let v = request.resource.data.verification;
+        return lead()
+          && resource.data.status in ['repair_completed', 'awaiting_verification']
+          && v.result == 'pass' && v.by == request.auth.uid
+          && resource.data.repair != null && resource.data.repair.by != request.auth.uid;
+      }
+      function workOk() {
+        return (inPool() || lead())
+          && (unchanged(['verification']) || (lead() && request.resource.data.verification.by == request.auth.uid))
+          && (unchanged(['assignedUid', 'assignedName']) || lead()
+              || request.resource.data.assignedUid == request.auth.uid
+              || (request.resource.data.assignedUid == null && resource.data.assignedUid == request.auth.uid))
+          && (unchanged(['pool', 'severity', 'targetDate']) || lead())
+          && (unchanged(['repair']) || request.resource.data.repair == null
+              || request.resource.data.repair.by == request.auth.uid);
+      }
+      allow read: if active();
+      allow create: if staff()
+        && request.resource.data.reportedBy == request.auth.uid
+        && request.resource.data.status in ['open', 'assigned']
+        && request.resource.data.verification == null
+        && request.resource.data.repair == null;
+      allow update: if staff() && unchanged(['code', 'inspectionId', 'reportedBy', 'reportedAt', 'equipmentId'])
+        && (request.resource.data.status == 'closed' && resource.data.status != 'closed' ? closeOk()
+            : resource.data.status == 'closed' ? lead()
+            : workOk());
+      allow delete: if false;
+    }
+
+    // ---------- files (stored in Firestore on the free plan) ----------
+    match /attachments/{id} {
+      allow read: if active();
+      allow create: if staff()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.data is string
+        && request.resource.data.data.size() < 950000;
+      allow update: if false;
+      allow delete: if hasRole(['admin']) || (staff() && resource.data.createdBy == request.auth.uid);
+    }
+
+    // ---------- notifications & audit ----------
+    match /notifications/{id} {
+      allow read: if signedIn() && resource.data.toUid == request.auth.uid;
+      allow create: if staff();
+      allow update: if signedIn() && resource.data.toUid == request.auth.uid && changed().hasOnly(['read']);
+      allow delete: if signedIn() && resource.data.toUid == request.auth.uid;
+    }
+
+    match /audit/{id} {
+      allow read: if hasRole(['admin', 'manager', 'supervisor']);
+      allow create: if active() && request.resource.data.uid == request.auth.uid
+        && request.resource.data.at == request.time;
+      allow update, delete: if false;
+    }
+  }
+}
