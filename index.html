@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0b2a5b">
+<title>Cold Run Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --primary: #1468e6;
+    --primary-dark: #0b4fb8;
+    --primary-soft: #e8f1ff;
+    --navy: #0b2a5b;
+    --green: #22a447;
+    --green-soft: #e3f6e8;
+    --red: #e0413a;
+    --red-soft: #fde7e6;
+    --amber: #c27a00;
+    --amber-soft: #fff3d6;
+    --orange: #f28c1e;
+    --purple: #7b61f0;
+    --text: #15233b;
+    --muted: #6b778c;
+    --line: #e3e8ef;
+    --bg: #f3f5f9;
+    --card: #ffffff;
+    --radius: 14px;
+    --shadow: 0 2px 10px rgba(16, 34, 64, .07);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, sans-serif;
+    background: #dfe4ec;
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  button, input, select, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  svg { display: block; }
+
+  #app {
+    max-width: 480px;
+    min-height: 100vh;
+    margin: 0 auto;
+    background: var(--bg);
+    position: relative;
+    overflow-x: hidden;
+    box-shadow: 0 0 40px rgba(0, 0, 0, .08);
+  }
+  .screen { min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* ---------- Top bar ---------- */
+  .topbar {
+    position: sticky; top: 0; z-index: 5;
+    display: flex; align-items: center; gap: 8px;
+    padding: 14px 16px; background: var(--card);
+    border-bottom: 1px solid var(--line);
+  }
+  .topbar h1 { flex: 1; margin: 0; font-size: 18px; font-weight: 700; text-align: center; }
+  .icon-btn {
+    width: 40px; height: 40px; border: 0; border-radius: 10px;
+    background: transparent; display: grid; place-items: center; color: var(--text);
+  }
+  .icon-btn:active { background: var(--bg); }
+  .icon-btn svg { width: 22px; height: 22px; }
+  .flip svg { transform: scaleX(-1); }
+  .spacer { width: 40px; }
+  .content { flex: 1; padding: 16px; }
+
+  /* ---------- Home ---------- */
+  .home {
+    background: linear-gradient(180deg, #0d2754 0%, #183a73 45%, #0a1b3b 100%);
+    color: #fff; min-height: 100vh; display: flex; flex-direction: column;
+  }
+  .home-top { display: flex; justify-content: space-between; padding: 14px 12px 0; }
+  .home-top .icon-btn { color: #fff; }
+  .home-top .icon-btn:active { background: rgba(255, 255, 255, .1); }
+  .hero { position: relative; text-align: center; padding: 0 16px 22px; }
+  .hero .logo { width: 84px; height: 84px; margin: 0 auto 6px; }
+  .hero .plant { font-size: 21px; font-weight: 700; margin: 0; direction: ltr; }
+  .hero .company { font-size: 14px; opacity: .85; margin: 0 0 8px; direction: ltr; }
+  .hero .skyline { width: 100%; height: 150px; margin-top: 4px; }
+  .hero h2 { margin: 10px 0 0; font-size: 26px; font-weight: 700; direction: ltr; }
+  .hero h3 { margin: 0; font-size: 19px; font-weight: 500; opacity: .95; direction: ltr; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 4px 14px 24px; }
+  .tile {
+    border: 0; border-radius: 16px; color: #fff; padding: 20px 10px 16px;
+    min-height: 120px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 6px; text-align: center; box-shadow: 0 6px 16px rgba(0, 0, 0, .25);
+  }
+  .tile svg { width: 38px; height: 38px; margin-bottom: 4px; }
+  .tile b { font-size: 15px; font-weight: 600; }
+  .tile small { font-size: 12.5px; opacity: .92; direction: ltr; }
+  .tile:active { transform: scale(.98); }
+  .t-green { background: linear-gradient(160deg, #2fbf57, #1b9a3f); }
+  .t-blue { background: linear-gradient(160deg, #2a7ff3, #1460d6); }
+  .t-orange { background: linear-gradient(160deg, #f7a23a, #ec7c12); }
+  .t-purple { background: linear-gradient(160deg, #8f7af6, #6c50e8); }
+  .home-foot { text-align: center; font-size: 12px; opacity: .6; padding: 0 16px 18px; margin-top: auto; }
+
+  /* ---------- Lists / cards ---------- */
+  .list { display: flex; flex-direction: column; gap: 10px; }
+  .row {
+    display: flex; align-items: center; gap: 12px; width: 100%;
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 12px 14px; text-align: right; box-shadow: var(--shadow);
+  }
+  .row:active { background: var(--primary-soft); }
+  .row .ico { width: 52px; height: 44px; flex: none; color: var(--navy); }
+  .row .ico svg { width: 100%; height: 100%; }
+  .row .txt { flex: 1; min-width: 0; }
+  .row .txt b { display: block; font-weight: 600; }
+  .row .txt small { display: block; color: var(--muted); direction: ltr; text-align: right; }
+  .chev { color: var(--muted); flex: none; }
+  .chev svg { width: 18px; height: 18px; }
+
+  .progress-wrap { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font-size: 13px; color: var(--muted); }
+  .progress { flex: 1; height: 8px; border-radius: 99px; background: var(--line); overflow: hidden; }
+  .progress i { display: block; height: 100%; background: var(--green); border-radius: 99px; transition: width .3s; }
+
+  .group { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); margin-bottom: 10px; overflow: hidden; box-shadow: var(--shadow); }
+  .group-head {
+    width: 100%; border: 0; background: #eef2f8; display: flex; align-items: center; gap: 8px;
+    padding: 12px 14px; font-weight: 700; text-align: right;
+  }
+  .group.closed .group-head { background: var(--card); }
+  .group-head .gtitle { flex: 1; }
+  .group-head .gcount { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .group-head .gcount.full { color: var(--green); }
+  .group-head svg { width: 18px; height: 18px; color: var(--muted); transition: transform .2s; }
+  .group.closed .group-head svg { transform: rotate(180deg); }
+  .group.closed .items { display: none; }
+  .item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--line); }
+  .item.focus { outline: 2px solid var(--primary); outline-offset: -2px; border-radius: 10px; background: #f8fbff; }
+  .check {
+    width: 26px; height: 26px; flex: none; border-radius: 6px; border: 2px solid #b9c2d0;
+    background: #fff; display: grid; place-items: center; padding: 0;
+  }
+  .check svg { width: 16px; height: 16px; color: #fff; }
+  .check.on { background: var(--green); border-color: var(--green); }
+  .check.skip { background: #fff; border-color: var(--amber); color: var(--amber); font-weight: 700; }
+  .item .label { flex: 1; border: 0; background: none; text-align: right; padding: 4px 0; font-size: 14.5px; }
+  .item .label small { display: block; font-size: 12px; color: var(--muted); }
+  .tag { font-size: 11px; padding: 1px 8px; border-radius: 99px; margin-inline-start: 6px; font-weight: 600; }
+  .tag.skip { background: var(--amber-soft); color: var(--amber); }
+  .mini { width: 32px; height: 32px; border: 0; background: none; color: var(--primary); display: grid; place-items: center; padding: 0; position: relative; }
+  .mini svg { width: 22px; height: 22px; }
+  .mini .dot { position: absolute; top: 2px; left: 2px; min-width: 15px; height: 15px; border-radius: 99px; background: var(--green); color: #fff; font-size: 10px; line-height: 15px; }
+
+  .actions { display: flex; gap: 12px; padding: 12px 16px 18px; background: var(--card); border-top: 1px solid var(--line); position: sticky; bottom: 0; }
+  .btn {
+    flex: 1; border-radius: 12px; padding: 12px 14px; font-weight: 600; font-size: 15.5px;
+    border: 1.5px solid var(--primary); background: var(--primary); color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn svg { width: 20px; height: 20px; }
+  .btn:active { background: var(--primary-dark); }
+  .btn.outline { background: #fff; color: var(--primary); }
+  .btn.outline:active { background: var(--primary-soft); }
+  .btn.green { background: var(--green); border-color: var(--green); }
+  .btn.ghost { background: #fff; border-color: var(--line); color: var(--text); }
+  .btn.danger { background: #fff; border-color: var(--red); color: var(--red); }
+  .btn.block { width: 100%; }
+  .btn:disabled { opacity: .5; }
+
+  /* ---------- Item detail ---------- */
+  .hint { background: var(--primary-soft); color: #23446f; border-radius: 12px; padding: 12px 14px; font-size: 13.5px; margin-bottom: 14px; }
+  .photo-main { position: relative; border-radius: 14px; overflow: hidden; background: #dfe5ee; aspect-ratio: 4/3; display: grid; place-items: center; color: var(--muted); }
+  .photo-main img { width: 100%; height: 100%; object-fit: cover; }
+  .photo-main .x { position: absolute; top: 10px; left: 10px; width: 32px; height: 32px; border-radius: 99px; border: 0; background: rgba(15, 23, 42, .65); color: #fff; display: grid; place-items: center; }
+  .photo-main .x svg { width: 18px; height: 18px; }
+  .photo-empty { text-align: center; font-size: 14px; }
+  .photo-empty svg { width: 44px; height: 44px; margin: 0 auto 6px; opacity: .6; }
+  .thumbs { display: flex; gap: 8px; margin-top: 8px; overflow-x: auto; }
+  .thumbs button { width: 58px; height: 58px; flex: none; border-radius: 10px; overflow: hidden; border: 2px solid transparent; padding: 0; background: #ddd; }
+  .thumbs button.sel { border-color: var(--primary); }
+  .thumbs img { width: 100%; height: 100%; object-fit: cover; }
+  .btn-row { display: flex; gap: 12px; margin: 12px 0 18px; }
+  .field-label { display: block; color: var(--muted); font-size: 13.5px; margin: 0 0 6px; }
+  textarea, input[type=text], input[type=search], input[type=date], select {
+    width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--card);
+    padding: 11px 12px; outline: none; font-size: 15px;
+  }
+  textarea { min-height: 120px; resize: vertical; }
+  textarea:focus, input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(20, 104, 230, .12); }
+  .attach { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-top: 10px; font-size: 14px; }
+  .attach span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: ltr; text-align: right; }
+  .attach svg { width: 20px; height: 20px; color: var(--red); flex: none; }
+  .listening { display: flex; align-items: center; gap: 10px; background: var(--red-soft); color: var(--red); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-weight: 600; font-size: 14px; }
+  .listening i { width: 10px; height: 10px; border-radius: 99px; background: var(--red); animation: pulse 1s infinite; }
+  .listening button { margin-inline-start: auto; border: 0; background: var(--red); color: #fff; border-radius: 8px; padding: 4px 12px; }
+  @keyframes pulse { 50% { opacity: .25; } }
+
+  /* ---------- Summary ---------- */
+  .done-hero { text-align: center; padding: 26px 16px 8px; }
+  .done-hero .ok { width: 84px; height: 84px; border-radius: 99px; background: var(--green); margin: 0 auto 12px; display: grid; place-items: center; color: #fff; }
+  .done-hero .ok.warn { background: var(--amber); }
+  .done-hero .ok svg { width: 48px; height: 48px; }
+  .done-hero h2 { margin: 0; font-size: 21px; }
+  .done-hero p { margin: 2px 0 0; color: var(--muted); }
+  .kv { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 4px 14px; box-shadow: var(--shadow); }
+  .kv div { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .kv div:last-child { border-bottom: 0; }
+  .kv dt { color: var(--muted); font-size: 13.5px; }
+  .kv dd { margin: 0; font-weight: 600; text-align: left; }
+  .kv .ok-text { color: var(--green); }
+  .kv .warn-text { color: var(--amber); }
+  .summary-notes { margin-top: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .soft-btn { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 14px 8px; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 600; color: var(--text); box-shadow: var(--shadow); }
+  .soft-btn svg { width: 24px; height: 24px; color: var(--primary); }
+
+  /* ---------- History ---------- */
+  .search { display: flex; gap: 8px; margin-bottom: 12px; }
+  .search .box { flex: 1; position: relative; }
+  .search .box svg { position: absolute; top: 50%; left: 12px; width: 18px; height: 18px; transform: translateY(-50%); color: var(--muted); }
+  .search input { padding-left: 38px; }
+  .filter-btn { width: 46px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; display: grid; place-items: center; color: var(--text); position: relative; }
+  .filter-btn svg { width: 20px; height: 20px; }
+  .filter-btn.active { border-color: var(--primary); color: var(--primary); }
+  .hcard { display: flex; align-items: center; gap: 10px; width: 100%; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; text-align: right; box-shadow: var(--shadow); }
+  .hcard .txt { flex: 1; }
+  .hcard b { display: block; font-weight: 600; }
+  .hcard small { color: var(--muted); direction: ltr; display: inline-block; }
+  .badge { font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 99px; flex: none; }
+  .badge.complete { background: var(--green-soft); color: var(--green); }
+  .badge.incomplete { background: var(--red-soft); color: var(--red); }
+  .badge.progress { background: var(--amber-soft); color: var(--amber); }
+  .empty { text-align: center; color: var(--muted); padding: 48px 16px; }
+  .empty svg { width: 54px; height: 54px; margin: 0 auto 10px; opacity: .5; }
+
+  /* ---------- Sheets / drawer / modal ---------- */
+  .overlay { position: fixed; inset: 0; background: rgba(10, 20, 40, .45); z-index: 20; display: flex; justify-content: center; animation: fade .15s; }
+  @keyframes fade { from { opacity: 0; } }
+  .sheet-wrap { width: 100%; max-width: 480px; display: flex; flex-direction: column; justify-content: flex-end; }
+  .sheet { background: var(--card); border-radius: 20px 20px 0 0; padding: 6px 16px 22px; max-height: 88vh; overflow-y: auto; animation: up .2s ease-out; }
+  @keyframes up { from { transform: translateY(40px); opacity: 0; } }
+  .sheet-head { display: flex; align-items: center; padding: 8px 0 6px; }
+  .sheet-head h2 { flex: 1; margin: 0; font-size: 18px; text-align: center; }
+  .sheet-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 12px; border: 1px solid var(--line); background: var(--card); border-radius: 12px; margin-top: 10px; text-align: right; font-weight: 500; }
+  .sheet-row svg { width: 22px; height: 22px; color: var(--text); flex: none; }
+  .sheet-row .blue svg { color: var(--primary); }
+  .sheet-row span { flex: 1; }
+  .sheet-row .blue, .sheet-row .chev { flex: none; }
+  .form-field { margin-top: 12px; }
+  .doc { font-size: 14.5px; }
+  .doc h4 { margin: 14px 0 6px; font-size: 15px; color: var(--navy); }
+  .doc ul, .doc ol { margin: 0; padding-inline-start: 20px; }
+  .doc li { margin-bottom: 4px; }
+  .doc table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  .doc th, .doc td { border: 1px solid var(--line); padding: 6px 8px; text-align: right; }
+  .doc th { background: var(--bg); }
+
+  .drawer-wrap { width: 100%; max-width: 480px; display: flex; }
+  .drawer { width: 78%; max-width: 330px; background: var(--card); min-height: 100%; padding: 18px 14px; display: flex; flex-direction: column; animation: slide .2s ease-out; }
+  @keyframes slide { from { transform: translateX(40px); } }
+  .drawer-brand { display: flex; align-items: center; gap: 10px; padding-bottom: 14px; border-bottom: 1px solid var(--line); margin-bottom: 8px; direction: ltr; }
+  .drawer-brand svg { width: 46px; height: 46px; }
+  .drawer-brand b { display: block; font-size: 15.5px; }
+  .drawer-brand small { color: var(--muted); }
+  .drawer-user { font-size: 13px; color: var(--muted); padding: 2px 6px 8px; }
+  .nav-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 8px; border: 0; background: none; text-align: right; border-radius: 10px; font-weight: 500; }
+  .nav-item:active { background: var(--bg); }
+  .nav-item svg { width: 21px; height: 21px; color: #404b5e; }
+  .nav-item.out { margin-top: auto; border-top: 1px solid var(--line); border-radius: 0; padding-top: 16px; }
+
+  .modal-wrap { width: 100%; max-width: 480px; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal { background: var(--card); border-radius: 18px; padding: 18px; width: 100%; max-width: 380px; animation: up .2s ease-out; }
+  .modal h3 { margin: 0 0 8px; font-size: 17px; }
+  .modal p { margin: 0 0 14px; color: #3e4a5f; font-size: 14.5px; }
+  .modal .btn-row { margin: 14px 0 0; }
+
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #15233b; color: #fff; padding: 10px 18px; border-radius: 99px; font-size: 14px; z-index: 40; animation: fade .2s; max-width: 90vw; text-align: center; }
+
+  .settings .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 12px; box-shadow: var(--shadow); }
+  .settings .card h4 { margin: 0 0 8px; font-size: 15px; }
+  .settings .card p { margin: 0 0 10px; color: var(--muted); font-size: 13.5px; }
+
+  #print { display: none; }
+  @media print {
+    @page { size: A4; margin: 14mm; }
+    body { background: #fff; }
+    #app, .overlay, .toast { display: none !important; }
+    #print { display: block; font-size: 12px; color: #000; }
+    #print h1 { font-size: 18px; margin: 0 0 2px; }
+    #print .sub { color: #444; margin: 0 0 12px; direction: ltr; text-align: right; }
+    #print table { width: 100%; border-collapse: collapse; margin-bottom: 12px; }
+    #print th, #print td { border: 1px solid #999; padding: 5px 6px; text-align: right; vertical-align: top; }
+    #print th { background: #eee; }
+    #print .grp td { background: #f4f4f4; font-weight: 700; }
+    #print .photos img { width: 120px; height: 90px; object-fit: cover; margin: 2px; }
+    #print .sign { display: flex; justify-content: space-between; margin-top: 30px; }
+    #print .sign div { width: 45%; border-top: 1px solid #000; padding-top: 4px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="print"></div>
+<input type="file" id="camInput" accept="image/*" capture="environment" hidden>
+<input type="file" id="galInput" accept="image/*" multiple hidden>
+<input type="file" id="pdfInput" accept="application/pdf" hidden>
+
+<script>
+/* ======================= Icons ======================= */
+const I = {
+  menu: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h16"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 1 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  chevL: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>',
+  chevUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  checkCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9.5"/><path d="M7.5 12.3l3 3 6-6.3"/></svg>',
+  list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/></svg>',
+  book: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M2 5c3-1.5 7-1.5 10 1 3-2.5 7-2.5 10-1v14c-3-1.5-7-1.5-10 1-3-2.5-7-2.5-10-1z"/><path d="M12 6v14"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1c.5.4 1.1.7 1.7 1l.4 2.6h4l.4-2.6c.6-.3 1.2-.6 1.7-1l2.5 1 2-3.5zM13 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z" transform="translate(-1 0)"/></svg>',
+  info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.01"/></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 8h4l2-3h6l2 3h4v12H3z"/><circle cx="12" cy="13.5" r="3.5"/></svg>',
+  image: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="M21 16l-5-5-9 9"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
+  file: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 2h8l6 6v14H6zM13 3.5V9h5.5z"/><path fill="#fff" d="M8 13h8v1.6H8zM8 16h8v1.6H8z"/></svg>',
+  more: '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>',
+  filter: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>',
+  calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  share: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v8h14v-8"/></svg>',
+  save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 9h8M8 13h8"/></svg>',
+  pdf: '<svg viewBox="0 0 24 24"><path fill="#fff" d="M6 2h8l6 6v14H6z"/><path fill="#e0413a" d="M7 13h10v6H7z"/><text x="12" y="17.8" font-size="5" font-family="Arial" font-weight="700" text-anchor="middle" fill="#fff">PDF</text></svg>',
+  home: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l9 8h-3v9h-4v-6h-4v6H6v-9H3z"/></svg>',
+  logout: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9.5"/><path d="M12 7v5l3 2"/></svg>',
+  guide: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 7h3v3H8zM13 8h3M8 14h8M8 17h5"/></svg>',
+  spec: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M9 3v4M15 3v4M8 14l2 2 4-4"/></svg>',
+  gauge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 15a4 4 0 0 1 8 0M12 15l2-3"/></svg>',
+  logo: '<svg viewBox="0 0 64 64"><path fill="#cfe0ff" d="M14 52V24l6-3v31zM24 52V14l8-6v44zM36 52V18l6-4v38z"/><path fill="#1468e6" d="M4 50c14-6 34-6 56 0v4H4z"/><path fill="#7fb0ff" d="M8 56c14-4 32-4 48 0v2H8z"/></svg>',
+};
+
+/* Section illustrations (simple line drawings in plant navy) */
+const SI = {
+  quarry: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 38h22l-4-14H12z"/><path d="M26 30h10l6-10h8l6 10v8H26"/><circle cx="34" cy="40" r="4"/><circle cx="50" cy="40" r="4"/><path d="M14 24l6-12 6 4"/></svg>',
+  raw: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 22h30v14H4zM34 26h12l6 6v4H34"/><circle cx="12" cy="39" r="4"/><circle cx="28" cy="39" r="4"/><circle cx="46" cy="39" r="4"/><path d="M8 22l6-8h12l4 8"/></svg>',
+  rawmill: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M20 10h18v30H20zM14 40h30M38 16h10v24M48 22h8"/><path d="M24 4h10v6H24zM26 18h6M26 24h6M26 30h6"/></svg>',
+  kiln: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M6 32l46-16 4 10-46 16z"/><path d="M18 27l3 9M34 21l3 9"/><path d="M14 44h8M30 38h8M52 14v-8h6v18"/></svg>',
+  cooler: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 18h46v16H4z"/><path d="M50 22h8v12h-8"/><circle cx="14" cy="38" r="3"/><circle cx="40" cy="38" r="3"/><path d="M10 24h4M18 24h4M26 24h4M34 24h4"/></svg>',
+  cement: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M4 26h28v10H4zM32 28h8"/><path d="M42 12h12v28H42zM44 6h8v6"/><circle cx="10" cy="40" r="3"/><circle cx="26" cy="40" r="3"/></svg>',
+  packing: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M10 8h24v14l-6 6H16l-6-6z"/><path d="M14 28v12M30 28v12M8 40h28"/><path d="M38 30h18v10H38zM44 24h8v6"/></svg>',
+  utilities: '<svg viewBox="0 0 64 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M6 20h22v20H6zM28 26h10v14"/><circle cx="17" cy="30" r="5"/><path d="M42 40V14a6 6 0 0 1 12 0v26zM40 40h16"/></svg>',
+};
+
+/* ======================= Data ======================= */
+const SECTIONS = [
+  { id: 'quarry', ar: 'المحجر والكسارة', en: 'Quarry & Crusher', mech: ['فحص فكوك الكسارة والمطارق', 'فحص السيور الناقلة والبكرات'] },
+  { id: 'raw', ar: 'نقل المواد الخام', en: 'Raw Material Handling', mech: ['فحص الستاكر والريكلايمر', 'فحص الأحزمة الناقلة والبكرات'] },
+  { id: 'rawmill', ar: 'الطاحونة الخام', en: 'Raw Mill', mech: ['فحص البطانات وحلقات الطحن', 'فحص صمامات الهواء والمراوح'] },
+  { id: 'kiln', ar: 'الفرن', en: 'Kiln', mech: ['فحص الإطارات (Tyres) والبكرات الداعمة', 'فحص سدادات المدخل والمخرج (Seals)'] },
+  { id: 'cooler', ar: 'المبرد', en: 'Cooler', mech: ['فحص الألواح الشبكية (Grate Plates)', 'فحص مراوح التبريد وكسارة الكلنكر'] },
+  { id: 'cement', ar: 'الطاحونة الأسمنت', en: 'Cement Mill', mech: ['فحص كرات الطحن والبطانات', 'فحص الفاصل (Separator)'] },
+  { id: 'packing', ar: 'التعبئة والمناولة', en: 'Packing & Dispatch', mech: ['فحص ماكينات التعبئة (Packers)', 'فحص أحزمة التحميل'] },
+  { id: 'utilities', ar: 'الخدمات المساعدة', en: 'Utilities', mech: ['فحص الضواغط الهوائية', 'فحص مضخات المياه وأبراج التبريد'] },
+];
+
+function buildGroups(section) {
+  return [
+    { id: 'prep', title: 'التحضيرات الأولية', items: [
+      { id: 'p1', t: 'التأكد من اكتمال أعمال الصيانة', h: 'التأكد من إغلاق جميع أوامر العمل وتوقيعها من المسؤول، وإزالة أقفال وبطاقات العزل (LOTO) بعد التنسيق.' },
+      { id: 'p2', t: 'إزالة أدوات الصيانة ومواد التنظيف', h: 'التأكد من عدم وجود أدوات أو قطع غيار أو مواد تنظيف داخل المعدة أو على المسارات.' },
+      { id: 'p3', t: 'فحص مستوى الزيت في الجيربوكسات', h: 'يجب أن يكون مستوى الزيت بين العلامتين على زجاجة البيان، والتأكد من نوع الزيت حسب المواصفات.' },
+      { id: 'p4', t: 'فحص نظام التشحيم', h: 'التأكد من عمل جميع نقاط التشحيم وعدم وجود تسريب والتحقق من ضغط وتدفق الزيت حسب المواصفات.', photo: true },
+      { id: 'p5', t: 'التأكد من نظافة المسارات', h: 'المسارات والممرات خالية من العوائق والمخلفات، وأغطية الفتحات مثبتة.' },
+      { id: 'p6', t: 'التأكد من جاهزية أنظمة الأمان', h: 'طفايات الحريق في مكانها، والإنارة تعمل، ولوحات التحذير واضحة.' },
+    ]},
+    { id: 'mech', title: 'فحص الأنظمة الميكانيكية', items: [
+      { id: 'm1', t: section.mech[0], h: 'فحص بصري للتآكل والتشققات والتأكد من إحكام البراغي حسب عزم الشد المحدد.', photo: true },
+      { id: 'm2', t: section.mech[1], h: 'التأكد من سلامة الأجزاء وعدم وجود احتكاك أو اهتزاز غير طبيعي عند التدوير اليدوي.' },
+      { id: 'm3', t: 'فحص الكوبلنغ وشد السيور', h: 'التحقق من استقامة الكوبلنغ (Alignment) وشد السيور حسب توصيات الشركة المصنعة.' },
+      { id: 'm4', t: 'التأكد من تركيب الواقيات (Guards)', h: 'جميع الواقيات على الأجزاء الدوارة مركبة ومثبتة بشكل صحيح.' },
+    ]},
+    { id: 'elec', title: 'فحص الأنظمة الكهربائية', items: [
+      { id: 'e1', t: 'قياس عزل المحركات (Megger)', h: 'قيمة العزل يجب ألا تقل عن 1 MΩ لكل 1 kV من جهد التشغيل، وتسجيل القيمة في الملاحظات.' },
+      { id: 'e2', t: 'التأكد من إحكام التوصيلات في اللوحات', h: 'فحص أطراف الكابلات والقواطع وعدم وجود آثار حرارة أو احتراق.' },
+      { id: 'e3', t: 'فحص التأريض (Earthing)', h: 'التأكد من توصيل التأريض للمحركات واللوحات وسلامة الكابلات.' },
+    ]},
+    { id: 'ctrl', title: 'فحص أنظمة التحكم والإنترلوك', items: [
+      { id: 'c1', t: 'اختبار أزرار الطوارئ (Emergency Stop)', h: 'الضغط على كل زر طوارئ والتأكد من إيقاف المعدة وظهور الإنذار في غرفة التحكم.' },
+      { id: 'c2', t: 'اختبار حبال السحب (Pull Cord)', h: 'اختبار جميع مفاتيح حبال السحب على طول الناقلات.' },
+      { id: 'c3', t: 'التحقق من الإشارات في غرفة التحكم (DCS)', h: 'مطابقة إشارات الحساسات (حرارة، ضغط، سرعة) مع القراءات الميدانية.' },
+      { id: 'c4', t: 'اختبار تسلسل الإنترلوك', h: 'التأكد من عدم إمكانية تشغيل المعدة قبل تشغيل المعدات التي تسبقها في التسلسل.' },
+    ]},
+    { id: 'run', title: 'التشغيل التجريبي (Cold Run)', items: [
+      { id: 'r1', t: 'التشغيل بدون حمل والتحقق من اتجاه الدوران', h: 'تشغيل لحظي (Jog) للتحقق من اتجاه الدوران قبل التشغيل المستمر.' },
+      { id: 'r2', t: 'قياس الاهتزازات ودرجات حرارة المحامل', h: 'الاهتزاز ضمن الحدود المسموحة (عادة أقل من 4.5 mm/s) ودرجة حرارة المحامل أقل من 80°C.', photo: true },
+      { id: 'r3', t: 'التأكد من عدم وجود أصوات غير طبيعية', h: 'الاستماع لأي طرق أو احتكاك أو صفير خلال التشغيل التجريبي.' },
+      { id: 'r4', t: 'تسجيل تيار المحركات', h: 'تسجيل تيار التشغيل بدون حمل ومقارنته بالقيمة الاسمية للمحرك.' },
+    ]},
+  ];
+}
+const allItems = (section) => buildGroups(section).flatMap(g => g.items);
+
+const STATUS = {
+  complete: { label: 'مكتملة', cls: 'complete' },
+  incomplete: { label: 'غير مكتملة', cls: 'incomplete' },
+  progress: { label: 'قيد التنفيذ', cls: 'progress' },
+};
+
+/* ======================= Storage ======================= */
+const KEY = 'kcp-coldrun-v1';
+let db = { technician: '', checklists: [] };
+try { const raw = localStorage.getItem(KEY); if (raw) db = Object.assign(db, JSON.parse(raw)); } catch (e) {}
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); return true; }
+  catch (e) { toast('مساحة التخزين ممتلئة – احذف بعض الصور أو القوائم القديمة'); return false; }
+}
+
+/* ======================= Helpers ======================= */
+const $ = (s) => document.querySelector(s);
+const app = $('#app');
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = (n) => String(n).padStart(2, '0');
+const fmtDate = (ts) => { const d = new Date(ts); return `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())}`; };
+const fmtTime = (ts) => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const dayKey = (ts) => { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const sectionOf = (id) => SECTIONS.find(s => s.id === id);
+const getCl = (id) => db.checklists.find(c => c.id === id);
+const titleOf = (cl) => `قائمة فحص ${sectionOf(cl.section).ar} (Cold Run)`;
+const itemState = (cl, itemId) => (cl.items[itemId] ||= { state: null, note: '', photos: [], files: [] });
+
+function stats(cl) {
+  const items = allItems(sectionOf(cl.section));
+  const done = items.filter(i => cl.items[i.id]?.state === 'done').length;
+  const skipped = items.filter(i => cl.items[i.id]?.state === 'skipped').length;
+  return { total: items.length, done, skipped, pct: Math.round(done / items.length * 100) };
+}
+
+let toastTimer;
+function toast(msg) {
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.remove(), 2600);
+}
+
+function go(path) { location.hash = path; }
+function topbar(title, backTo, right = '<span class="spacer"></span>') {
+  return `<header class="topbar">
+    <button class="icon-btn" aria-label="رجوع" onclick="go('${backTo}')">${I.back}</button>
+    <h1>${esc(title)}</h1>${right}</header>`;
+}
+
+/* ======================= Overlays ======================= */
+function closeOverlay() { document.querySelector('.overlay')?.remove(); }
+function overlay(kind, html) {
+  closeOverlay();
+  const o = document.createElement('div');
+  o.className = 'overlay';
+  o.innerHTML = `<div class="${kind}-wrap">${html}</div>`;
+  o.addEventListener('click', (e) => { if (e.target === o || e.target === o.firstElementChild) closeOverlay(); });
+  document.body.appendChild(o);
+  return o;
+}
+function sheet(title, body) {
+  return overlay('sheet', `<div class="sheet" role="dialog" aria-label="${esc(title)}">
+    <div class="sheet-head"><span class="spacer"></span><h2>${esc(title)}</h2>
+    <button class="icon-btn" aria-label="إغلاق" onclick="closeOverlay()">${I.close}</button></div>${body}</div>`);
+}
+function confirmBox(title, msg, okLabel, onOk, danger) {
+  const o = overlay('modal', `<div class="modal" role="alertdialog"><h3>${esc(title)}</h3><p>${esc(msg)}</p>
+    <div class="btn-row"><button class="btn ${danger ? 'danger' : ''}" id="mOk">${esc(okLabel)}</button>
+    <button class="btn ghost" onclick="closeOverlay()">إلغاء</button></div></div>`);
+  o.querySelector('#mOk').onclick = () => { closeOverlay(); onOk(); };
+}
+function askName(onDone) {
+  const o = overlay('modal', `<div class="modal"><h3>اسم الفني المنفذ</h3><p>يُسجل الاسم في تقرير الفحص.</p>
+    <input type="text" id="nameIn" placeholder="مثال: أحمد علي" value="${esc(db.technician)}">
+    <div class="btn-row"><button class="btn" id="mOk">متابعة</button><button class="btn ghost" onclick="closeOverlay()">إلغاء</button></div></div>`);
+  const inp = o.querySelector('#nameIn'); inp.focus();
+  const ok = () => {
+    const v = inp.value.trim();
+    if (!v) { inp.focus(); return; }
+    db.technician = v; persist(); closeOverlay(); onDone();
+  };
+  o.querySelector('#mOk').onclick = ok;
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') ok(); });
+}
+
+function openDrawer() {
+  const nav = (icon, label, action, cls = '') => `<button class="nav-item ${cls}" onclick="closeOverlay();${action}">${icon}<span>${label}</span></button>`;
+  overlay('drawer', `<nav class="drawer">
+    <div class="drawer-brand">${I.logo}<div><b>Karbala Cement Plant</b><small>Delta Company</small></div></div>
+    ${db.technician ? `<div class="drawer-user">الفني: ${esc(db.technician)}</div>` : ''}
+    ${nav(I.home, 'الصفحة الرئيسية', "go('/')")}
+    ${nav(I.checkCircle, 'بدء قائمة جديدة', "go('/sections')")}
+    ${nav(I.list, 'القوائم السابقة', "go('/history')")}
+    ${nav(I.book, 'إجراءات التشغيل (SOP)', 'openSop()')}
+    ${nav(I.file, 'الأدلة الفنية', 'openManuals()')}
+    ${nav(I.gear, 'الإعدادات', "go('/settings')")}
+    ${nav(I.logout, 'تسجيل الخروج', 'logout()', 'out')}
+  </nav>`);
+}
+function logout() {
+  db.technician = ''; persist(); go('/'); render(); toast('تم تسجيل الخروج');
+}
+
+/* ---------- SOP & manuals ---------- */
+const DOCS = {
+  guide: { title: 'إرشادات عامة للـ Cold Run', html: `
+    <p>التشغيل البارد (Cold Run) هو تشغيل المعدات بدون مواد وبدون حرارة بعد انتهاء الصيانة، للتحقق من سلامتها قبل التشغيل الفعلي.</p>
+    <h4>قبل البدء</h4><ul><li>الحصول على تصريح العمل وإبلاغ غرفة التحكم.</li><li>إزالة أقفال العزل (LOTO) بالتنسيق مع جميع الفرق.</li><li>إخلاء المنطقة من الأشخاص غير المعنيين.</li></ul>
+    <h4>أثناء الفحص</h4><ul><li>تنفيذ البنود بالترتيب وعدم تخطي أي بند يتعلق بالسلامة.</li><li>توثيق البنود المهمة بالصور.</li><li>تسجيل أي ملاحظة فورًا في البند المعني.</li></ul>
+    <h4>بعد الانتهاء</h4><ul><li>تصدير التقرير وتسليمه لمشرف الوردية.</li><li>عدم البدء بالتشغيل الفعلي قبل إغلاق جميع الملاحظات.</li></ul>` },
+  specs: { title: 'مواصفات التشغيل', html: `
+    <ul><li>مدة التشغيل التجريبي: 30 – 60 دقيقة لكل معدة رئيسية.</li><li>التشغيل يبدأ بتشغيل لحظي (Jog) للتحقق من اتجاه الدوران.</li>
+    <li>التشغيل يتم حسب تسلسل الإنترلوك من آخر المسار إلى أوله.</li><li>مراقبة القراءات كل 10 دقائق وتسجيلها.</li></ul>` },
+  limits: { title: 'قيم التشغيل المسموح بها', html: `
+    <table><tr><th>المعامل</th><th>الحد المسموح</th></tr>
+    <tr><td>اهتزاز المحامل</td><td>&lt; 4.5 mm/s</td></tr>
+    <tr><td>حرارة المحامل</td><td>&lt; 80 °C</td></tr>
+    <tr><td>ضغط زيت التشحيم</td><td>2.5 – 4 bar</td></tr>
+    <tr><td>عزل المحركات</td><td>≥ 1 MΩ / kV</td></tr>
+    <tr><td>تيار بدون حمل</td><td>30 – 40% من التيار الاسمي</td></tr></table>
+    <p style="color:var(--muted);font-size:13px;margin-top:8px">القيم إرشادية؛ يُرجع دائمًا إلى دليل الشركة المصنعة لكل معدة.</p>` },
+  issue: { title: 'إجراءات في حالة وجود ملاحظة', html: `
+    <ol><li>إيقاف المعدة فورًا إذا كانت الملاحظة تتعلق بالسلامة أو بقيم خارج الحدود.</li>
+    <li>تسجيل الملاحظة في البند مع صورة توضيحية.</li><li>إبلاغ مشرف الوردية وغرفة التحكم.</li>
+    <li>فتح أمر عمل تصحيحي وإعادة فحص البند بعد المعالجة.</li><li>عدم اعتماد القائمة كمكتملة قبل إغلاق الملاحظة.</li></ol>` },
+};
+function openSop() {
+  const row = (icon, label, action) => `<button class="sheet-row" onclick="${action}"><span class="blue">${icon}</span><span>${label}</span><span class="chev">${I.chevL}</span></button>`;
+  sheet('إجراءات التشغيل (SOP)', `
+    ${row(I.guide, 'إرشادات عامة للـ Cold Run', "openDoc('guide')")}
+    ${row(I.spec, 'مواصفات التشغيل', "openDoc('specs')")}
+    ${row(I.gauge, 'قيم التشغيل المسموح بها', "openDoc('limits')")}
+    ${row(I.clock, 'إجراءات في حالة وجود ملاحظة', "openDoc('issue')")}
+    ${row(I.file, 'نماذج جاهزة', 'openForms()')}`);
+}
+function openDoc(key) {
+  const d = DOCS[key];
+  sheet(d.title, `<div class="doc">${d.html}</div><button class="btn outline block" style="margin-top:16px" onclick="openSop()">رجوع للإجراءات</button>`);
+}
+function openForms() {
+  sheet('نماذج جاهزة', `<p style="color:var(--muted);margin:4px 0">طباعة نموذج فحص فارغ للتعبئة اليدوية:</p>
+    ${SECTIONS.map(s => `<button class="sheet-row" onclick="printBlank('${s.id}')"><span class="blue">${I.pdf}</span><span>${s.ar}</span><small style="color:var(--muted);direction:ltr">${s.en}</small></button>`).join('')}`);
+}
+function openManuals() {
+  sheet('الأدلة الفنية', `<div class="doc">
+    <p>مراجع سريعة لكل قسم – عدد بنود الفحص والبنود الميكانيكية الخاصة:</p>
+    <table><tr><th>القسم</th><th>بنود خاصة</th></tr>
+    ${SECTIONS.map(s => `<tr><td>${s.ar}<br><small style="color:var(--muted)">${s.en}</small></td><td>${s.mech.map(esc).join('<br>')}</td></tr>`).join('')}</table>
+    <p style="color:var(--muted);font-size:13px;margin-top:8px">للتفاصيل الكاملة يُرجع إلى أدلة الشركات المصنعة في مكتبة قسم الصيانة.</p></div>`);
+}
+
+/* ======================= Screens ======================= */
+function renderHome() {
+  const inProgress = db.checklists.find(c => c.status === 'progress');
+  app.innerHTML = `<section class="home">
+    <div class="home-top">
+      <button class="icon-btn" aria-label="القائمة" onclick="openDrawer()">${I.menu}</button>
+      <button class="icon-btn" aria-label="الإشعارات" onclick="notifications()">${I.bell}</button>
+    </div>
+    <div class="hero">
+      <div class="logo">${I.logo}</div>
+      <p class="plant">Karbala Cement Plant</p>
+      <p class="company">Delta Company</p>
+      <svg class="skyline" viewBox="0 0 400 150" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
+        <defs><linearGradient id="glow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffb347" stop-opacity=".0"/><stop offset="1" stop-color="#ffb347" stop-opacity=".35"/></linearGradient></defs>
+        <rect x="0" y="60" width="400" height="90" fill="url(#glow)"/>
+        <g fill="#0a1a38">
+          <rect x="20" y="70" width="28" height="80"/><rect x="52" y="40" width="14" height="110"/><rect x="70" y="58" width="36" height="92"/>
+          <rect x="112" y="20" width="10" height="130"/><rect x="126" y="62" width="50" height="88"/><path d="M180 150V80l40-20v90z"/>
+          <rect x="226" y="30" width="16" height="120"/><rect x="246" y="50" width="20" height="100"/><rect x="270" y="74" width="44" height="76"/>
+          <rect x="318" y="44" width="12" height="106"/><rect x="334" y="66" width="46" height="84"/>
+        </g>
+        <g fill="#ffd27a">
+          ${[[30,90],[38,110],[76,80],[90,100],[134,90],[150,110],[160,80],[200,110],[252,80],[280,96],[296,120],[344,90],[360,110]].map(([x,y]) => `<rect x="${x}" y="${y}" width="3" height="3"/>`).join('')}
+        </g>
+        <g fill="#8fb5ff" opacity=".35"><circle cx="117" cy="12" r="8"/><circle cx="234" cy="22" r="7"/><circle cx="125" cy="4" r="5"/></g>
+      </svg>
+      <h2>Cold Run Checklist</h2>
+      <h3>After Maintenance</h3>
+    </div>
+    <div class="tiles">
+      <button class="tile t-green" onclick="go('/sections')">${I.checkCircle}<b>بدء قائمة فحص جديدة</b><small>Start New Checklist</small></button>
+      <button class="tile t-blue" onclick="go('/history')">${I.list}<b>القوائم السابقة</b><small>Previous Checklists</small></button>
+      <button class="tile t-orange" onclick="openSop()">${I.book}<b>إجراءات التشغيل</b><small>SOP / Guidelines</small></button>
+      <button class="tile t-purple" onclick="go('/settings')">${I.gear}<b>الإعدادات</b><small>Settings</small></button>
+    </div>
+    ${inProgress ? `<div style="padding:0 14px 18px"><button class="btn block" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.3)" onclick="go('/run/${inProgress.id}')">متابعة القائمة الحالية: ${esc(sectionOf(inProgress.section).ar)} (${stats(inProgress).pct}%)</button></div>` : ''}
+    <div class="home-foot">${db.technician ? 'الفني: ' + esc(db.technician) : ''}</div>
+  </section>`;
+}
+function notifications() {
+  const open = db.checklists.filter(c => c.status === 'progress');
+  if (!open.length) { toast('لا توجد إشعارات جديدة'); return; }
+  sheet('الإشعارات', open.map(c => `<button class="sheet-row" onclick="closeOverlay();go('/run/${c.id}')"><span class="blue">${I.clock}</span><span>${esc(titleOf(c))} – لم تكتمل بعد (${stats(c).pct}%)</span></button>`).join(''));
+}
+
+function renderSections() {
+  app.innerHTML = `<section class="screen">${topbar('اختيار القسم', '/')}
+    <div class="content"><div class="list">
+      ${SECTIONS.map(s => `<button class="row" onclick="startChecklist('${s.id}')">
+        <span class="ico">${SI[s.id]}</span>
+        <span class="txt"><b>${s.ar}</b><small>${s.en}</small></span>
+        <span class="chev">${I.chevL}</span></button>`).join('')}
+    </div></div></section>`;
+}
+function startChecklist(sectionId) {
+  const create = () => {
+    const cl = { id: 'c' + Date.now().toString(36), section: sectionId, startedAt: Date.now(), completedAt: null,
+      technician: db.technician, status: 'progress', items: {}, notes: '', openGroup: 0 };
+    db.checklists.unshift(cl); persist(); go('/run/' + cl.id);
+  };
+  const existing = db.checklists.find(c => c.section === sectionId && c.status === 'progress');
+  const withName = () => db.technician ? create() : askName(create);
+  if (existing) {
+    const o = overlay('modal', `<div class="modal"><h3>توجد قائمة غير مكتملة</h3>
+      <p>لديك قائمة فحص لقسم ${esc(sectionOf(sectionId).ar)} لم تكتمل بعد (${stats(existing).pct}%).</p>
+      <div class="btn-row"><button class="btn" id="cont">متابعة</button><button class="btn outline" id="neu">قائمة جديدة</button></div></div>`);
+    o.querySelector('#cont').onclick = () => { closeOverlay(); go('/run/' + existing.id); };
+    o.querySelector('#neu').onclick = () => { closeOverlay(); withName(); };
+  } else withName();
+}
+
+let focusItem = null;
+function renderRun(cl) {
+  const section = sectionOf(cl.section);
+  const groups = buildGroups(section);
+  const st = stats(cl);
+  const open = cl.openGroup ?? 0;
+  const isLast = open >= groups.length - 1;
+  app.innerHTML = `<section class="screen">${topbar(titleOf(cl), '/')}
+    <div class="content">
+      <div class="progress-wrap"><div class="progress"><i style="width:${st.pct}%"></i></div><span dir="ltr">${st.done} / ${st.total}</span><b style="color:var(--text)">${st.pct}%</b></div>
+      ${groups.map((g, gi) => {
+        const gDone = g.items.filter(i => cl.items[i.id]?.state === 'done').length;
+        return `<div class="group ${gi === open ? '' : 'closed'}">
+          <button class="group-head" onclick="toggleGroup(${gi})"><span class="gtitle">${esc(g.title)}</span>
+            <span dir="ltr" class="gcount ${gDone === g.items.length ? 'full' : ''}">${gDone}/${g.items.length}</span>${I.chevUp}</button>
+          <div class="items">${g.items.map(it => {
+            const s = cl.items[it.id] || {};
+            const nPhotos = (s.photos || []).length;
+            return `<div class="item ${focusItem === it.id ? 'focus' : ''}" id="it-${it.id}">
+              <button class="check ${s.state === 'done' ? 'on' : s.state === 'skipped' ? 'skip' : ''}" aria-label="تأشير" onclick="toggleItem('${it.id}')">${s.state === 'done' ? I.check : s.state === 'skipped' ? '–' : ''}</button>
+              <button class="label" onclick="go('/run/${cl.id}/item/${it.id}')">${esc(it.t)}${s.state === 'skipped' ? '<span class="tag skip">تم التخطي</span>' : ''}${s.note ? `<small>${esc(s.note.slice(0, 60))}${s.note.length > 60 ? '…' : ''}</small>` : ''}</button>
+              ${it.photo || nPhotos ? `<button class="mini" aria-label="صور" onclick="go('/run/${cl.id}/item/${it.id}')">${I.camera}${nPhotos ? `<span class="dot">${nPhotos}</span>` : ''}</button>` : ''}
+              <button class="mini" aria-label="معلومات" onclick="itemInfo('${it.id}')">${I.info}</button></div>`;
+          }).join('')}</div></div>`;
+      }).join('')}
+    </div>
+    <div class="actions">
+      <button class="btn" onclick="nextGroup()">${isLast ? 'إنهاء الفحص' : 'التالي'}</button>
+      <button class="btn outline" onclick="prevGroup()" ${open === 0 ? 'disabled' : ''}>السابق</button>
+    </div></section>`;
+  if (focusItem) { document.getElementById('it-' + focusItem)?.scrollIntoView({ block: 'center' }); focusItem = null; }
+}
+function currentCl() { const m = location.hash.match(/#\/(?:run|summary)\/([^/]+)/); return m && getCl(m[1]); }
+function toggleGroup(gi) { const cl = currentCl(); cl.openGroup = cl.openGroup === gi ? -1 : gi; persist(); render(); }
+function toggleItem(itemId) {
+  const cl = currentCl(); const s = itemState(cl, itemId);
+  s.state = s.state === 'done' ? null : 'done'; persist(); render();
+}
+function itemInfo(itemId) {
+  const cl = currentCl(); const it = allItems(sectionOf(cl.section)).find(i => i.id === itemId);
+  overlay('modal', `<div class="modal"><h3>${esc(it.t)}</h3><p>${esc(it.h)}</p>
+    <div class="btn-row"><button class="btn" onclick="closeOverlay();go('/run/${cl.id}/item/${it.id}')">فتح البند</button><button class="btn ghost" onclick="closeOverlay()">إغلاق</button></div></div>`);
+}
+function prevGroup() { const cl = currentCl(); cl.openGroup = Math.max(0, (cl.openGroup < 0 ? 0 : cl.openGroup) - 1); persist(); render(); window.scrollTo(0, 0); }
+function nextGroup() {
+  const cl = currentCl(); const n = buildGroups(sectionOf(cl.section)).length;
+  const cur = cl.openGroup < 0 ? 0 : cl.openGroup;
+  if (cur < n - 1) { cl.openGroup = cur + 1; persist(); render(); window.scrollTo(0, 0); return; }
+  const st = stats(cl); const pending = st.total - st.done;
+  if (pending > 0) confirmBox('توجد بنود غير منجزة', `${pending} من ${st.total} بند لم يتم إنجازها. سيتم حفظ القائمة كـ "غير مكتملة". هل تريد الإنهاء؟`, 'إنهاء', () => finish(cl));
+  else finish(cl);
+}
+function finish(cl) {
+  const st = stats(cl);
+  cl.status = st.done === st.total ? 'complete' : 'incomplete';
+  cl.completedAt = Date.now(); persist(); go('/summary/' + cl.id);
+}
+
+/* ---------- Item detail ---------- */
+let selPhoto = 0;
+let recog = null;
+function renderItem(cl, itemId) {
+  const it = allItems(sectionOf(cl.section)).find(i => i.id === itemId);
+  if (!it) { go('/run/' + cl.id); return; }
+  const s = itemState(cl, itemId);
+  if (selPhoto >= s.photos.length) selPhoto = Math.max(0, s.photos.length - 1);
+  app.innerHTML = `<section class="screen">${topbar(it.t, '/run/' + cl.id, `<button class="icon-btn" aria-label="خيارات" onclick="openOptions()">${I.more}</button>`)}
+    <div class="content">
+      <div class="hint">${esc(it.h)}</div>
+      <div class="photo-main">${s.photos.length
+        ? `<img src="${s.photos[selPhoto]}" alt="صورة البند"><button class="x" aria-label="حذف الصورة" onclick="removePhoto()">${I.close}</button>`
+        : `<div class="photo-empty">${I.image}${it.photo ? 'يُنصح بإرفاق صورة لهذا البند' : 'لا توجد صور'}</div>`}</div>
+      ${s.photos.length > 1 ? `<div class="thumbs">${s.photos.map((p, i) => `<button class="${i === selPhoto ? 'sel' : ''}" onclick="selPhoto=${i};render()"><img src="${p}" alt=""></button>`).join('')}</div>` : ''}
+      <div class="btn-row">
+        <button class="btn" onclick="$('#camInput').click()">${I.camera}التقاط صورة</button>
+        <button class="btn outline" onclick="$('#galInput').click()">${I.image}إضافة صورة</button>
+      </div>
+      ${recog ? `<div class="listening"><i></i>جارٍ الاستماع… تحدث الآن<button onclick="stopDictation()">إيقاف</button></div>` : ''}
+      <label class="field-label" for="note">ملاحظات (اختياري)</label>
+      <textarea id="note" placeholder="اكتب ملاحظاتك هنا…">${esc(s.note)}</textarea>
+      ${s.files.map((f, i) => `<div class="attach">${I.file}<span>${esc(f.name)}</span>
+        ${f.data ? `<button class="mini" aria-label="فتح" onclick="openFile(${i})">${I.share}</button>` : ''}
+        <button class="mini" style="color:var(--red)" aria-label="حذف" onclick="removeFile(${i})">${I.close}</button></div>`).join('')}
+    </div>
+    <div class="actions">
+      <button class="btn green" onclick="markItem('done')">${I.check}تم الإنجاز</button>
+      <button class="btn ghost" onclick="markItem('skipped')">تخطي</button>
+    </div></section>`;
+  $('#note').addEventListener('input', (e) => { s.note = e.target.value; persist(); });
+}
+function itemCtx() {
+  const m = location.hash.match(/#\/run\/([^/]+)\/item\/([^/]+)/);
+  if (!m) return null;
+  const cl = getCl(m[1]); return cl && { cl, s: itemState(cl, m[2]), itemId: m[2] };
+}
+function markItem(state) {
+  const { cl, s, itemId } = itemCtx();
+  stopDictation();
+  s.state = state; persist();
+  focusItem = itemId;
+  go('/run/' + cl.id);
+}
+function removePhoto() {
+  confirmBox('حذف الصورة', 'هل تريد حذف هذه الصورة؟', 'حذف', () => {
+    const { s } = itemCtx(); s.photos.splice(selPhoto, 1); persist(); render();
+  }, true);
+}
+function removeFile(i) { const { s } = itemCtx(); s.files.splice(i, 1); persist(); render(); }
+function openFile(i) {
+  const { s } = itemCtx(); const f = s.files[i];
+  fetch(f.data).then(r => r.blob()).then(b => window.open(URL.createObjectURL(b), '_blank'));
+}
+function openOptions() {
+  sheet('الخيارات', `
+    <button class="sheet-row" onclick="closeOverlay();startDictation()">${I.mic}<span>إضافة ملاحظة صوتية</span></button>
+    <button class="sheet-row" onclick="closeOverlay();$('#galInput').click()">${I.image}<span>إضافة صورة من المعرض</span></button>
+    <button class="sheet-row" onclick="closeOverlay();$('#camInput').click()">${I.camera}<span>التقاط صورة جديدة</span></button>
+    <button class="sheet-row" onclick="closeOverlay();$('#pdfInput').click()">${I.file}<span>إضافة ملف (PDF)</span></button>
+    <button class="btn ghost block" style="margin-top:14px" onclick="closeOverlay()">إلغاء</button>`);
+}
+
+/* Voice note → speech-to-text appended to the item's notes */
+function startDictation() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('المتصفح لا يدعم التعرف على الصوت – جرّب Chrome'); return; }
+  const ctx = itemCtx(); if (!ctx) return;
+  recog = new SR();
+  recog.lang = 'ar-IQ';
+  recog.continuous = true;
+  recog.interimResults = false;
+  recog.onresult = (e) => {
+    const c = itemCtx(); if (!c) return;
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) {
+        const t = e.results[i][0].transcript.trim();
+        c.s.note = (c.s.note ? c.s.note.trimEnd() + ' ' : '') + t;
+      }
+    }
+    persist();
+    const ta = $('#note'); if (ta) ta.value = c.s.note;
+  };
+  recog.onerror = (e) => { toast(e.error === 'not-allowed' ? 'لم يتم السماح باستخدام الميكروفون' : 'تعذر التعرف على الصوت'); };
+  recog.onend = () => { recog = null; if (itemCtx()) render(); };
+  try { recog.start(); render(); } catch (e) { recog = null; toast('تعذر تشغيل الميكروفون'); }
+}
+function stopDictation() { if (recog) { recog.onend = null; recog.stop(); recog = null; if (itemCtx()) render(); } }
+
+/* Downscale photos so many fit in browser storage */
+function compressImage(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const max = 1024; let { width: w, height: h } = img;
+      if (w > max || h > max) { const r = Math.min(max / w, max / h); w = Math.round(w * r); h = Math.round(h * r); }
+      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+      cv.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(cv.toDataURL('image/jpeg', 0.7));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(); };
+    img.src = url;
+  });
+}
+async function addPhotos(files) {
+  const ctx = itemCtx(); if (!ctx || !files.length) return;
+  for (const f of files) {
+    try {
+      const data = await compressImage(f);
+      ctx.s.photos.push(data);
+      if (!persist()) { ctx.s.photos.pop(); break; }
+    } catch (e) { toast('تعذر قراءة الصورة'); }
+  }
+  selPhoto = ctx.s.photos.length - 1;
+  render();
+}
+$('#camInput').addEventListener('change', (e) => { addPhotos([...e.target.files]); e.target.value = ''; });
+$('#galInput').addEventListener('change', (e) => { addPhotos([...e.target.files]); e.target.value = ''; });
+$('#pdfInput').addEventListener('change', (e) => {
+  const f = e.target.files[0]; e.target.value = '';
+  const ctx = itemCtx(); if (!f || !ctx) return;
+  const add = (data) => {
+    ctx.s.files.push({ name: f.name, data });
+    if (!persist()) { ctx.s.files.pop(); ctx.s.files.push({ name: f.name, data: null }); persist(); }
+    render();
+  };
+  if (f.size > 1.5 * 1024 * 1024) { toast('الملف كبير – سيتم حفظ الاسم فقط كمرجع'); add(null); return; }
+  const r = new FileReader(); r.onload = () => add(r.result); r.readAsDataURL(f);
+});
+
+/* ---------- Summary ---------- */
+function renderSummary(cl) {
+  const st = stats(cl);
+  const ok = cl.status === 'complete';
+  const ts = cl.completedAt || cl.startedAt;
+  app.innerHTML = `<section class="screen">
+    <div class="done-hero">
+      <div class="ok ${ok ? '' : 'warn'}">${ok ? I.check : I.info}</div>
+      <h2>${ok ? 'تم إكمال قائمة الفحص' : 'تم إنهاء قائمة الفحص'}</h2>
+      <p>${esc(titleOf(cl))}</p>
+    </div>
+    <div class="content">
+      <dl class="kv" style="margin:0">
+        <div><dt>القسم</dt><dd>${esc(sectionOf(cl.section).ar)}</dd></div>
+        <div><dt>التاريخ</dt><dd style="direction:ltr">${fmtDate(ts)} &nbsp; ${fmtTime(ts)}</dd></div>
+        <div><dt>المنفذ</dt><dd>${esc(cl.technician || '—')}</dd></div>
+        <div><dt>النتيجة</dt><dd class="${ok ? 'ok-text' : 'warn-text'}">${ok ? 'تمت بنجاح' : `غير مكتملة (${st.done}/${st.total})`}</dd></div>
+        <div><dt>عدد البنود</dt><dd>${st.total}${st.skipped ? ` <small style="color:var(--amber)">· ${st.skipped} تم تخطيها</small>` : ''}</dd></div>
+      </dl>
+      <div class="summary-notes">
+        <label class="field-label" for="gnotes">الملاحظات العامة</label>
+        <textarea id="gnotes" placeholder="مثال: جميع الأنظمة جاهزة للتشغيل التجريبي.">${esc(cl.notes)}</textarea>
+      </div>
+      <button class="btn block" style="margin-top:14px" onclick="exportPdf()">${I.pdf}تصدير تقرير PDF</button>
+      <div class="grid2">
+        <button class="soft-btn" onclick="shareReport()">${I.share}مشاركة</button>
+        <button class="soft-btn" onclick="saveAndExit()">${I.save}حفظ كملف</button>
+      </div>
+      <div class="grid2">
+        <button class="soft-btn" onclick="go('/run/${cl.id}')">${I.list}مراجعة البنود</button>
+        <button class="soft-btn" onclick="go('/')">${I.home}الرئيسية</button>
+      </div>
+    </div></section>`;
+  $('#gnotes').addEventListener('input', (e) => { cl.notes = e.target.value; persist(); });
+}
+function reportText(cl) {
+  const st = stats(cl); const ts = cl.completedAt || cl.startedAt;
+  const lines = [titleOf(cl), 'Karbala Cement Plant – Delta Company', '',
+    `القسم: ${sectionOf(cl.section).ar}`, `التاريخ: ${fmtDate(ts)} ${fmtTime(ts)}`, `المنفذ: ${cl.technician || '—'}`,
+    `النتيجة: ${STATUS[cl.status].label} (${st.done}/${st.total})`, ''];
+  buildGroups(sectionOf(cl.section)).forEach(g => {
+    lines.push('■ ' + g.title);
+    g.items.forEach(it => {
+      const s = cl.items[it.id] || {};
+      lines.push(`  ${s.state === 'done' ? '✔' : s.state === 'skipped' ? '↷' : '✘'} ${it.t}${s.note ? ' — ' + s.note : ''}`);
+    });
+  });
+  if (cl.notes) lines.push('', 'الملاحظات العامة: ' + cl.notes);
+  return lines.join('\n');
+}
+async function shareReport() {
+  const cl = currentCl(); const text = reportText(cl);
+  if (navigator.share) { try { await navigator.share({ title: titleOf(cl), text }); } catch (e) {} return; }
+  try { await navigator.clipboard.writeText(text); toast('تم نسخ التقرير – يمكنك لصقه في أي تطبيق'); }
+  catch (e) { toast('المشاركة غير مدعومة في هذا المتصفح'); }
+}
+function saveAndExit() {
+  const cl = currentCl();
+  const blob = new Blob(['﻿' + reportText(cl)], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ColdRun_${sectionOf(cl.section).en.replace(/\W+/g, '_')}_${dayKey(cl.completedAt || cl.startedAt)}.txt`;
+  a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  toast('تم حفظ التقرير');
+}
+function exportPdf() {
+  const cl = currentCl(); const st = stats(cl); const ts = cl.completedAt || cl.startedAt;
+  const groups = buildGroups(sectionOf(cl.section));
+  $('#print').innerHTML = `<div dir="rtl">
+    <h1>${esc(titleOf(cl))}</h1><p class="sub">Karbala Cement Plant – Delta Company · Cold Run Checklist After Maintenance</p>
+    <table><tr><th>القسم</th><td>${esc(sectionOf(cl.section).ar)} / ${esc(sectionOf(cl.section).en)}</td><th>التاريخ</th><td style="direction:ltr;text-align:right">${fmtDate(ts)} ${fmtTime(ts)}</td></tr>
+    <tr><th>المنفذ</th><td>${esc(cl.technician || '—')}</td><th>النتيجة</th><td>${STATUS[cl.status].label} (${st.done}/${st.total})</td></tr></table>
+    <table><tr><th style="width:28px">#</th><th>البند</th><th style="width:80px">الحالة</th><th>الملاحظات</th></tr>
+    ${groups.map(g => `<tr class="grp"><td colspan="4">${esc(g.title)}</td></tr>` + g.items.map((it, i) => {
+      const s = cl.items[it.id] || {};
+      return `<tr><td>${i + 1}</td><td>${esc(it.t)}</td><td>${s.state === 'done' ? '✔ منجز' : s.state === 'skipped' ? 'تم التخطي' : '✘ غير منجز'}</td>
+        <td>${esc(s.note || '')}${(s.files || []).length ? `<br><small>مرفقات: ${s.files.map(f => esc(f.name)).join('، ')}</small>` : ''}
+        ${(s.photos || []).length ? `<div class="photos">${s.photos.map(p => `<img src="${p}">`).join('')}</div>` : ''}</td></tr>`;
+    }).join('')).join('')}</table>
+    ${cl.notes ? `<p><b>الملاحظات العامة:</b> ${esc(cl.notes)}</p>` : ''}
+    <div class="sign"><div>توقيع الفني المنفذ</div><div>توقيع مشرف الوردية</div></div></div>`;
+  toast('اختر "حفظ كـ PDF" من نافذة الطباعة');
+  setTimeout(() => window.print(), 300);
+}
+function printBlank(sectionId) {
+  const s = sectionOf(sectionId); closeOverlay();
+  $('#print').innerHTML = `<div dir="rtl"><h1>قائمة فحص ${esc(s.ar)} (Cold Run)</h1><p class="sub">Karbala Cement Plant – Delta Company · ${esc(s.en)}</p>
+    <table><tr><th>التاريخ</th><td style="width:35%"></td><th>المنفذ</th><td style="width:35%"></td></tr></table>
+    <table><tr><th style="width:28px">#</th><th>البند</th><th style="width:50px">✔</th><th style="width:40%">الملاحظات</th></tr>
+    ${buildGroups(s).map(g => `<tr class="grp"><td colspan="4">${esc(g.title)}</td></tr>` + g.items.map((it, i) => `<tr><td>${i + 1}</td><td>${esc(it.t)}</td><td></td><td></td></tr>`).join('')).join('')}</table>
+    <div class="sign"><div>توقيع الفني المنفذ</div><div>توقيع مشرف الوردية</div></div></div>`;
+  setTimeout(() => window.print(), 200);
+}
+
+/* ---------- History ---------- */
+const filters = { q: '', section: '', from: '', to: '', status: '' };
+function filtered() {
+  const q = filters.q.trim().toLowerCase();
+  return db.checklists.filter(c => {
+    const s = sectionOf(c.section); const d = dayKey(c.completedAt || c.startedAt);
+    if (q && !(titleOf(c) + ' ' + s.en + ' ' + (c.technician || '') + ' ' + fmtDate(c.completedAt || c.startedAt)).toLowerCase().includes(q)) return false;
+    if (filters.section && c.section !== filters.section) return false;
+    if (filters.status && c.status !== filters.status) return false;
+    if (filters.from && d < filters.from) return false;
+    if (filters.to && d > filters.to) return false;
+    return true;
+  });
+}
+function renderHistory() {
+  const active = filters.section || filters.from || filters.to || filters.status;
+  app.innerHTML = `<section class="screen">${topbar('القوائم السابقة', '/')}
+    <div class="content">
+      <div class="search">
+        <div class="box"><input type="search" id="q" placeholder="بحث..." value="${esc(filters.q)}">${I.search}</div>
+        <button class="filter-btn ${active ? 'active' : ''}" aria-label="تصفية" onclick="openFilter()">${I.filter}</button>
+      </div>
+      <div class="list" id="hlist"></div>
+    </div></section>`;
+  const q = $('#q');
+  q.addEventListener('input', () => { filters.q = q.value; drawHistoryList(); });
+  drawHistoryList();
+}
+function drawHistoryList() {
+  const list = filtered();
+  $('#hlist').innerHTML = list.length ? list.map(c => {
+    const ts = c.completedAt || c.startedAt; const b = STATUS[c.status];
+    return `<button class="hcard" onclick="go('${c.status === 'progress' ? '/run/' : '/summary/'}${c.id}')">
+      <span class="txt"><b>${esc(titleOf(c))}</b><small>${fmtDate(ts)} &nbsp; ${fmtTime(ts)}</small></span>
+      <span class="badge ${b.cls}">${b.label}</span></button>`;
+  }).join('') : `<div class="empty">${I.list}${db.checklists.length ? 'لا توجد نتائج مطابقة' : 'لا توجد قوائم سابقة بعد.<br>ابدأ قائمة فحص جديدة من الصفحة الرئيسية.'}</div>`;
+}
+function openFilter() {
+  const o = sheet('تصفية القوائم السابقة', `
+    <div class="form-field"><label class="field-label" for="fSec">القسم</label>
+      <select id="fSec"><option value="">جميع الأقسام</option>${SECTIONS.map(s => `<option value="${s.id}" ${filters.section === s.id ? 'selected' : ''}>${s.ar}</option>`).join('')}</select></div>
+    <div class="form-field"><label class="field-label" for="fFrom">من تاريخ</label><input type="date" id="fFrom" value="${filters.from}"></div>
+    <div class="form-field"><label class="field-label" for="fTo">إلى تاريخ</label><input type="date" id="fTo" value="${filters.to}"></div>
+    <div class="form-field"><label class="field-label" for="fSt">الحالة</label>
+      <select id="fSt"><option value="">جميع الحالات</option>${Object.entries(STATUS).map(([k, v]) => `<option value="${k}" ${filters.status === k ? 'selected' : ''}>${v.label}</option>`).join('')}</select></div>
+    <button class="btn block" style="margin-top:18px" id="fApply">عرض النتائج</button>
+    <button class="btn ghost block" style="margin-top:10px" id="fReset">إعادة تعيين</button>`);
+  o.querySelector('#fApply').onclick = () => {
+    filters.section = $('#fSec').value; filters.from = $('#fFrom').value; filters.to = $('#fTo').value; filters.status = $('#fSt').value;
+    closeOverlay(); render();
+  };
+  o.querySelector('#fReset').onclick = () => { Object.assign(filters, { section: '', from: '', to: '', status: '' }); closeOverlay(); render(); };
+}
+
+/* ---------- Settings ---------- */
+function renderSettings() {
+  let used = 0; try { used = (localStorage.getItem(KEY) || '').length; } catch (e) {}
+  app.innerHTML = `<section class="screen settings">${topbar('الإعدادات', '/')}
+    <div class="content">
+      <div class="card"><h4>اسم الفني المنفذ</h4><p>يظهر في تقارير الفحص الجديدة.</p>
+        <input type="text" id="tech" value="${esc(db.technician)}" placeholder="أدخل الاسم"></div>
+      <div class="card"><h4>البيانات المحفوظة</h4>
+        <p>${db.checklists.length} قائمة محفوظة على هذا الجهاز · ${(used / 1024 / 1024).toFixed(2)} MB تقريبًا</p>
+        <button class="btn danger block" onclick="clearAll()" ${db.checklists.length ? '' : 'disabled'}>حذف جميع القوائم</button></div>
+      <div class="card"><h4>حول التطبيق</h4><p style="margin:0">Cold Run Checklist After Maintenance<br>Karbala Cement Plant – Delta Company<br>البيانات تُحفظ محليًا في المتصفح على هذا الجهاز فقط.</p></div>
+    </div></section>`;
+  $('#tech').addEventListener('input', (e) => { db.technician = e.target.value.trim(); persist(); });
+}
+function clearAll() {
+  confirmBox('حذف جميع القوائم', 'سيتم حذف جميع قوائم الفحص والصور المحفوظة نهائيًا. لا يمكن التراجع.', 'حذف الكل', () => {
+    db.checklists = []; persist(); render(); toast('تم حذف جميع القوائم');
+  }, true);
+}
+
+/* ======================= Router ======================= */
+function render() {
+  const h = location.hash.replace(/^#/, '') || '/';
+  const p = h.split('/').filter(Boolean);
+  if (p[0] === 'sections') return renderSections();
+  if (p[0] === 'history') return renderHistory();
+  if (p[0] === 'settings') return renderSettings();
+  if (p[0] === 'run' || p[0] === 'summary') {
+    const cl = getCl(p[1]);
+    if (!cl) { go('/'); return; }
+    if (p[0] === 'summary') return renderSummary(cl);
+    if (p[2] === 'item') return renderItem(cl, p[3]);
+    return renderRun(cl);
+  }
+  renderHome();
+}
+let lastRoute = '';
+window.addEventListener('hashchange', () => {
+  if (!location.hash.includes('/item/')) stopDictation();
+  closeOverlay();
+  const route = location.hash.split('/').slice(0, 3).join('/');
+  render();
+  if (route !== lastRoute) window.scrollTo(0, 0);
+  lastRoute = route;
+});
+render();
+</script>
+</body>
+</html>
