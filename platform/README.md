@@ -45,6 +45,27 @@ React 18 + TypeScript + Vite, PWA (vite-plugin-pwa), Firebase Auth + Cloud Fires
    ```
 6. Open the site. The first visitor is asked to create the **System Administrator**. Then go to **Settings → Load example departments, equipment and checklists**, review/replace the examples, and add users under **Users**.
 
+### Automatic deployment from GitHub (recommended)
+
+The workflow `.github/workflows/firebase-deploy.yml` publishes the app to `https://<project-id>.web.app` on every merge to `main` (or on demand: **Actions → Deploy platform to Firebase → Run workflow**). One-time setup:
+
+1. **Firebase project** – console.firebase.google.com → *Add project* (Spark/free plan is fine). Then:
+   - *Build → Authentication → Get started → Email/Password → Enable*.
+   - *Build → Firestore Database → Create database* (production mode, pick a region near Iraq, e.g. `europe-west`/`me-central`).
+   - *Project settings → General → Your apps → Web (`</>`)* → register an app. Note `apiKey`, `projectId`, `appId`, `messagingSenderId`.
+2. **Service account key** – *Project settings → Service accounts → Generate new private key* (downloads a JSON file). In Google Cloud console → *IAM*, make sure that account (`firebase-adminsdk-…@<project>.iam.gserviceaccount.com`) has the **Firebase Admin** role.
+3. **GitHub secrets** – repository → *Settings → Secrets and variables → Actions → New repository secret*:
+
+   | Secret | Value |
+   |---|---|
+   | `FIREBASE_SERVICE_ACCOUNT` | the whole content of the JSON key file |
+   | `FIREBASE_PROJECT_ID` | `projectId` |
+   | `FIREBASE_API_KEY` | `apiKey` |
+   | `FIREBASE_APP_ID` | `appId` |
+   | `FIREBASE_MESSAGING_SENDER_ID` | `messagingSenderId` |
+4. Merge to `main` (or run the workflow manually). The run summary shows the live URL.
+5. Open the URL on any phone, tablet or PC. The first visitor creates the System Administrator. On phones use *Add to Home Screen* / *Install app* to get an app icon that also works offline.
+
 ### Local development with emulators
 ```bash
 echo "VITE_FIREBASE_PROJECT_ID=demo-coldrun
