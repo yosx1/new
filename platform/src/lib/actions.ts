@@ -10,6 +10,16 @@ import type {
 
 const online = () => navigator.onLine;
 
+/**
+ * Online: wait (up to 10 s) until the server confirms the write, so a record is never only on the device
+ * when the user believes it was created. Offline: the write is queued locally and synced later.
+ */
+async function commit(p: Promise<unknown>, what: string) {
+  const guarded = p.catch(e => { console.warn(what, e); throw e; });
+  if (!online()) { guarded.catch(() => {}); return; }
+  await Promise.race([guarded, new Promise(r => setTimeout(r, 10_000))]);
+}
+
 /** Reads a document from the server when online, otherwise from the local cache. */
 async function readInspection(id: string): Promise<Inspection> {
   const s = await getDoc(ref('inspections', id));
@@ -81,7 +91,7 @@ export async function createInspection(user: UserProfile, data: Omit<Inspection,
     ...base, code, summary, pools: computePools(base, summary), override: null,
     createdAt: serverTimestamp(), createdBy: user.id, createdByName: user.name, updatedAt: serverTimestamp(), docVersion: 1,
   };
-  setDoc(r, record).catch(e => console.warn('create inspection', e));
+  await commit(setDoc(r, record), 'create inspection');
   audit(user, 'inspection.create', 'inspection', r.id, { label: code, after: { title: data.title, equipment: data.equipmentTag, wo: data.workOrder } });
   for (const uid of new Set([data.supervisorUid, data.productionEngUid, data.maintenanceEngUid, ...data.assignedUids])) {
     if (uid && uid !== user.id) notify(uid, { en: `You were added to inspection ${code}`, ar: `تمت إضافتك إلى الفحص ${code}` }, `/inspections/${r.id}`);
@@ -177,7 +187,7 @@ export async function raiseDefect(user: UserProfile, settings: Settings, insp: I
     status: args.assignedUid ? 'assigned' : 'open', repair: null, verification: null, reopenCount: 0,
     reportedAt: serverTimestamp(), reportedBy: user.id, reportedByName: user.name, updatedAt: serverTimestamp(),
   };
-  setDoc(r, rec).catch(e => console.warn('defect create', e));
+  await commit(setDoc(r, rec), 'defect create');
   audit(user, 'defect.create', 'defect', r.id, { label: code, after: { severity: args.severity, pool: args.pool, item: args.itemId, inspection: insp.code } });
   if (args.assignedUid && args.assignedUid !== user.id) {
     notify(args.assignedUid, { en: `Defect ${code} assigned to you`, ar: `تم إسناد العيب ${code} إليك` }, `/defects/${r.id}`);
