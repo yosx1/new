@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
-import { getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
-import { auth } from '../firebase';
+import { getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { auth, db } from '../firebase';
 import { ref } from '../lib/db';
 import type { UserProfile } from '../types';
 
@@ -54,6 +54,22 @@ async function registerDevice(user: UserProfile, id: string) {
   }
 }
 
+/** First sign-in of someone the administrator invited by email: turn the invitation into a profile. */
+async function claimInvite(fbUser: User) {
+  const email = fbUser.email?.toLowerCase();
+  if (!email || !fbUser.emailVerified) return;
+  const inv = await getDoc(ref('invites', email));
+  if (!inv.exists()) return;
+  const i = inv.data();
+  const b = writeBatch(db);
+  b.set(ref('users', fbUser.uid), {
+    name: i.name || fbUser.displayName || email, email, role: i.role, departmentId: i.departmentId ?? null,
+    phone: i.phone ?? '', active: true, lang: 'ar', createdAt: serverTimestamp(), createdBy: i.invitedBy,
+  });
+  b.delete(inv.ref);
+  await b.commit();
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({ phase: 'loading' });
 
@@ -69,10 +85,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let deviceRegistered = false;
 
       let noProfileTimer: ReturnType<typeof setTimeout> | undefined;
+      let claimTried = false;
       unsubProfile = onSnapshot(ref('users', fbUser.uid), snap => {
         clearTimeout(noProfileTimer);
         if (!snap.exists()) {
           if (snap.metadata.fromCache) return; // wait for the server before deciding
+          if (!claimTried) { claimTried = true; claimInvite(fbUser).catch(e => console.warn('invite claim', e)); }
           // First-time setup writes the profile right after creating the account; give it a moment.
           noProfileTimer = setTimeout(() => { cleanup(); signOut(auth); setState({ phase: 'signedOut', reason: 'noProfile' }); }, 6000);
           return;

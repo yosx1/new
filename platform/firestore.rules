@@ -39,10 +39,37 @@ service cloud.firestore {
       allow create: if hasRole(['admin'])
         || (uid == request.auth.uid && !exists(setupPath())
             && getAfter(setupPath()).data.adminUid == request.auth.uid
-            && request.resource.data.role == 'admin' && request.resource.data.active == true);
+            && request.resource.data.role == 'admin' && request.resource.data.active == true)
+        || claimsInvite(uid);
+      // Someone the administrator invited by email claims it on first sign-in (Google or password).
+      // The profile must copy the invitation exactly and the invitation is consumed in the same write.
+      function claimsInvite(uid) {
+        let inv = invitePath(myEmail());
+        let i = get(inv).data;
+        let d = request.resource.data;
+        return uid == request.auth.uid && verifiedEmail() && exists(inv) && !existsAfter(inv)
+          && d.keys().hasOnly(['name', 'email', 'role', 'departmentId', 'phone', 'active', 'lang', 'createdAt', 'createdBy'])
+          && d.email.lower() == myEmail() && d.role == i.role && d.departmentId == i.departmentId
+          && d.active == true && d.createdBy == i.invitedBy && d.createdAt == request.time;
+      }
       allow update: if hasRole(['admin'])
         || (uid == request.auth.uid && active() && changed().hasOnly(['lang', 'phone', 'name']));
       allow delete: if false;
+    }
+
+    function invitePath(email) { return /databases/$(database)/documents/invites/$(email); }
+    function verifiedEmail() { return signedIn() && request.auth.token.email != null && request.auth.token.email_verified == true; }
+    function myEmail() { return request.auth.token.email.lower(); }
+
+    match /invites/{email} {
+      allow read: if hasRole(['admin']) || (verifiedEmail() && myEmail() == email);
+      allow create, update: if hasRole(['admin'])
+        && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'departmentId', 'phone', 'invitedBy', 'createdAt'])
+        && request.resource.data.email == email && email.lower() == email
+        && request.resource.data.role in ['admin', 'supervisor', 'manager', 'mechanical', 'electrical', 'instrumentation', 'production', 'viewer']
+        && request.resource.data.invitedBy == request.auth.uid;
+      allow delete: if hasRole(['admin'])
+        || (verifiedEmail() && myEmail() == email && existsAfter(userPath(request.auth.uid)));
     }
 
     match /devices/{id} {

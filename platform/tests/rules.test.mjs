@@ -162,3 +162,25 @@ test('notifications: only well-formed in-app messages to existing users', async 
   await assertSucceeds(updateDoc(doc(as('mech'), 'notifications', r.id), { read: true }));
   await assertFails(updateDoc(doc(as('mech'), 'notifications', r.id), { link: '/x' }));
 });
+
+test('invitations: admin invites by email; only that verified email can claim, once, with the invited role', async () => {
+  const adb = as('admin');
+  const inv = { email: 'new@kcp.iq', name: 'New', role: 'electrical', departmentId: null, phone: '', invitedBy: 'admin', createdAt: 1 };
+  await assertFails(setDoc(doc(as('sup'), 'invites/new@kcp.iq'), { ...inv, invitedBy: 'sup' }));
+  await assertFails(setDoc(doc(adb, 'invites/New@kcp.iq'), { ...inv, email: 'New@kcp.iq' }));
+  await assertFails(setDoc(doc(adb, 'invites/new@kcp.iq'), { ...inv, role: 'owner' }));
+  await assertSucceeds(setDoc(doc(adb, 'invites/new@kcp.iq'), inv));
+
+  const profile = { name: 'New', email: 'new@kcp.iq', role: 'electrical', departmentId: null, phone: '', active: true, lang: 'ar', createdAt: serverTimestamp(), createdBy: 'admin' };
+  const claim = (db, uid, p = profile) => { const b = writeBatch(db); b.set(doc(db, 'users', uid), p); b.delete(doc(db, 'invites/new@kcp.iq')); return b.commit(); };
+  const ctx = (uid, email, verified = true) => env.authenticatedContext(uid, { email, email_verified: verified }).firestore();
+
+  await assertFails(claim(ctx('x1', 'other@kcp.iq'), 'x1'));                       // different email
+  await assertFails(claim(ctx('x2', 'new@kcp.iq', false), 'x2'));                  // unverified email
+  await assertFails(claim(ctx('x3', 'new@kcp.iq'), 'x3', { ...profile, role: 'admin' })); // role escalation
+  const keep = ctx('x4', 'new@kcp.iq'); // claiming without consuming the invitation
+  await assertFails(setDoc(doc(keep, 'users/x4'), profile));
+  await assertSucceeds(getDoc(doc(ctx('x5', 'NEW@kcp.iq'), 'invites/new@kcp.iq')));
+  await assertSucceeds(claim(ctx('x5', 'NEW@kcp.iq'), 'x5'));
+  await assertFails(claim(ctx('x6', 'new@kcp.iq'), 'x6'));                         // already used
+});
