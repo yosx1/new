@@ -10,7 +10,8 @@
     "typecheck": "tsc -b",
     "emulators": "firebase emulators:start --only auth,firestore,hosting",
     "test:rules": "firebase emulators:exec --only firestore \"node --test tests/rules.test.mjs\"",
-    "deploy": "npm run build && firebase deploy --only hosting,firestore"
+    "deploy": "npm run build && firebase deploy --only hosting,firestore",
+    "firebase:setup": "node scripts/setup-firebase.mjs"
   },
   "dependencies": {
     "firebase": "^12.19.0",

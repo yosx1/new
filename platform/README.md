@@ -45,6 +45,19 @@ React 18 + TypeScript + Vite, PWA (vite-plugin-pwa), Firebase Auth + Cloud Fires
    ```
 6. Open the site. The first visitor is asked to create the **System Administrator**. Then go to **Settings → Load example departments, equipment and checklists**, review/replace the examples, and add users under **Users**.
 
+### Quickest: one command on your computer
+
+Needs Node.js 20+ (nodejs.org) and Git. In a terminal:
+
+```bash
+git clone -b ccr-9545330f-jai40b https://github.com/yosx1/new.git
+cd new/platform
+npm install
+npm run firebase:setup -- kcp-coldrun-2026      # choose your own unique project id
+```
+
+The script signs in through your browser (your Chrome profile), creates the free Firebase project, the web app, the Firestore database, enables Email/Password sign-in, builds and deploys, then prints the live link `https://<project-id>.web.app`. Re-running it is safe; finished steps are reused. Optional: `--location me-central2` (default `eur3`).
+
 ### Automatic deployment from GitHub (recommended)
 
 The workflow `.github/workflows/firebase-deploy.yml` publishes the app to `https://<project-id>.web.app` on every merge to `main` (or on demand: **Actions → Deploy platform to Firebase → Run workflow**). One-time setup:
