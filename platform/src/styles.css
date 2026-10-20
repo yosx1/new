@@ -317,3 +317,8 @@ a.lrow:hover, button.lrow:hover { border-color: #c6d3e6; }
 .install-prompt p { margin: 2px 0 0; font-size: 13.5px; }
 .install-actions { display: flex; gap: 6px; margin-inline-start: auto; }
 @media (min-width: 900px) { .install-prompt { bottom: 20px; inset-inline-end: 20px; inset-inline-start: auto; margin: 0; } }
+
+.or-line { display: flex; align-items: center; gap: 10px; color: var(--muted, #6b7280); font-size: 13px; }
+.or-line::before, .or-line::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.google-btn { background: #fff; border-color: var(--line); gap: 10px; font-weight: 600; }
+.google-btn:hover:not(:disabled) { background: #f8fafc; }
