@@ -209,8 +209,18 @@ service cloud.firestore {
     // ---------- notifications & audit ----------
     match /notifications/{id} {
       allow read: if signedIn() && resource.data.toUid == request.auth.uid;
-      allow create: if staff();
-      allow update: if signedIn() && resource.data.toUid == request.auth.uid && changed().hasOnly(['read']);
+      // Only well-formed, unread, server-timestamped messages to a real user with an in-app link.
+      allow create: if staff()
+        && request.resource.data.keys().hasOnly(['toUid', 'title', 'link', 'read', 'createdAt'])
+        && request.resource.data.toUid is string && exists(userPath(request.resource.data.toUid))
+        && request.resource.data.title is map && request.resource.data.title.keys().hasOnly(['en', 'ar'])
+        && request.resource.data.title.en is string && request.resource.data.title.en.size() <= 300
+        && request.resource.data.title.ar is string && request.resource.data.title.ar.size() <= 300
+        && request.resource.data.link is string && request.resource.data.link.matches('/[^/].{0,199}|/')
+        && request.resource.data.read == false
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && resource.data.toUid == request.auth.uid && changed().hasOnly(['read'])
+        && request.resource.data.read is bool;
       allow delete: if signedIn() && resource.data.toUid == request.auth.uid;
     }
 

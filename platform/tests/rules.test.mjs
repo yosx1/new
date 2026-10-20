@@ -146,3 +146,19 @@ test('viewers are read-only', async () => {
   await assertSucceeds(getDoc(doc(as('view'), 'inspections/I1')));
   await assertFails(addDoc(collection(as('view'), 'defects'), { reportedBy: 'view', status: 'open', verification: null, repair: null }));
 });
+
+test('notifications: only well-formed in-app messages to existing users', async () => {
+  const db = as('sup');
+  const ok = { toUid: 'mech', title: { en: 'Hi', ar: 'مرحبا' }, link: '/inspections/I1', read: false, createdAt: serverTimestamp() };
+  await assertSucceeds(addDoc(collection(db, 'notifications'), ok));
+  await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: 'https://evil.example' }));
+  await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: '//evil.example' }));
+  await assertFails(addDoc(collection(db, 'notifications'), { ...ok, toUid: 'nobody' }));
+  await assertFails(addDoc(collection(db, 'notifications'), { ...ok, read: true }));
+  await assertFails(addDoc(collection(db, 'notifications'), { ...ok, extra: 1 }));
+  await assertFails(addDoc(collection(as('view'), 'notifications'), ok));
+  const r = await addDoc(collection(db, 'notifications'), ok);
+  await assertFails(getDoc(doc(as('elec'), 'notifications', r.id)));
+  await assertSucceeds(updateDoc(doc(as('mech'), 'notifications', r.id), { read: true }));
+  await assertFails(updateDoc(doc(as('mech'), 'notifications', r.id), { link: '/x' }));
+});

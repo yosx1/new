@@ -7,6 +7,13 @@ export const STRINGS: Record<string, Entry> = {
   'plant.default': ['Karbala Cement Plant', 'معمل سمنت كربلاء'],
   'lang.switch': ['العربية', 'English'],
 
+  // install prompt
+  'install.title': ['Install the Cold Run app', 'ثبّت تطبيق التشغيل البارد'],
+  'install.body': ['Add it to your device for quick access and offline inspections.', 'أضفه إلى جهازك للوصول السريع وإجراء الفحوصات بدون إنترنت.'],
+  'install.ios': ['Tap the Share button, then "Add to Home Screen".', 'اضغط زر المشاركة ثم "إضافة إلى الشاشة الرئيسية".'],
+  'install.btn': ['Install', 'تثبيت'],
+  'install.later': ['Not now', 'ليس الآن'],
+
   // nav
   'nav.dashboard': ['Dashboard', 'لوحة المتابعة'],
   'nav.tasks': ['My Tasks', 'مهامي'],
