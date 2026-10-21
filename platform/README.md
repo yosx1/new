@@ -88,10 +88,28 @@ npm run dev
 ```
 
 ### Tests
+Everything runs locally against the Firebase emulators — no real project or credentials needed.
+
 ```bash
-npm run typecheck
-npm run test:rules   # security-rule tests on the Firestore emulator (needs Java 11+)
+npm run check        # typecheck + lint + unit tests + production build + security-rule tests
+npm run test:e2e     # end-to-end in Chromium on the emulators (needs Java 11+)
 ```
+
+| Command | What it covers |
+|---|---|
+| `npm run typecheck` | TypeScript, strict |
+| `npm run lint` | ESLint (TypeScript + React hooks rules) |
+| `npm run test:unit` | Vitest: workflow logic and roles (`src/lib/rules.ts`), CSV import/export, Excel writer, usage meter |
+| `npm run test:rules` | `tests/rules.test.mjs` — every Firestore permission: roles, team scope, workflow transitions, version checks, append-only audit, usage counters, nothing readable or writable outside the model |
+| `npm run test:e2e` | `tests/e2e/` (Playwright): first-run setup, users & invitations, equipment CSV, a full cold run by four people (check → Not OK with photo → fix → approve / send back → archive), Excel files opened with openpyxl, admin rename/delete with audit, **what each role can and cannot see** (members of different disciplines and departments, manager), no page flicker, pop-ups above the sidebar, phone layout in Arabic. Screenshots land in `tests/e2e/out/`. |
+
+The end-to-end run needs Chromium (`npx playwright install chromium`) and Python 3 with `openpyxl` (an independent check of the Excel files). CI (`.github/workflows/platform-ci.yml`) runs all of the above on every push, plus `npm audit --omit=dev`.
+
+### Staying on the free plan
+- Each device keeps only the **current shutdown** live; inspections of closed shutdowns load on demand (from the device cache when nothing changed) and totals use count queries.
+- Team members load only their own discipline and department.
+- Photos are read from the device cache; saving a part writes without reading first.
+- The app counts its own reads/writes/deletes (`src/lib/fs.ts` → `usage/{day}`); the Apps Script service e-mails administrators at 25/50/75/90/100 % of the daily limits, stored data and the e-mail quota. Today's use is shown in Settings → Plan & billing.
 
 ## Data model (Firestore)
 

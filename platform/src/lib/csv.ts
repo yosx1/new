@@ -1,6 +1,6 @@
 /** Small CSV reader for files saved from Excel: quotes, "" escapes, CR/LF, a UTF-8 BOM, and ',' or ';' separators. */
 export function parseCsv(text: string): string[][] {
-  const src = text.replace(/^﻿/, '');
+  const src = text.replace(/^\uFEFF/, '');
   const first = src.split(/\r?\n/, 1)[0] ?? '';
   const sep = (first.match(/;/g)?.length ?? 0) > (first.match(/,/g)?.length ?? 0) ? ';' : first.includes('\t') && !first.includes(',') ? '\t' : ',';
   const rows: string[][] = [];

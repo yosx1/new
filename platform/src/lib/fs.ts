@@ -17,9 +17,9 @@ export const usageDay = () => dayFmt.format(new Date());
 
 const pending = new Map<string, Record<Kind, number>>();
 const trace: string[] = [];
-if (import.meta.env.VITE_USE_EMULATORS) (window as unknown as { __meter: unknown }).__meter = { pending, trace };
+if (import.meta.env.VITE_USE_EMULATORS === 'true' && typeof window !== 'undefined') (window as unknown as { __meter: unknown }).__meter = { pending, trace };
 function add(kind: Kind, n = 1, why = '') {
-  if (import.meta.env.VITE_USE_EMULATORS) trace.push(kind + ' ' + n + ' ' + why);
+  if (import.meta.env.VITE_USE_EMULATORS === 'true') trace.push(kind + ' ' + n + ' ' + why);
   if (n <= 0) return;
   const day = usageDay();
   const c = pending.get(day) ?? { reads: 0, writes: 0, deletes: 0 };

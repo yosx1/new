@@ -7,11 +7,12 @@ export interface Sheet { name: string; title?: string[]; header: string[]; rows:
 
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!))
   // XML 1.0 forbids most control characters
+  // eslint-disable-next-line no-control-regex -- removing them is the point
   .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '');
 const col = (i: number) => { let s = ''; for (i++; i > 0; i = Math.floor((i - 1) / 26)) s = String.fromCharCode(65 + ((i - 1) % 26)) + s; return s; };
 // Sheet names: max 31 chars, no []:*?/\ and unique.
 const sheetName = (n: string, used: Set<string>) => {
-  let base = n.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31).trim() || 'Sheet';
+  const base = n.replace(/[[\]:*?/\\]/g, ' ').slice(0, 31).trim() || 'Sheet';
   for (let k = 2, s = base; ; k++) { if (!used.has(s.toLowerCase())) { used.add(s.toLowerCase()); return s; } s = `${base.slice(0, 28)} ${k}`; }
 };
 

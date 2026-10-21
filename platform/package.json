@@ -9,9 +9,15 @@
     "preview": "vite preview",
     "typecheck": "tsc -b",
     "emulators": "firebase emulators:start --only auth,firestore,hosting",
-    "test:rules": "firebase emulators:exec --only firestore \"node --test tests/rules.test.mjs\"",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-coldrun \"node --test tests/rules.test.mjs\"",
     "deploy": "npm run build && firebase deploy --only hosting,firestore",
-    "firebase:setup": "node scripts/setup-firebase.mjs"
+    "firebase:setup": "node scripts/setup-firebase.mjs",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:unit": "vitest run",
+    "build:e2e": "VITE_USE_EMULATORS=true VITE_FIREBASE_PROJECT_ID=demo-coldrun VITE_FIREBASE_API_KEY=demo-key VITE_FIREBASE_AUTH_DOMAIN=demo-coldrun.firebaseapp.com VITE_FIREBASE_APP_ID=demo-app vite build --outDir dist-e2e",
+    "test:e2e": "npm run build:e2e && firebase emulators:exec --only auth,firestore --project demo-coldrun \"node tests/e2e/run.mjs\"",
+    "check": "npm run typecheck && npm run lint && npm run test:unit && npm run build && npm run test:rules"
   },
   "dependencies": {
     "fflate": "^0.8.3",
@@ -21,13 +27,23 @@
     "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.1",
     "@firebase/rules-unit-testing": "^5.0.2",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "@vitejs/plugin-react": "^4.3.3",
+    "eslint": "^9.39.1",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "firebase-tools": "^13.25.0",
+    "globals": "^16.4.0",
+    "playwright": "^1.56.0",
     "typescript": "~5.6.3",
+    "typescript-eslint": "^8.46.2",
     "vite": "^5.4.11",
-    "vite-plugin-pwa": "^0.21.0"
+    "vite-plugin-pwa": "^0.21.0",
+    "vitest": "^2.1.9"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.3"
   }
 }

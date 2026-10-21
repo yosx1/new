@@ -38,7 +38,7 @@ const mk = async (e, d, status, results, by, extra = {}) => {
     discipline: d, parts, results: res, summary, status, createdBy: by.id, createdByName: by.name, createdAt: now, updatedAt: now, approval: null, rejection: null, docVersion: 2, ...extra });
   return id;
 };
-const drive = E('Kiln main drive'), fan = E('Kiln ID fan'), sep = E('Raw mill separator');
+const drive = E('Kiln main drive'), sep = E('Raw mill separator');
 const checked = await mk(drive, 'electrical', 'pool', { p1: { status: 'ok' }, p2: { status: 'notok', note: 'Cable gland loose at the MCC panel entry' } }, ali);
 const corrective = await mk(drive, 'mechanical', 'corrective', { p1: { status: 'ok' }, p2: { status: 'notok', note: 'Oil leak at the pinion seal' } }, omar);
 const waiting = await mk(sep, 'electrical', 'waiting_approval', { p1: { status: 'ok' } }, ali);
@@ -49,7 +49,7 @@ async function pageFor(lang, who) {
   const key = lang + who;
   if (ctxs[key]) return ctxs[key];
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 });
-  await ctx.addInitScript(l => { try { localStorage.setItem('lang', l); sessionStorage.setItem('installPromptDismissed', '1'); localStorage.removeItem('hiddenTips'); } catch {} }, lang);
+  await ctx.addInitScript(l => { try { localStorage.setItem('lang', l); sessionStorage.setItem('installPromptDismissed', '1'); localStorage.removeItem('hiddenTips'); } catch { /* storage blocked */ } }, lang);
   const page = await ctx.newPage();
   await page.goto(url); await page.waitForSelector('.login-card form');
   const i = page.locator('.login-card form input');
@@ -65,10 +65,10 @@ const go = async (page, p) => { await page.goto(new URL(p, url).href); await pag
 for (const lang of ['en', 'ar']) {
   // signed out
   const c0 = await browser.newContext({ viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1.5 });
-  await c0.addInitScript(l => { try { localStorage.setItem('lang', l); sessionStorage.setItem('installPromptDismissed', '1'); } catch {} }, lang);
+  await c0.addInitScript(l => { try { localStorage.setItem('lang', l); sessionStorage.setItem('installPromptDismissed', '1'); } catch { /* storage blocked */ } }, lang);
   const p0 = await c0.newPage(); await p0.goto(url); await p0.waitForSelector('.login-card form'); await shot(p0, 'login', lang); await c0.close();
   const ph = await browser.newContext({ ...devices['iPhone 13'] });
-  await ph.addInitScript(l => { try { localStorage.setItem('lang', l); } catch {} }, lang);
+  await ph.addInitScript(l => { try { localStorage.setItem('lang', l); } catch { /* storage blocked */ } }, lang);
   const pp = await ph.newPage(); await pp.goto(url); await pp.waitForSelector('.install-prompt', { timeout: 8000 }).catch(() => {});
   await pp.waitForTimeout(800); await pp.screenshot({ path: `${OUT}/${lang}-phone-install.png` }); await ph.close();
 

@@ -4,3 +4,5 @@ dev-dist
 .env.local
 *.log
 .firebase
+dist-e2e
+tests/e2e/out
