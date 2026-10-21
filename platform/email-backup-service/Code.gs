@@ -10,11 +10,12 @@
  *   2. weeklyBackup: copies every Firestore collection to a dated folder in Google Drive, shares the
  *      backup folder with the backup e-mail from Settings and keeps the last KEEP_BACKUPS copies.
  *
- * Setup: set PROJECT_ID, run setup() once (authorise when asked), then Deploy → Web app
+ * Setup: set PROJECT_ID and WEB_API_KEY, run setup() once (authorise when asked), then Deploy → Web app
  * (Execute as: Me, Who has access: Anyone) and paste the /exec URL into Settings in the platform.
  */
 const PROJECT_ID = 'kcp-coldrun-2026';
 const APP_URL = 'https://' + PROJECT_ID + '.web.app';
+const WEB_API_KEY = 'PASTE_FIREBASE_WEB_API_KEY'; // the VITE_FIREBASE_API_KEY value from .env.local
 const KEEP_BACKUPS = 12;
 const MAX_SENDS_PER_INSPECTION = 3;
 const COLLECTIONS = ['config', 'users', 'invites', 'devices', 'departments', 'equipment', 'shutdowns', 'documents',
@@ -25,7 +26,7 @@ const FS = 'https://firestore.googleapis.com/v1/projects/' + PROJECT_ID + '/data
 function setup() {
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'weeklyBackup') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('weeklyBackup').timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(2).everyWeeks(1).create();
-  apiKey_();
+  getDoc_('config/settings'); // checks access to the database (and asks for permission)
   return 'Weekly backup scheduled. Now deploy as a web app.';
 }
 
@@ -151,28 +152,21 @@ function recipients_(settings) {
   return list.slice(0, 50);
 }
 
-/** The web API key is looked up from the Firebase project once and cached. */
-function apiKey_() {
-  const props = PropertiesService.getScriptProperties();
-  let key = props.getProperty('API_KEY');
-  if (key) return key;
-  const apps = api_('https://firebase.googleapis.com/v1beta1/projects/' + PROJECT_ID + '/webApps').apps || [];
-  if (!apps.length) throw new Error('no Firebase web app');
-  key = api_('https://firebase.googleapis.com/v1beta1/' + apps[0].name + '/config').apiKey;
-  props.setProperty('API_KEY', key);
-  return key;
-}
+/** The Firebase web API key (public: it is in the web app too, and only accepts requests from the app's address). */
+function apiKey_() { return WEB_API_KEY; }
+
+function auth_() { return { Authorization: 'Bearer ' + ScriptApp.getOAuthToken(), 'x-goog-user-project': PROJECT_ID }; }
 
 function api_(url, opts) {
-  const r = UrlFetchApp.fetch(url, Object.assign({ headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true }, opts || {}));
-  if (r.getResponseCode() >= 300) throw new Error(url.split('?')[0].split('/').slice(-2).join('/') + ' ' + r.getResponseCode());
+  const r = UrlFetchApp.fetch(url, Object.assign({ headers: auth_(), muteHttpExceptions: true }, opts || {}));
+  if (r.getResponseCode() >= 300) throw new Error(url.split('?')[0].split('/').slice(-2).join('/') + ' ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 300));
   return JSON.parse(r.getContentText() || '{}');
 }
 
 function getDoc_(path) {
-  const r = UrlFetchApp.fetch(FS + '/' + path, { headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() }, muteHttpExceptions: true });
+  const r = UrlFetchApp.fetch(FS + '/' + path, { headers: auth_(), muteHttpExceptions: true });
   if (r.getResponseCode() === 404) return null;
-  if (r.getResponseCode() >= 300) throw new Error('firestore ' + r.getResponseCode());
+  if (r.getResponseCode() >= 300) throw new Error('firestore ' + r.getResponseCode() + ' ' + r.getContentText().slice(0, 300));
   return decode_(JSON.parse(r.getContentText()).fields || {});
 }
 
