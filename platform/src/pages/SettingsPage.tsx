@@ -108,7 +108,7 @@ function PlanBilling() {
             <span>{t('bill.' + k)}</span>
             <Progress value={pct} tone={pct >= 90 ? 'red' : pct >= 75 ? 'orange' : 'green'} />
             <span className="val">{pct}%</span>
-            <span className="note">{v.toLocaleString()} / {FREE_DAILY[k].toLocaleString()}</span>
+            <span className="note"><bdi dir="ltr">{v.toLocaleString()} / {FREE_DAILY[k].toLocaleString()}</bdi></span>
           </div>
         );
       })}

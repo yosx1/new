@@ -43,6 +43,10 @@ const checked = await mk(drive, 'electrical', 'pool', { p1: { status: 'ok' }, p2
 const corrective = await mk(drive, 'mechanical', 'corrective', { p1: { status: 'ok' }, p2: { status: 'notok', note: 'Oil leak at the pinion seal' } }, omar);
 const waiting = await mk(sep, 'electrical', 'waiting_approval', { p1: { status: 'ok' } }, ali);
 
+// example usage of the day, so the Plan & billing card shows its bars
+const usageDay = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+await put(`usage/${usageDay}`, { reads: 13450, writes: 2150, deletes: 40, updatedAt: now });
+
 const browser = await chromium.launch();
 const ctxs = {};
 async function pageFor(lang, who) {
@@ -73,6 +77,7 @@ for (const lang of ['en', 'ar']) {
   await pp.waitForTimeout(800); await pp.screenshot({ path: `${OUT}/${lang}-phone-install.png` }); await ph.close();
 
   const a = await pageFor(lang, 'ali@kcp.iq');
+  await go(a, '/'); await shot(a, 'member', lang);
   await go(a, '/tasks'); await shot(a, 'pool', lang);
   await go(a, '/inspections/new'); await a.locator('select').nth(1).selectOption({ index: 2 }); await shot(a, 'new', lang);
   await go(a, `/inspections/${checked}`); await a.waitForSelector('.part-row'); await shot(a, 'checked', lang);
@@ -95,10 +100,11 @@ for (const lang of ['en', 'ar']) {
   await ad.keyboard.press('Escape');
   await go(ad, '/users'); await ad.locator('.page-head .btn.primary').click(); const um = ad.locator('.modal'); await um.waitFor();
   await um.locator('input').nth(0).fill(lang === 'ar' ? 'حسين مهندس سيطرة' : 'Hussein Instrumentation'); await um.locator('input[type=email]').fill('hussein@kcp.iq');
-  await um.locator('select').nth(0).selectOption('member'); await um.locator('select').nth(1).selectOption('instrumentation'); await um.locator('select').nth(2).selectOption('CLR');
+  await um.locator('select').nth(0).selectOption('member'); await um.locator('select').nth(1).selectOption('instrumentation'); await um.locator('select').nth(2).selectOption('CLR1');
   await shot(ad, 'user-add', lang); await ad.keyboard.press('Escape');
   await go(ad, '/settings'); await ad.locator('table.priv').evaluate(e => e.closest('.card').scrollIntoView({ block: 'start' })); await shot(ad, 'roles', lang);
   await ad.locator('.card', { hasText: /Completion reports|تقارير الإنجاز/ }).last().evaluate(e => e.scrollIntoView({ block: 'start' })); await shot(ad, 'report-settings', lang);
+  await ad.locator('.card', { hasText: /Plan & billing|الخطة والدفع/ }).last().evaluate(e => e.scrollIntoView({ block: 'start' })); await shot(ad, 'billing', lang);
   await go(ad, '/help'); await ad.locator('.guide-head').nth(1).click(); await shot(ad, 'guide', lang);
 }
 

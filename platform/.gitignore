@@ -6,3 +6,6 @@ dev-dist
 .firebase
 dist-e2e
 tests/e2e/out
+guide-src/shots/
+guide-src/shots-new/
+guide-src/guide-*.html

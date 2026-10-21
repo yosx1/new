@@ -31,6 +31,7 @@ export const GUIDE: GuideSection[] = [
     steps: [
       ['Open the inspection from "Waiting in your pool". Each part has two buttons: ✓ OK and ✕ Not OK.', 'افتح الفحص من "بانتظار فريقك". لكل جزء زران: ✓ سليم و ✕ غير سليم.'],
       ['Not OK asks for a short description of the problem; add a photo — it saves time for the repair.', 'غير سليم يطلب وصفاً قصيراً للمشكلة؛ أضف صورة — توفر الوقت على الإصلاح.'],
+      ['Chose wrongly? Tap the highlighted ✓ again to clear the part. A highlighted ✕ asks first, because it removes the note and photo.', 'اخترت خطأً؟ اضغط ✓ المؤشَّر مرة أخرى لإلغاء الجزء. أما ✕ المؤشَّر فيطلب التأكيد لأنه يحذف الملاحظة والصورة.'],
       ['Colleagues of the same discipline and department can share the work on one inspection.', 'يمكن لزملاء الاختصاص والقسم نفسه تقاسم العمل على الفحص الواحد.'],
       ['When every part is checked, press Submit inspection.', 'عند فحص جميع الأجزاء اضغط إرسال الفحص.'],
       ['During corrective maintenance, open each Not OK part, press Mark fixed and write what was done. The last fix sends it for approval.', 'أثناء الصيانة التصحيحية افتح كل جزء غير سليم واضغط "تم الإصلاح" واكتب ما تم. آخر إصلاح يرسل الفحص للموافقة.'],
@@ -62,6 +63,9 @@ export const GUIDE: GuideSection[] = [
       ['Devices: revoke a lost or shared phone — it is signed out immediately.', 'الأجهزة: ألغِ هاتفاً مفقوداً أو مشتركاً — يُسجَّل خروجه فوراً.'],
       ['Rename a shutdown or project, or correct its year: Edit on the shutdown card, or Settings → Shutdowns & projects for past ones.', 'لإعادة تسمية توقف أو مشروع أو تصحيح سنته: تعديل في بطاقة التوقف، أو الإعدادات ← التوقفات والمشاريع للسابقة منها.'],
       ['Delete an inspection made by mistake: open it and press Delete. Its photos are removed too and the deletion is kept in the audit log.', 'لحذف فحص أُنشئ بالخطأ: افتحه واضغط حذف. تُحذف صوره أيضاً ويبقى الحذف مسجلاً في سجل التدقيق.'],
+      ['Closing a shutdown starts the next one with the same year — set the new year and name with Edit on the shutdown card.', 'إغلاق التوقف يبدأ التوقف التالي بالسنة نفسها — حدّد السنة الجديدة والاسم بزر تعديل في بطاقة التوقف.'],
+      ['Settings → Departments: rename, reorder, add or retire departments.', 'الإعدادات ← الأقسام: غيّر الأسماء أو الترتيب أو أضف أقساماً أو أوقفها.'],
+      ['Settings → Plan & billing shows today\'s use of the free limits. Administrators are e-mailed at 25%, 50%, 75%, 90% and 100%; add a payment method there if limits are reached often.', 'الإعدادات ← الخطة والدفع تعرض استخدام اليوم من الحدود المجانية. يصل لمديري النظام بريد عند 25% و50% و75% و90% و100%؛ وأضف وسيلة دفع من هناك إذا تكرر الوصول إلى الحدود.'],
     ],
   },
   {

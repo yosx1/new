@@ -67,7 +67,7 @@ export function Layout() {
       </div>
       <button className="btn primary block new-btn" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>
       <nav className="nav">{main.map(link)}</nav>
-      <div className="nav-title">{t('nav.admin')}</div>
+      {user.role !== 'member' && <div className="nav-title">{t('nav.admin')}</div>}
       <nav className="nav">{admin.map(link)}</nav>
       <div className="side-user">
         <Icon name="user" />

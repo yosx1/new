@@ -5,7 +5,7 @@ import { CHAPTERS, META } from './content.mjs';
 
 const here = new URL('.', import.meta.url).pathname;
 const [lang, out] = process.argv.slice(2);
-const icon = readFileSync('/home/user/new/platform/public/icon.svg', 'utf8');
+const icon = readFileSync(`${here}../public/icon.svg`, 'utf8');
 const img64 = n => 'data:image/jpeg;base64,' + readFileSync(`${here}shots/${n}.jpg`).toString('base64');
 
 function part(lang) {
@@ -32,7 +32,7 @@ function part(lang) {
         <h1>${L(META.title)}</h1>
         <h2>${L(META.sub)}</h2>
         <p class="plant">${L(META.plant)}</p>
-        <p class="url" dir="ltr">${META.url}</p>
+        <p class="url"><bdi dir="ltr">${META.url}</bdi></p>
         <p class="date">${lang === 'ar' ? 'الإصدار' : 'Edition'} ${new Date().toISOString().slice(0, 10)}</p>
       </div>
     </div>
@@ -58,7 +58,8 @@ body { margin: 0; font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-u
   radial-gradient(circle at 82% 64%, rgba(154,192,255,.9) 0 1.6px, transparent 2.2px), radial-gradient(circle at 35% 78%, rgba(154,192,255,.9) 0 1.6px, transparent 2.2px),
   radial-gradient(60% 50% at 85% 15%, rgba(21,101,216,.55), transparent 70%); }
 .cover svg.lines { position: absolute; inset: 0; }
-.cover-in { position: absolute; inset-inline: 22mm; bottom: 40mm; }
+.cover-in { position: absolute; inset-inline: 22mm; bottom: 82mm; }
+.cover-plant { position: absolute; inset: auto 0 0 0; } .cover-plant svg { width: 100%; height: auto; display: block; }
 .logo svg { width: 30mm; height: 30mm; border-radius: 7mm; }
 .lang-tag { display: inline-block; margin: 10mm 0 4mm; padding: 1.2mm 4mm; border: 1px solid rgba(255,255,255,.5); border-radius: 20mm; font-size: 10pt; letter-spacing: .4pt; }
 .cover h1 { font-size: 34pt; margin: 0 0 3mm; line-height: 1.15; }
@@ -95,6 +96,8 @@ td:first-child { font-weight: 600; width: 38%; }
 b[dir=ltr] { unicode-bidi: isolate; }
 `;
 
+// The plant skyline of the sign-in page (plant.svg, exported from the app's PlantScene).
+const plant = readFileSync(`${here}plant.svg`, 'utf8');
 // A few network lines on the cover, drawn once so both parts match.
 const lines = (() => {
   const pts = [[20,30],[38,22],[52,40],[70,18],[82,34],[64,56],[82,64],[46,70],[35,78],[18,60],[58,86],[90,82],[8,88]];
@@ -104,7 +107,7 @@ const lines = (() => {
 
 const html = `<!doctype html><html><head><meta charset="utf-8"><title>${lang === 'ar' ? 'جاهزية التشغيل البارد — دليل المستخدم' : 'Cold Run Readiness — User Guide'}</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>${css}</style></head><body>${part(lang)}</body></html>`.replaceAll('<div class="cover-net"></div>', '<div class="cover-net"></div>' + lines);
+<style>${css}</style></head><body>${part(lang)}</body></html>`.replaceAll('<div class="cover-net"></div>', '<div class="cover-net"></div>' + lines + `<div class="cover-plant">${plant}</div>`);
 writeFileSync(`${here}guide-${lang}.html`, html);
 
 const browser = await chromium.launch();
