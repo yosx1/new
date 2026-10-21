@@ -21,6 +21,14 @@ const COLLECTIONS = ['config', 'users', 'invites', 'devices', 'departments', 'eq
   'counters', 'inspections', 'notifications', 'audit', 'attachments'];
 const FS = 'https://firestore.googleapis.com/v1/projects/' + PROJECT_ID + '/databases/(default)/documents';
 
+/** Run once from the editor: authorises the script and schedules the weekly backup (Fridays, 02:00). */
+function setup() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'weeklyBackup') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('weeklyBackup').timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(2).everyWeeks(1).create();
+  apiKey_();
+  return 'Weekly backup scheduled. Now deploy as a web app.';
+}
+
 /* ---------------- web app ---------------- */
 
 function doPost(e) {
@@ -115,14 +123,6 @@ function weeklyBackup() {
         + '\nThis backup: ' + dir.getUrl() + '\n\n' + Object.keys(counts).map(function (k) { return k + ': ' + counts[k]; }).join('\n') });
   }
   return counts;
-}
-
-/** Run once from the editor: authorises the script and schedules the weekly backup (Fridays, 02:00). */
-function setup() {
-  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'weeklyBackup') ScriptApp.deleteTrigger(t); });
-  ScriptApp.newTrigger('weeklyBackup').timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(2).everyWeeks(1).create();
-  apiKey_();
-  return 'Weekly backup scheduled. Now deploy as a web app.';
 }
 
 /* ---------------- helpers ---------------- */
