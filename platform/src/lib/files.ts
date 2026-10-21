@@ -1,4 +1,4 @@
-import { serverTimestamp } from 'firebase/firestore';
+import { getDocFromCache, serverTimestamp } from 'firebase/firestore';
 import { addDoc, getDoc } from './fs';
 import { col, ref } from './db';
 import type { Attachment, UserProfile } from '../types';
@@ -62,7 +62,9 @@ export async function saveAttachment(
 const cache = new Map<string, Promise<Attachment | null>>();
 export function loadAttachment(id: string): Promise<Attachment | null> {
   if (!cache.has(id)) {
-    cache.set(id, getDoc(ref('attachments', id)).then(s => (s.exists() ? ({ id: s.id, ...s.data() } as Attachment) : null)).catch(() => null));
+    // photos never change, so the copy saved on this device is used when there is one (no read, no download)
+    const r = ref('attachments', id);
+    cache.set(id, getDocFromCache(r).catch(() => getDoc(r)).then(s => (s.exists() ? ({ id: s.id, ...s.data() } as Attachment) : null)).catch(() => null));
   }
   return cache.get(id)!;
 }

@@ -87,7 +87,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       let noProfileTimer: ReturnType<typeof setTimeout> | undefined;
       let claimTried = false;
-      unsubProfile = onSnapshot(ref('users', fbUser.uid), snap => {
+      let ready = false;
+      let last = '';
+      // metadata changes too, so a profile written on this sign-in (an invitation) is seen once the server has it
+      unsubProfile = onSnapshot(ref('users', fbUser.uid), { includeMetadataChanges: true }, snap => {
         clearTimeout(noProfileTimer);
         if (!snap.exists()) {
           if (snap.metadata.fromCache) return; // wait for the server before deciding
@@ -96,6 +99,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           noProfileTimer = setTimeout(() => { cleanup(); signOut(auth); setState({ phase: 'signedOut', reason: 'noProfile' }); }, 6000);
           return;
         }
+        if (!ready && snap.metadata.hasPendingWrites) return; // not saved on the server yet: its rules would refuse the data
+        ready = true;
+        const json = JSON.stringify(snap.data());
+        if (json === last) return; // only the sync state changed
+        last = json;
         const user = { id: snap.id, ...snap.data() } as UserProfile;
         if (!user.active) { cleanup(); signOut(auth); setState({ phase: 'signedOut', reason: 'inactive' }); return; }
         setState({ phase: 'ready', fbUser, user, deviceDocId: devId });

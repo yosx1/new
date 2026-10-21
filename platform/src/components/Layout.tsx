@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { updateDoc } from '../lib/fs';
+import { flushUsage, updateDoc } from '../lib/fs';
 import { auth } from '../firebase';
 import { useUser } from '../auth/Auth';
 import { useData } from '../data/DataProvider';
@@ -30,20 +30,27 @@ export function Layout() {
     && (user.role === 'member' ? inMyPool(user, i) : i.status === 'waiting_approval')).length, [data.inspections, data.shutdown, user]);
   const unread = data.notifications.filter(n => !n.read);
 
+  // Reload after signing out so nothing of this person stays in memory and the next sign-in starts clean.
+  const logout = async () => {
+    await Promise.race([flushUsage().catch(() => {}), new Promise(r => setTimeout(r, 1500))]); // offline: don't wait
+    await signOut(auth).catch(() => {});
+    location.replace('/');
+  };
+
   const main: NavItem[] = [
     { to: '/', icon: 'dashboard', key: 'nav.dashboard' },
     { to: '/tasks', icon: 'tasks', key: 'nav.tasks', badge: taskCount },
     { to: '/inspections', icon: 'checklist', key: 'nav.inspections' },
     { to: '/equipment', icon: 'factory', key: 'nav.equipment' },
-    { to: '/reports', icon: 'chart', key: 'nav.reports' },
+    { to: '/reports', icon: 'chart', key: 'nav.reports', show: can.seeReports(user) },
     { to: '/documents', icon: 'book', key: 'nav.documents' },
     { to: '/help', icon: 'info', key: 'nav.help' },
-  ];
+  ].filter(x => x.show !== false);
   const admin: NavItem[] = [
     { to: '/users', icon: 'users', key: 'nav.users', show: can.manageSystem(user) },
     { to: '/devices', icon: 'phone', key: 'nav.devices', show: can.manageSystem(user) },
     { to: '/audit', icon: 'shield', key: 'nav.audit', show: can.seeAudit(user) },
-    { to: '/settings', icon: 'gear', key: 'nav.settings' },
+    { to: '/settings', icon: user.role === 'member' ? 'user' : 'gear', key: user.role === 'member' ? 'nav.profile' : 'nav.settings' },
   ].filter(x => x.show !== false);
 
   const link = (x: NavItem) => (
@@ -65,7 +72,7 @@ export function Layout() {
       <div className="side-user">
         <Icon name="user" />
         <div className="grow"><b>{user.name}</b><small>{t('role.' + user.role)}</small></div>
-        <button className="icon-btn" title={t('nav.logout')} onClick={() => signOut(auth)}><Icon name="logout" className="flip-rtl" /></button>
+        <button className="icon-btn" title={t('nav.logout')} onClick={() => void logout()}><Icon name="logout" className="flip-rtl" /></button>
       </div>
     </>
   );

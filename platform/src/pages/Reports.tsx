@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { useData } from '../data/DataProvider';
+import { useAllInspections, useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { inspectionId } from '../lib/rules';
 import { downloadXlsx } from '../lib/xlsx';
@@ -19,7 +19,9 @@ export default function Reports() {
   const data = useData();
   const [r, setR] = useState<R>('overview');
   const [f, setF] = useState<FilterState>({ ...EMPTY_FILTERS, shutdown: data.shutdown?.id ?? '' });
-  const insp = useMemo(() => applyFilters(data.inspections, f), [data.inspections, f]);
+  // only a report on past shutdowns loads the Done inspections
+  const all = useAllInspections(f.shutdown !== (data.shutdown?.id ?? ''));
+  const insp = useMemo(() => applyFilters(all, f), [all, f]);
   const eqs = data.equipment.filter(e => e.active && (!f.dept || e.departmentId === f.dept) && (!f.eq || e.id === f.eq));
   const discs = DISCIPLINES.filter(d => !f.disc || d === f.disc);
 

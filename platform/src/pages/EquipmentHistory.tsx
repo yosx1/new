@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { useData } from '../data/DataProvider';
+import { useAllInspections, useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { Card, Empty, PageHead } from '../components/ui';
 import { InspectionRow } from '../components/InspectionRow';
@@ -13,7 +13,8 @@ export default function EquipmentHistory() {
   const data = useData();
   const nav = useNavigate();
   const eq = data.eq(id);
-  const insps = useMemo(() => data.inspections.filter(i => i.equipmentId === id), [data.inspections, id]);
+  const all = useAllInspections();
+  const insps = useMemo(() => all.filter(i => i.equipmentId === id), [all, id]);
   if (!eq) return <Card><Empty>{t('c.notFound')}</Empty></Card>;
 
   return (

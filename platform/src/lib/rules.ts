@@ -14,6 +14,7 @@ export const can = {
   manageSystem: (u: UserProfile) => u.role === 'admin',
   manageEquipment: (u: UserProfile) => isLead(u),
   approve: (u: UserProfile) => isLead(u),
+  seeReports: (u: UserProfile) => isLead(u),
   archive: (u: UserProfile) => isLead(u),
   seeAudit: (u: UserProfile) => isLead(u),
   /** Disciplines this person may start inspections for on a piece of equipment. */
@@ -27,6 +28,10 @@ export const can = {
 };
 
 /** The team pool: inspections waiting for this person's discipline (and department). */
+/** A team member sees only the inspections of their discipline and department; leads see everything. */
+export const myTeam = (u: UserProfile, i: Pick<Inspection, 'discipline' | 'departmentId'>) =>
+  u.role !== 'member' || (u.discipline === i.discipline && inDept(u, i.departmentId));
+
 export const inMyPool = (u: UserProfile, i: Inspection) =>
   (i.status === 'pool' || i.status === 'corrective') && u.role === 'member'
   && u.discipline === i.discipline && inDept(u, i.departmentId);

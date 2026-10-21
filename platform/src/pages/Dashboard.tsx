@@ -25,7 +25,7 @@ export default function Dashboard() {
   const myPool = data.inspections.filter(i => i.status === 'pool' && inMyPool(user, i)).length;
   const poolAll = by('pool');
   const active = by('corrective') + by('waiting_approval') + by('approved');
-  const done = data.inspections.filter(i => i.status === 'archived').length;
+  const done = data.archivedCount ?? 0;
   const go = (s: string) => nav('/inspections?status=' + s);
   const segments = (['pool', 'corrective', 'waiting_approval', 'approved'] as InspectionStatus[]).map(s => ({ label: t('st.' + s), value: by(s), tone: STATUS_TONE[s] }));
 

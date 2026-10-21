@@ -65,7 +65,7 @@ export const GUIDE: GuideSection[] = [
     ],
   },
   {
-    id: 'reports', icon: 'chart', title: ['Reports and Excel', 'التقارير وملفات Excel'],
+    id: 'reports', icon: 'chart', title: ['Reports and Excel', 'التقارير وملفات Excel'], roles: LEADS,
     steps: [
       ['Reports: overview by department or discipline, Not OK parts, equipment not started, all inspections and work per person.', 'التقارير: نظرة عامة حسب القسم أو الاختصاص، الأجزاء غير السليمة، المعدات التي لم تبدأ، كل الفحوصات، والعمل لكل شخص.'],
       ['Choose the shutdown and filters, then Export Excel — the file holds exactly what you see.', 'اختر التوقف والتصفية ثم تصدير Excel — يحتوي الملف ما تراه بالضبط.'],

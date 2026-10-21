@@ -60,7 +60,7 @@ export function ShutdownEdit({ sd, onClose }: { sd: Shutdown; onClose: () => voi
     if (!name.trim() || name.trim().length > 100) { toast(t('c.required'), 'err'); return; }
     if (!Number.isInteger(y) || y < 2000 || y > 2100) { toast(t('sd.badYear'), 'err'); return; }
     setBusy(true);
-    try { await renameShutdown(user, sd, name.trim(), y, data.inspections); toast(t('c.saved')); onClose(); }
+    try { await renameShutdown(user, sd, name.trim(), y); if (sd.status !== 'open') data.refreshPast(); toast(t('c.saved')); onClose(); }
     catch (e) { toast(errMsg(e, t), 'err'); } finally { setBusy(false); }
   };
   return (

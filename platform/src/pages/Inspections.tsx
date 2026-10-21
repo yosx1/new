@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useData } from '../data/DataProvider';
+import { useAllInspections, useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { downloadXlsx } from '../lib/xlsx';
-import { Card, Empty, PageHead, Tabs } from '../components/ui';
+import { Card, Empty, PageHead, Spinner, Tabs } from '../components/ui';
 import { EMPTY_FILTERS, Filters, applyFilters, type FilterState } from '../components/Filters';
 import { InspectionRow } from '../components/InspectionRow';
 import { ShutdownCard } from '../components/ShutdownCard';
@@ -27,7 +27,8 @@ export default function Inspections() {
   const [f, setF] = useState<FilterState>(EMPTY_FILTERS);
 
   const sdId = data.shutdown?.id;
-  const base = useMemo(() => data.inspections.filter(i => (tab === 'archived' ? i.status === 'archived' : i.shutdownId === sdId)), [data.inspections, tab, sdId]);
+  const all = useAllInspections(tab === 'archived');
+  const base = useMemo(() => all.filter(i => (tab === 'archived' ? i.status === 'archived' : i.shutdownId === sdId)), [all, tab, sdId]);
   const filtered = applyFilters(base, f);
   const count = (s: InspectionStatus[]) => base.filter(i => s.includes(i.status)).length;
   const rows = filtered.filter(i => tab === 'pool' ? i.status === 'pool' : tab === 'archived' ? true
@@ -52,7 +53,7 @@ export default function Inspections() {
         <Tabs<Tab> value={tab} onChange={x => setStatus(x)} tabs={[
           ['pool', <>{t('st.pool')} <b className="tab-n">{count(['pool'])}</b></>],
           ['active', <>{t('dash.active')} <b className="tab-n">{count(['corrective', 'waiting_approval', 'approved'])}</b></>],
-          ['archived', <>{t('st.archived')} <b className="tab-n">{data.inspections.filter(i => i.status === 'archived').length}</b></>],
+          ['archived', <>{t('st.archived')} <b className="tab-n">{data.archivedCount ?? '…'}</b></>],
         ]} />
       </div>
       {tab === 'active' && (
@@ -65,7 +66,7 @@ export default function Inspections() {
       )}
       <Filters value={f} onChange={setF} show={tab === 'archived' ? ['q', 'shutdown', 'dept', 'disc'] : ['q', 'dept', 'eq', 'disc']} />
       <Card>
-        {rows.length === 0 ? <Empty>{tab === 'pool' ? t('insp.emptyPool') : tab === 'archived' ? t('insp.emptyDone') : t('insp.emptyActive')}</Empty> : (
+        {tab === 'archived' && !data.past ? <div className="center"><Spinner /></div> : rows.length === 0 ? <Empty>{tab === 'pool' ? t('insp.emptyPool') : tab === 'archived' ? t('insp.emptyDone') : t('insp.emptyActive')}</Empty> : (
           <div className="list">{rows.map(i => <InspectionRow key={i.id} i={i} />)}</div>
         )}
       </Card>

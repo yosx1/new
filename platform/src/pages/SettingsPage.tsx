@@ -3,7 +3,7 @@ import { serverTimestamp, terminate, clearIndexedDbPersistence } from 'firebase/
 import { setDoc, updateDoc } from '../lib/fs';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
-import { useData } from '../data/DataProvider';
+import { useAllInspections, useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { audit, ref } from '../lib/db';
@@ -50,7 +50,7 @@ export default function SettingsPage() {
 
   return (
     <>
-      <PageHead title={t('nav.settings')} />
+      <PageHead title={t(user.role === 'member' ? 'nav.profile' : 'nav.settings')} />
       {admin && <Tip id="settings">{t('tip.settings')}</Tip>}
       <div className="grid g2">
         <Card title={t('nav.profile')}>
@@ -84,7 +84,7 @@ export default function SettingsPage() {
       )}
       {admin && <DepartmentSettings />}
       {admin && <ShutdownList />}
-      <RolesMatrix />
+      {user.role !== 'member' && <RolesMatrix />}
       {admin && <ReportSettings />}
       {admin && <PlanBilling />}
     </>
@@ -127,11 +127,12 @@ function ShutdownList() {
   const { t, fmtDate } = useI18n();
   const data = useData();
   const [edit, setEdit] = useState<Shutdown | null>(null);
+  const all = useAllInspections();
   return (
     <Card title={t('sd.list')} className="mt">
       <div className="list">
         {data.shutdowns.map(s => {
-          const n = data.inspections.filter(i => i.shutdownId === s.id).length;
+          const n = all.filter(i => i.shutdownId === s.id).length;
           return (
             <div key={s.id} className="lrow">
               <Icon name="factory" />

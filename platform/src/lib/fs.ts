@@ -1,7 +1,7 @@
 /**
  * Metered Firestore calls. The free (Spark) plan gives Google's usage numbers only to projects with billing,
  * so the app counts its own document reads, writes and deletes (as Firestore bills them, rounded up) and adds
- * them to usage/{day} every few minutes. The e-mail service compares that day's total with the free limits and
+ * them to usage/{day} every 10–15 minutes. The e-mail service compares that day's total with the free limits and
  * alerts the administrators. Same signatures as 'firebase/firestore': import these instead of the originals.
  */
 import * as F from 'firebase/firestore';
@@ -27,10 +27,14 @@ function add(kind: Kind, n = 1, why = '') {
   pending.set(day, c);
 }
 
-let flushing = false;
-async function flush() {
+let flushing = false, lastFlush = 0; // the first hide of a session always reports
+async function flush(force = true) {
   if (flushing || !pending.size) return;
+  const waiting = [...pending.values()].reduce((n, c) => n + c.reads + c.writes + c.deletes, 0);
+  // each report is a write too, so it is sent at most every 10 minutes unless a lot is waiting
+  if (!force && Date.now() - lastFlush < 10 * 60 * 1000 && waiting < 2000) return;
   flushing = true;
+  lastFlush = Date.now();
   const batch = [...pending.entries()];
   pending.clear();
   try {
@@ -50,6 +54,9 @@ async function flush() {
   } finally { flushing = false; }
 }
 
+/** Sends the counts now (before signing out). */
+export const flushUsage = () => flush(true);
+
 let started = false;
 /** Starts sending the counts (every 5 minutes and when the app is hidden). Call once a user is signed in. */
 export function startMeter() {
@@ -57,8 +64,8 @@ export function startMeter() {
   started = true;
   seen();
   setInterval(seen, 60 * 1000);
-  setInterval(flush, 5 * 60 * 1000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void flush(); });
+  setInterval(() => void flush(), 15 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') void flush(false); });
 }
 
 /* ---------------- writes ---------------- */
@@ -102,6 +109,9 @@ export const getDoc = (async (r: F.DocumentReference) => { const s = await F.get
 export const getDocs = (async (q: F.Query) => { const s = await F.getDocs(q); if (!s.metadata.fromCache) add('reads', Math.max(1, s.size)); return s; }) as typeof F.getDocs;
 
 // Firestore bills a listener in full again when the app was away for more than 30 minutes; within that, only what changed.
+/** Counting with an aggregation costs one read per 1000 documents counted. */
+export const getCountFromServer = (async (q: F.Query) => { const s = await F.getCountFromServer(q); add('reads', Math.max(1, Math.ceil(s.data().count / 1000))); return s; }) as typeof F.getCountFromServer;
+
 const RESUME_MS = 30 * 60 * 1000;
 const SEEN = 'meterSeen';
 const cold = (() => { try { return Date.now() - Number(localStorage.getItem(SEEN) || 0) > RESUME_MS; } catch { return true; } })();

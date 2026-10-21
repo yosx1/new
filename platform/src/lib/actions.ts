@@ -1,4 +1,4 @@
-import { query, serverTimestamp, where, type DocumentData } from 'firebase/firestore';
+import { getDocFromCache, query, serverTimestamp, where, type DocumentData } from 'firebase/firestore';
 import { addDoc, deleteDoc, getDoc, getDocs, runTransaction, setDoc, updateDoc, writeBatch } from './fs';
 import { db } from '../firebase';
 import { audit, col, nextCode, ref } from './db';
@@ -30,6 +30,16 @@ async function readInspection(id: string): Promise<Inspection> {
 export async function mutateInspection(id: string, fn: (cur: Inspection) => DocumentData) {
   const build = (cur: Inspection) => ({ ...fn(cur), updatedAt: serverTimestamp(), docVersion: (cur.docVersion ?? 0) + 1 });
   if (online()) {
+    // Usually the live copy on this device is current: write straight away (no read). If someone else saved in
+    // between, the rules refuse the docVersion and the transaction below re-reads and applies the change.
+    try {
+      const c = await getDocFromCache(ref('inspections', id));
+      if (c.exists() && !c.metadata.hasPendingWrites) {
+        const cur = { id: c.id, ...c.data() } as Inspection;
+        await updateDoc(c.ref, build(cur));
+        return cur;
+      }
+    } catch { /* not cached, or out of date: fall back to the transaction */ }
     return runTransaction(db, async tx => {
       const s = await tx.get(ref('inspections', id));
       if (!s.exists()) throw new Error('not-found');
@@ -97,9 +107,11 @@ export async function archiveShutdown(user: UserProfile, sd: Shutdown, inspectio
 }
 
 /** Administrator: rename a shutdown / project or change its year; its inspections show the new name too. */
-export async function renameShutdown(user: UserProfile, sd: Shutdown, name: string, year: number, inspections: Inspection[]) {
+export async function renameShutdown(user: UserProfile, sd: Shutdown, name: string, year: number) {
   await updateDoc(ref('shutdowns', sd.id), { name, year });
-  const mine = inspections.filter(i => i.shutdownId === sd.id && i.shutdownName !== name);
+  // a past shutdown's inspections are not kept live, so they are fetched here
+  const all = (await getDocs(query(col('inspections'), where('shutdownId', '==', sd.id)))).docs.map(d => ({ id: d.id, ...d.data() }) as Inspection);
+  const mine = all.filter(i => i.shutdownName !== name);
   for (let k = 0; k < mine.length; k += 400) {
     const b = writeBatch(db);
     for (const i of mine.slice(k, k + 400)) b.update(ref('inspections', i.id), { shutdownName: name, updatedAt: serverTimestamp(), docVersion: (i.docVersion ?? 0) + 1 });
@@ -166,7 +178,7 @@ export async function deleteInspection(user: UserProfile, insp: Inspection) {
   const files = await getDocs(query(col('attachments'), where('inspectionId', '==', insp.id))).catch(() => null);
   for (const f of files?.docs ?? []) await deleteDoc(f.ref).catch(() => {});
   await deleteDoc(ref('inspections', insp.id));
-  audit(user, 'inspection.delete', 'inspection', insp.id, { label: `${insp.code} · ${insp.title}`, before: { status: insp.status, discipline: insp.discipline, shutdown: insp.shutdownName } });
+  await audit(user, 'inspection.delete', 'inspection', insp.id, { label: `${insp.code} · ${insp.title}`, before: { status: insp.status, discipline: insp.discipline, shutdown: insp.shutdownName } });
 }
 
 export async function approveInspection(user: UserProfile, insp: Inspection, comment: string) {

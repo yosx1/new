@@ -22,12 +22,19 @@ export default function InspectionView() {
   const data = useData();
   const nav = useNavigate();
   const { toast, confirm } = useFeedback();
-  const [insp, setInsp] = useState<Inspection | null | undefined>(undefined);
+  // the current shutdown is already live in the data provider; only other inspections get their own listener
+  const live = data.inspections.find(i => i.id === id);
+  const [own, setInsp] = useState<Inspection | null | undefined>(undefined);
+  const insp = live ?? own;
   const [dialog, setDialog] = useState<'approve' | 'reject' | null>(null);
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => onSnapshot(ref('inspections', id), s => setInsp(s.exists() ? ({ id: s.id, ...s.data() } as Inspection) : null), () => setInsp(null)), [id]);
+  const isLive = !!live;
+  useEffect(() => {
+    if (!data.loaded || isLive) return;
+    return onSnapshot(ref('inspections', id), s => setInsp(s.exists() ? ({ id: s.id, ...s.data() } as Inspection) : null), () => setInsp(null));
+  }, [id, isLive, data.loaded]);
 
   if (insp === undefined) return <div className="center-screen"><Spinner /></div>;
   if (insp === null) return <Card><Empty>{t('c.notFound')} <Link to="/inspections">{t('nav.inspections')}</Link></Empty></Card>;
@@ -42,7 +49,7 @@ export default function InspectionView() {
   const remove = async () => {
     if (!(await confirm(t('insp.delete'), t('insp.deleteDesc', { name: `${insp.title} · ${t('disc.' + insp.discipline)} · ${insp.code}` }), true))) return;
     setBusy(true);
-    try { await deleteInspection(user, insp); toast(t('insp.deleted')); nav('/inspections', { replace: true }); }
+    try { await deleteInspection(user, insp); if (insp.status === 'archived') data.refreshPast(); toast(t('insp.deleted')); nav('/inspections', { replace: true }); }
     catch (e) { toast(errMsg(e, t), 'err'); setBusy(false); }
   };
   const submit = () => run(async () => {

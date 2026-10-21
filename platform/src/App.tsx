@@ -47,6 +47,11 @@ function AdminOnly({ children }: { children: ReactNode }) {
   return can.manageSystem(u) ? <>{children}</> : <Navigate to="/" replace />;
 }
 
+function LeadOnly({ children }: { children: ReactNode }) {
+  const u = useUser();
+  return can.seeReports(u) ? <>{children}</> : <Navigate to="/" replace />;
+}
+
 function Preload() {
   useEffect(() => {
     const go = () => Object.values(LOADERS).forEach(load => load().catch(() => {}));
@@ -76,7 +81,7 @@ export default function App() {
             <Route path="users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="devices" element={<AdminOnly><Devices /></AdminOnly>} />
             <Route path="documents" element={<Documents />} />
-            <Route path="reports" element={<Reports />} />
+            <Route path="reports" element={<LeadOnly><Reports /></LeadOnly>} />
             <Route path="audit" element={<Audit />} />
             <Route path="settings" element={<SettingsPage />} />
             <Route path="help" element={<Help />} />
