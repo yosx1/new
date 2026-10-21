@@ -172,6 +172,8 @@ test('notifications: only well-formed in-app messages to existing users', async 
   await assertSucceeds(addDoc(collection(db, 'notifications'), ok));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: 'https://evil.example' }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: '//evil.example' }));
+  await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: '/\\evil.example' }));   // backslash open-redirect trick
+  await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: '/x\njavascript:1' }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, toUid: 'nobody' }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, read: true }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, extra: 1 }));
@@ -201,4 +203,49 @@ test('invitations: admin invites by email; only that verified email can claim, o
   await assertSucceeds(getDoc(doc(ctx('x5', 'NEW@kcp.iq'), 'invites/new@kcp.iq')));
   await assertSucceeds(claim(ctx('x5', 'NEW@kcp.iq'), 'x5'));
   await assertFails(claim(ctx('x6', 'new@kcp.iq'), 'x6'));                           // already used
+});
+
+test('administrator: delete any inspection, rename a shutdown and the name on its inspections', async () => {
+  await setAs('approved');
+  await assertFails(deleteDoc(ins(as('mgr'))));
+  await assertFails(deleteDoc(ins(as('elec'))));
+  // rename: admin only, name + year only, valid values
+  const sd = doc(as('admin'), `shutdowns/${SD}`);
+  await assertFails(updateDoc(doc(as('mgr'), `shutdowns/${SD}`), { name: 'Kiln overhaul 2026' }));
+  await assertFails(updateDoc(sd, { name: '' }));
+  await assertFails(updateDoc(sd, { year: 1990 }));
+  await assertFails(updateDoc(sd, { status: 'closed' }));
+  await assertSucceeds(updateDoc(sd, { name: 'Kiln overhaul 2026', year: 2026 }));
+  // the inspection may only take the shutdown's real name, and nothing else may change with it
+  await assertFails(updateDoc(ins(as('admin')), { shutdownName: 'Something else', docVersion: 2 }));
+  await assertFails(updateDoc(ins(as('admin')), { shutdownName: 'Kiln overhaul 2026', title: 'x', docVersion: 2 }));
+  await assertFails(updateDoc(ins(as('mgr')), { shutdownName: 'Kiln overhaul 2026', docVersion: 2 }));
+  await assertSucceeds(updateDoc(ins(as('admin')), { shutdownName: 'Kiln overhaul 2026', docVersion: 2 }));
+  await assertSucceeds(deleteDoc(ins(as('admin'))));
+});
+
+test('counters: only the inspection-code counter, only counting up by one', async () => {
+  await assertSucceeds(setDoc(doc(as('elec'), 'counters/CR-2026'), { value: 1, updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(as('elec'), 'counters/CR-2026'), { value: 5, updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(as('elec'), 'counters/anything'), { value: 1 }));
+  await assertFails(setDoc(doc(as('elec'), 'counters/CR-2027'), { value: 1, junk: 'x' }));
+});
+
+test('nothing outside the data model can be read or written', async () => {
+  for (const path of ['templates/T1', 'defects/D1', 'secrets/x', 'inspections/I1/results/a']) {
+    await assertFails(setDoc(doc(as('admin'), path), { x: 1 }));
+    await assertFails(getDoc(doc(as('admin'), path)));
+  }
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'users/admin')));
+  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'equipment/E1')));
+});
+
+test('departments: the administrator manages them with valid data; nobody deletes them', async () => {
+  const d = { code: 'CML5', name: { en: 'Cement Mill 5', ar: 'طاحونة السمنت 5' }, order: 11, active: true, createdAt: serverTimestamp(), createdBy: 'admin' };
+  await assertFails(setDoc(doc(as('mgr'), 'departments/CML5'), d));
+  await assertFails(setDoc(doc(as('admin'), 'departments/X1'), { ...d, name: { en: '', ar: '' } }));
+  await assertFails(setDoc(doc(as('admin'), 'departments/X2'), { ...d, order: '3' }));
+  await assertSucceeds(setDoc(doc(as('admin'), 'departments/CML5'), d));
+  await assertSucceeds(updateDoc(doc(as('admin'), 'departments/CML5'), { active: false, updatedAt: serverTimestamp() }));
+  await assertFails(deleteDoc(doc(as('admin'), 'departments/CML5')));
 });

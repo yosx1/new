@@ -387,3 +387,4 @@ a.lrow:hover, button.lrow:hover { border-color: #c6d3e6; }
   .part-preview { columns: 1; }
   .part-detail { padding-inline-start: 0; }
 }
+.btn.danger-text { color: var(--red); } .btn.danger-text:hover:not(:disabled) { background: var(--red-soft); }

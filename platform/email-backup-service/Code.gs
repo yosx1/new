@@ -130,7 +130,9 @@ function setup() {
 function verifyCaller_(idToken) {
   if (!idToken) throw new Error('not signed in');
   const r = UrlFetchApp.fetch('https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=' + apiKey_(), {
-    method: 'post', contentType: 'application/json', payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true });
+    method: 'post', contentType: 'application/json', payload: JSON.stringify({ idToken: idToken }), muteHttpExceptions: true,
+    // the web API key only accepts requests from the app's own address
+    headers: { Referer: APP_URL + '/' } });
   const u = r.getResponseCode() === 200 && (JSON.parse(r.getContentText()).users || [])[0];
   if (!u) throw new Error('invalid sign-in');
   const profile = getDoc_('users/' + u.localId);

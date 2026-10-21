@@ -6,11 +6,13 @@ import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { audit, ref } from '../lib/db';
-import { Card, Field, PageHead, errMsg, useFeedback } from '../components/ui';
+import { Badge, Card, Field, PageHead, errMsg, useFeedback } from '../components/ui';
 import { ReportSettings } from './ReportSettings';
 import { RolesMatrix } from './RolesMatrix';
+import { DepartmentSettings } from './DepartmentSettings';
+import { ShutdownEdit } from '../components/ShutdownCard';
 import { Icon } from '../components/Icon';
-import type { Settings } from '../types';
+import type { Settings, Shutdown } from '../types';
 import { Tip } from '../components/Tips';
 
 export default function SettingsPage() {
@@ -78,8 +80,35 @@ export default function SettingsPage() {
           <button className="btn primary mt" onClick={saveSys}>{t('c.save')}</button>
         </Card>
       )}
+      {admin && <DepartmentSettings />}
+      {admin && <ShutdownList />}
       <RolesMatrix />
       {admin && <ReportSettings />}
     </>
+  );
+}
+
+/** Administrator: every shutdown / project, current and past, with rename. */
+function ShutdownList() {
+  const { t, fmtDate } = useI18n();
+  const data = useData();
+  const [edit, setEdit] = useState<Shutdown | null>(null);
+  return (
+    <Card title={t('sd.list')} className="mt">
+      <div className="list">
+        {data.shutdowns.map(s => {
+          const n = data.inspections.filter(i => i.shutdownId === s.id).length;
+          return (
+            <div key={s.id} className="lrow">
+              <Icon name="factory" />
+              <div className="grow"><b>{s.name}</b> {s.id === data.shutdown?.id ? <Badge tone="blue">{t('sd.open')}</Badge> : <Badge tone="gray">{t('sd.closed')}</Badge>}
+                <div className="meta">{s.year} · {n} {t('nav.inspections')}{s.closedAt ? ` · ${t('sd.closedOn')} ${fmtDate(s.closedAt)}` : ''}</div></div>
+              <button className="btn sm ghost" onClick={() => setEdit(s)}><Icon name="edit" size={15} />{t('c.edit')}</button>
+            </div>
+          );
+        })}
+      </div>
+      {edit && <ShutdownEdit sd={edit} onClose={() => setEdit(null)} />}
+    </Card>
   );
 }

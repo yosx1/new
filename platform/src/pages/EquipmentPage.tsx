@@ -158,7 +158,7 @@ export default function EquipmentPage() {
           {plan.errors.length > 0 && (
             <div className="alert warn mt">
               <b>{t('eq.csvErrors', { n: plan.errors.length })}</b>
-              <ul className="small">{plan.errors.slice(0, 20).map(x => <li key={x.line}>{t('eq.line')} {x.line}: {t('eq.err.' + x.reason)} — <span className="ltr">{x.text}</span></li>)}</ul>
+              <ul className="small">{plan.errors.slice(0, 20).map(x => <li key={x.line}>{t('eq.line')} {x.line}: {t('eq.err.' + x.reason, { list: data.departments.map(d => b(d.name)).join(', ') })} — <span className="ltr">{x.text}</span></li>)}</ul>
             </div>
           )}
         </Modal>

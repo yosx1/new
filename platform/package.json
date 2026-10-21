@@ -14,11 +14,11 @@
     "firebase:setup": "node scripts/setup-firebase.mjs"
   },
   "dependencies": {
-    "fflate": "^0.8.2",
+    "fflate": "^0.8.3",
     "firebase": "^12.19.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.28.0"
+    "react-router-dom": "^7.18.4"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.2",

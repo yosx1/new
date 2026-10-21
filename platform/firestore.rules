@@ -42,9 +42,13 @@ service cloud.firestore {
     match /shutdowns/{id} {
       allow read: if active();
       allow create: if hasRole(leads()) && request.resource.data.status == 'open';
-      allow update: if hasRole(leads()) && resource.data.status == 'open' && request.resource.data.status == 'closed'
-        && request.resource.data.closedBy == request.auth.uid
-        && changed().hasOnly(['status', 'closedAt', 'closedBy', 'closedByName', 'archived']);
+      allow update: if (hasRole(leads()) && resource.data.status == 'open' && request.resource.data.status == 'closed'
+          && request.resource.data.closedBy == request.auth.uid
+          && changed().hasOnly(['status', 'closedAt', 'closedBy', 'closedByName', 'archived']))
+        // the administrator may rename a shutdown / project or correct its year
+        || (hasRole(['admin']) && changed().hasOnly(['name', 'year'])
+          && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 100
+          && request.resource.data.year is int && request.resource.data.year >= 2000 && request.resource.data.year <= 2100);
       allow delete: if false;
     }
 
@@ -100,7 +104,15 @@ service cloud.firestore {
     }
 
     // ---------- master data ----------
-    match /departments/{id} { allow read: if active(); allow write: if hasRole(['admin']); }
+    match /departments/{id} {
+      allow read: if active();
+      allow create, update: if hasRole(['admin'])
+        && request.resource.data.keys().hasOnly(['code', 'name', 'order', 'active', 'createdAt', 'createdBy', 'updatedAt'])
+        && request.resource.data.name.en is string && request.resource.data.name.en.size() > 0 && request.resource.data.name.en.size() <= 80
+        && request.resource.data.name.ar is string && request.resource.data.name.ar.size() <= 80
+        && request.resource.data.order is int && request.resource.data.active is bool;
+      allow delete: if false; // retire instead, old records point at it
+    }
     match /equipment/{id} {
       allow read: if active();
       allow create, update: if hasRole(leads())
@@ -138,6 +150,11 @@ service cloud.firestore {
           && d().rejection.by == request.auth.uid && d().rejection.reason.size() >= 3
           && changed().hasOnly(['status', 'approval', 'rejection', 'updatedAt', 'docVersion']);
       }
+      // A renamed shutdown: the administrator updates the name shown on its inspections.
+      function rename() {
+        return hasRole(['admin']) && changed().hasOnly(['shutdownName', 'updatedAt', 'docVersion'])
+          && d().shutdownName == get(/databases/$(database)/documents/shutdowns/$(resource.data.shutdownId)).data.name;
+      }
       function archive() {
         return hasRole(leads()) && resource.data.status == 'approved' && d().status == 'archived'
           && changed().hasOnly(['status', 'archivedAt', 'updatedAt', 'docVersion']);
@@ -152,9 +169,10 @@ service cloud.firestore {
         && d().status == 'pool' && d().docVersion == 1 && d().createdBy == request.auth.uid
         && d().approval == null && d().results.size() == 0;
       allow update: if active() && d().docVersion == resource.data.docVersion + 1
-        && unchanged(['code', 'shutdownId', 'shutdownName', 'title', 'equipmentId', 'departmentId', 'discipline', 'parts', 'createdBy', 'createdByName', 'createdAt'])
-        && (work() || approve() || sendBack() || archive());
-      allow delete: if hasRole(['admin']) && resource.data.status == 'pool';
+        && ((unchanged(['code', 'shutdownId', 'shutdownName', 'title', 'equipmentId', 'departmentId', 'discipline', 'parts', 'createdBy', 'createdByName', 'createdAt'])
+             && (work() || approve() || sendBack() || archive()))
+            || rename());
+      allow delete: if hasRole(['admin']);
     }
 
     match /documents/{id} {
@@ -165,7 +183,8 @@ service cloud.firestore {
 
     match /counters/{id} {
       allow read: if staff();
-      allow write: if staff() && request.resource.data.value ==
+      allow write: if staff() && id.matches('CR-[0-9]{4}') && request.resource.data.keys().hasOnly(['value', 'updatedAt'])
+        && request.resource.data.value ==
         (resource == null ? 1 : resource.data.value + 1);
     }
 
@@ -190,7 +209,7 @@ service cloud.firestore {
         && request.resource.data.title is map && request.resource.data.title.keys().hasOnly(['en', 'ar'])
         && request.resource.data.title.en is string && request.resource.data.title.en.size() <= 300
         && request.resource.data.title.ar is string && request.resource.data.title.ar.size() <= 300
-        && request.resource.data.link is string && request.resource.data.link.matches('/[^/].{0,199}|/')
+        && request.resource.data.link is string && request.resource.data.link.matches('/([A-Za-z0-9_-][A-Za-z0-9_/?=&.-]{0,198})?')
         && request.resource.data.read == false
         && request.resource.data.createdAt == request.time;
       allow update: if signedIn() && resource.data.toUid == request.auth.uid && changed().hasOnly(['read'])

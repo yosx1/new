@@ -60,6 +60,8 @@ export const GUIDE: GuideSection[] = [
       ['They receive an e-mail to set a password, or simply use "Sign in with Google" with the same e-mail.', 'يصلهم بريد لتعيين كلمة المرور، أو يدخلون مباشرة بـ"الدخول بحساب Google" بالبريد نفسه.'],
       ['When someone leaves, press Deactivate. Their history stays.', 'عند مغادرة شخص اضغط تعطيل. يبقى سجله.'],
       ['Devices: revoke a lost or shared phone — it is signed out immediately.', 'الأجهزة: ألغِ هاتفاً مفقوداً أو مشتركاً — يُسجَّل خروجه فوراً.'],
+      ['Rename a shutdown or project, or correct its year: Edit on the shutdown card, or Settings → Shutdowns & projects for past ones.', 'لإعادة تسمية توقف أو مشروع أو تصحيح سنته: تعديل في بطاقة التوقف، أو الإعدادات ← التوقفات والمشاريع للسابقة منها.'],
+      ['Delete an inspection made by mistake: open it and press Delete. Its photos are removed too and the deletion is kept in the audit log.', 'لحذف فحص أُنشئ بالخطأ: افتحه واضغط حذف. تُحذف صوره أيضاً ويبقى الحذف مسجلاً في سجل التدقيق.'],
     ],
   },
   {

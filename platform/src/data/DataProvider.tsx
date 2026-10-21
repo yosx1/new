@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { limit, onSnapshot, orderBy, query, where, type Query } from 'firebase/firestore';
 import { col, ref } from '../lib/db';
 import { useUser } from '../auth/Auth';
@@ -10,7 +10,10 @@ import { DEFAULT_SETTINGS, ensureDepartments } from './seed';
 interface Data {
   loaded: boolean;
   settings: Settings;
+  /** Active departments, in order. */
   departments: Department[];
+  /** Including retired ones (for old records and administration). */
+  allDepartments: Department[];
   equipment: Equipment[];
   users: UserProfile[];
   inspections: Inspection[];
@@ -47,6 +50,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [currentId, setCurrentId] = useState<string | null | undefined>(undefined);
   const [pend, setPend] = useState(false);
+  const startedShutdown = useRef(false);
+  const startedDepts = useRef(false);
   const [online, setOnline] = useState(navigator.onLine);
 
   useEffect(() => {
@@ -60,8 +65,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
   }, () => {}), []);
   useEffect(() => onSnapshot(ref('config', 'shutdown'), s => setCurrentId(s.exists() ? (s.data().currentId as string) : null), () => setCurrentId(null)), []);
 
-  const [departments, l1] = useLive<Department>(query(col('departments'), orderBy('order')), []);
-  const [equipment, l2] = useLive<Equipment>(query(col('equipment'), orderBy('name')), []);
+  const [allDepartments, l1] = useLive<Department>(query(col('departments'), orderBy('order')), []);
+  const departments = useMemo(() => allDepartments.filter(d => d.active !== false), [allDepartments]);
+  const [allEquipment, l2] = useLive<Equipment>(query(col('equipment'), orderBy('name')), []);
+  // Equipment of a retired department drops out of pools, menus and reports (old inspections still find it via eq()).
+  const equipment = useMemo(() => { const on = new Set(departments.map(d => d.id)); return allEquipment.filter(e => on.has(e.departmentId)); }, [allEquipment, departments]);
   const [users, l3] = useLive<UserProfile>(query(col('users'), orderBy('name')), []);
   const [inspections, l4] = useLive<Inspection>(query(col('inspections'), orderBy('createdAt', 'desc'), limit(3000)), [], setPend);
   const [shutdowns, l5] = useLive<Shutdown>(query(col('shutdowns'), orderBy('year', 'desc')), []);
@@ -71,24 +79,30 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // First sign-in of a manager or administrator: create the departments and the current shutdown.
   useEffect(() => {
     if (!isLead(me) || !navigator.onLine) return;
-    if (me.role === 'admin' && l1 && departments.length < 4) ensureDepartments(me).catch(e => console.warn('departments', e));
-    if (currentId === null) ensureShutdown(me).catch(e => console.warn('shutdown', e));
-  }, [me, l1, departments.length, currentId]);
+    if (me.role === 'admin' && l1 && allDepartments.length === 0 && !startedDepts.current) {
+      startedDepts.current = true;
+      ensureDepartments(me).catch(e => { startedDepts.current = false; console.warn('departments', e); });
+    }
+    if (currentId === null && !startedShutdown.current) {
+      startedShutdown.current = true;
+      ensureShutdown(me).catch(e => { startedShutdown.current = false; console.warn('shutdown', e); });
+    }
+  }, [me, l1, allDepartments.length, currentId]);
 
   const value = useMemo<Data>(() => {
-    const dMap = new Map(departments.map(d => [d.id, d]));
-    const eMap = new Map(equipment.map(e => [e.id, e]));
+    const dMap = new Map(allDepartments.map(d => [d.id, d]));
+    const eMap = new Map(allEquipment.map(e => [e.id, e]));
     const uMap = new Map(users.map(u => [u.id, u]));
     return {
       loaded: l1 && l2 && l3 && l4 && l5 && currentId !== undefined,
-      settings, departments, equipment, users, inspections, shutdowns, notifications,
+      settings, departments, allDepartments, equipment, users, inspections, shutdowns, notifications,
       shutdown: shutdowns.find(s => s.id === currentId) ?? null,
       pendingWrites: pend, online,
       dept: id => (id ? dMap.get(id) : undefined),
       eq: id => (id ? eMap.get(id) : undefined),
       userName: uid => (uid ? uMap.get(uid)?.name ?? '—' : '—'),
     };
-  }, [settings, departments, equipment, users, inspections, shutdowns, notifications, currentId, pend, online, l1, l2, l3, l4, l5]);
+  }, [settings, departments, allDepartments, equipment, allEquipment, users, inspections, shutdowns, notifications, currentId, pend, online, l1, l2, l3, l4, l5]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

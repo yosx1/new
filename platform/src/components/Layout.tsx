@@ -96,7 +96,8 @@ export function Layout() {
                 {data.notifications.length === 0 ? <p className="muted">{t('c.empty')}</p> : data.notifications.map(n => (
                   <button key={n.id} className={'bell-item' + (n.read ? '' : ' unread')} onClick={() => {
                     if (!n.read) updateDoc(ref('notifications', n.id), { read: true }).catch(() => {});
-                    nav(n.link);
+                    // only plain in-app paths (no //host, no backslashes) — never an off-site redirect
+                    nav(/^\/(?:[\w-][\w/?=&.-]*)?$/.test(n.link) ? n.link : '/');
                   }}>
                     <span>{b(n.title)}</span><small className="muted">{n.createdAt ? n.createdAt.toDate().toLocaleString(lang === 'ar' ? 'ar-IQ' : 'en-GB') : ''}</small>
                   </button>

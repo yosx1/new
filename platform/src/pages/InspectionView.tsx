@@ -5,7 +5,7 @@ import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { ref } from '../lib/db';
-import { approveInspection, fixPart, rejectInspection, savePart, submitInspection } from '../lib/actions';
+import { approveInspection, deleteInspection, fixPart, rejectInspection, savePart, submitInspection } from '../lib/actions';
 import { can } from '../lib/rules';
 import { downloadXlsx } from '../lib/xlsx';
 import { inspectionFileName, inspectionSheets } from '../lib/inspectionExport';
@@ -21,7 +21,7 @@ export default function InspectionView() {
   const user = useUser();
   const data = useData();
   const nav = useNavigate();
-  const { toast } = useFeedback();
+  const { toast, confirm } = useFeedback();
   const [insp, setInsp] = useState<Inspection | null | undefined>(undefined);
   const [dialog, setDialog] = useState<'approve' | 'reject' | null>(null);
   const [comment, setComment] = useState('');
@@ -38,6 +38,12 @@ export default function InspectionView() {
   const run = async (f: () => Promise<unknown>, ok?: string) => {
     setBusy(true);
     try { await f(); if (ok) toast(navigator.onLine ? ok : t('c.savedOffline')); } catch (e) { toast(errMsg(e, t), 'err'); } finally { setBusy(false); }
+  };
+  const remove = async () => {
+    if (!(await confirm(t('insp.delete'), t('insp.deleteDesc', { name: `${insp.title} · ${t('disc.' + insp.discipline)} · ${insp.code}` }), true))) return;
+    setBusy(true);
+    try { await deleteInspection(user, insp); toast(t('insp.deleted')); nav('/inspections', { replace: true }); }
+    catch (e) { toast(errMsg(e, t), 'err'); setBusy(false); }
   };
   const submit = () => run(async () => {
     const next = await submitInspection(user, insp);
@@ -66,6 +72,7 @@ export default function InspectionView() {
           <StatusBadge status={insp.status} />
           <button className="btn ghost sm" onClick={() => downloadXlsx(inspectionFileName(insp), inspectionSheets(insp, ctx), lang === 'ar')}><Icon name="download" size={16} />{t('c.exportXlsx')}</button>
           <Link className="btn ghost sm" to={`/print/inspection/${insp.id}`} target="_blank"><Icon name="printer" size={16} />{t('insp.reportPdf')}</Link>
+          {can.manageSystem(user) && <button className="btn ghost sm danger-text" disabled={busy} onClick={remove}><Icon name="trash" size={16} />{t('c.delete')}</button>}
         </>} />
 
       {insp.status === 'pool' && insp.rejection && (
@@ -133,7 +140,7 @@ function PartRow({ n, insp, partId, name, r, canCheck, canFix }: {
 }) {
   const { t, fmtDate } = useI18n();
   const user = useUser();
-  const { toast } = useFeedback();
+  const { toast, confirm } = useFeedback();
   const [edit, setEdit] = useState<'notok' | 'fix' | null>(null);
   const [note, setNote] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
@@ -144,7 +151,13 @@ function PartRow({ n, insp, partId, name, r, canCheck, canFix }: {
     setBusy(true);
     try { await fn(); setEdit(null); } catch (e) { toast(errMsg(e, t), 'err'); } finally { setBusy(false); }
   };
-  const ok = () => status !== 'ok' && save(() => savePart(user, insp.id, partId, { status: 'ok', note: '', photoIds: [] }));
+  const clear = () => save(() => savePart(user, insp.id, partId, { status: 'pending', note: '', photoIds: [] }));
+  // Tapping the active button again un-checks the part (back to "Not checked").
+  const ok = () => (status === 'ok' ? clear() : save(() => savePart(user, insp.id, partId, { status: 'ok', note: '', photoIds: [] })));
+  const notOk = async () => {
+    if (status !== 'notok') { open('notok'); return; }
+    if (await confirm(t('insp.uncheck'), t('insp.uncheckDesc', { name }))) clear();
+  };
   const confirmEdit = () => {
     if (note.trim().length < 3) { toast(edit === 'fix' ? t('insp.fixRequired') : t('insp.noteRequired'), 'err'); return; }
     save(() => (edit === 'notok'
@@ -160,8 +173,8 @@ function PartRow({ n, insp, partId, name, r, canCheck, canFix }: {
           {r && status !== 'pending' && <div className="meta">{r.byName} · {fmtDate(r.at, true)}</div>}</div>
         {canCheck ? (
           <div className="qbtns">
-            <button className={'qbtn pass' + (status === 'ok' ? ' on' : '')} disabled={busy} onClick={ok} aria-label={t('part.ok')}><Icon name="check" size={20} /></button>
-            <button className={'qbtn fail' + (status === 'notok' ? ' on' : '')} disabled={busy} onClick={() => open('notok')} aria-label={t('part.notok')}><Icon name="x" size={20} /></button>
+            <button className={'qbtn pass' + (status === 'ok' ? ' on' : '')} disabled={busy} onClick={ok} aria-label={t('part.ok')} title={status === 'ok' ? t('insp.tapToUncheck') : undefined}><Icon name="check" size={20} /></button>
+            <button className={'qbtn fail' + (status === 'notok' ? ' on' : '')} disabled={busy} onClick={notOk} aria-label={t('part.notok')} title={status === 'notok' ? t('insp.tapToUncheck') : undefined}><Icon name="x" size={20} /></button>
           </div>
         ) : <PartBadge status={status} fixed={!!r?.fix} />}
       </div>
@@ -172,6 +185,7 @@ function PartRow({ n, insp, partId, name, r, canCheck, canFix }: {
           {r.fix && <p className="mt"><b className="tone-text-purple">{t('part.fixed')}:</b> {r.fix.note} <span className="muted small">— {r.fix.byName} · {fmtDate(r.fix.at, true)}</span></p>}
           {r.fix?.photoIds?.length ? <div className="photos">{r.fix.photoIds.map(x => <Thumb key={x} id={x} />)}</div> : null}
           {canFix && !r.fix && edit !== 'fix' && <button className="btn sm outline mt" onClick={() => open('fix')}><Icon name="check" size={15} />{t('insp.fix')}</button>}
+          {canCheck && <button className="btn sm ghost mt" onClick={() => open('notok')}><Icon name="edit" size={15} />{t('c.edit')}</button>}
         </div>
       )}
       {edit && (

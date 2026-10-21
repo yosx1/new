@@ -1,5 +1,5 @@
 import {
-  addDoc, getDoc, runTransaction, serverTimestamp, setDoc, updateDoc, writeBatch, type DocumentData,
+  addDoc, deleteDoc, getDoc, getDocs, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch, type DocumentData,
 } from 'firebase/firestore';
 import { db } from '../firebase';
 import { audit, col, nextCode, ref } from './db';
@@ -48,24 +48,34 @@ export async function mutateInspection(id: string, fn: (cur: Inspection) => Docu
 
 /** The current yearly shutdown; created on first use. */
 export async function ensureShutdown(user: UserProfile): Promise<Shutdown> {
-  const cfg = await getDoc(ref('config', 'shutdown'));
-  const id = cfg.exists() ? (cfg.data().currentId as string) : null;
-  if (id) {
-    const s = await getDoc(ref('shutdowns', id));
-    if (s.exists()) return { id: s.id, ...s.data() } as Shutdown;
-  }
-  return startShutdown(user, new Date().getFullYear());
+  return startShutdown(user, new Date().getFullYear(), null);
 }
 
-async function startShutdown(user: UserProfile, year: number): Promise<Shutdown> {
-  const id = `SD-${year}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
-  const s = { name: `Annual shutdown ${year}`, year, status: 'open' as const, startedAt: serverTimestamp() };
-  const b = writeBatch(db);
-  b.set(ref('shutdowns', id), s);
-  b.set(ref('config', 'shutdown'), { currentId: id, updatedAt: serverTimestamp(), updatedBy: user.id });
-  await b.commit();
-  audit(user, 'shutdown.start', 'shutdown', id, { label: s.name });
-  return { id, ...s, startedAt: null };
+/**
+ * Starts a shutdown in one transaction on config/shutdown, so two devices (or two quick calls) can never
+ * create two. `replaces` is the shutdown being closed; null = only if there is no current one yet.
+ */
+async function startShutdown(user: UserProfile, year: number, replaces: string | null): Promise<Shutdown> {
+  const res = await runTransaction(db, async tx => {
+    const cfgRef = ref('config', 'shutdown');
+    const cfg = await tx.get(cfgRef);
+    const current = cfg.exists() ? (cfg.data().currentId as string | undefined) ?? null : null;
+    if (current && current !== replaces) {
+      const s = await tx.get(ref('shutdowns', current));
+      if (s.exists()) return { created: false, sd: { id: s.id, ...s.data() } as Shutdown };
+    }
+    const id = `SD-${year}-${Date.now().toString(36).toUpperCase().slice(-4)}`;
+    // Same year as before: number it ("… 2026 (2)") so the names stay distinguishable until the administrator renames it.
+    const taken = new Set((await getDocs(col('shutdowns')).catch(() => null))?.docs.map(d => d.data().name as string) ?? []);
+    let name = `Annual shutdown ${year}`;
+    for (let n = 2; taken.has(name); n++) name = `Annual shutdown ${year} (${n})`;
+    const s = { name, year, status: 'open' as const, startedAt: serverTimestamp() };
+    tx.set(ref('shutdowns', id), s);
+    tx.set(cfgRef, { currentId: id, updatedAt: serverTimestamp(), updatedBy: user.id });
+    return { created: true, sd: { id, ...s, startedAt: null } as Shutdown };
+  });
+  if (res.created) audit(user, 'shutdown.start', 'shutdown', res.sd.id, { label: res.sd.name });
+  return res.sd;
 }
 
 /**
@@ -83,7 +93,20 @@ export async function archiveShutdown(user: UserProfile, sd: Shutdown, inspectio
   }
   await updateDoc(ref('shutdowns', sd.id), { status: 'closed', closedAt: serverTimestamp(), closedBy: user.id, closedByName: user.name, archived: done.length });
   audit(user, 'shutdown.close', 'shutdown', sd.id, { label: sd.name, note: `${done.length} inspections archived` });
-  return startShutdown(user, Math.max(sd.year + 1, new Date().getFullYear()));
+  // The year is never advanced automatically; the administrator changes name and year by hand (Edit).
+  return startShutdown(user, sd.year, sd.id);
+}
+
+/** Administrator: rename a shutdown / project or change its year; its inspections show the new name too. */
+export async function renameShutdown(user: UserProfile, sd: Shutdown, name: string, year: number, inspections: Inspection[]) {
+  await updateDoc(ref('shutdowns', sd.id), { name, year });
+  const mine = inspections.filter(i => i.shutdownId === sd.id && i.shutdownName !== name);
+  for (let k = 0; k < mine.length; k += 400) {
+    const b = writeBatch(db);
+    for (const i of mine.slice(k, k + 400)) b.update(ref('inspections', i.id), { shutdownName: name, updatedAt: serverTimestamp(), docVersion: (i.docVersion ?? 0) + 1 });
+    await b.commit();
+  }
+  await audit(user, 'shutdown.edit', 'shutdown', sd.id, { label: name, before: { name: sd.name, year: sd.year }, after: { name, year } });
 }
 
 /* ---------------- inspections ---------------- */
@@ -137,6 +160,14 @@ export async function fixPart(user: UserProfile, insp: Inspection, partId: strin
   });
   audit(user, 'inspection.fix', 'inspection', insp.id, { label: `${insp.code} · ${insp.title}`, note });
   return next;
+}
+
+/** Administrator: delete an inspection (any stage) together with its photos. */
+export async function deleteInspection(user: UserProfile, insp: Inspection) {
+  const files = await getDocs(query(col('attachments'), where('inspectionId', '==', insp.id))).catch(() => null);
+  for (const f of files?.docs ?? []) await deleteDoc(f.ref).catch(() => {});
+  await deleteDoc(ref('inspections', insp.id));
+  audit(user, 'inspection.delete', 'inspection', insp.id, { label: `${insp.code} · ${insp.title}`, before: { status: insp.status, discipline: insp.discipline, shutdown: insp.shutdownName } });
 }
 
 export async function approveInspection(user: UserProfile, insp: Inspection, comment: string) {
