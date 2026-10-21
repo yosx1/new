@@ -1,6 +1,5 @@
-import {
-  addDoc, collection, doc, runTransaction, serverTimestamp, type DocumentData,
-} from 'firebase/firestore';
+import { collection, doc, serverTimestamp, type DocumentData } from 'firebase/firestore';
+import { addDoc, runTransaction } from './fs';
 import { db } from '../firebase';
 import type { UserProfile } from '../types';
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { addDoc, deleteDoc, onSnapshot, query, serverTimestamp, updateDoc, where, type Query } from 'firebase/firestore';
+import { query, serverTimestamp, where, type Query } from 'firebase/firestore';
+import { addDoc, deleteDoc, onSnapshot, updateDoc } from '../lib/fs';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';

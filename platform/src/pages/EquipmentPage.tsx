@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { addDoc, serverTimestamp, updateDoc, writeBatch } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
+import { addDoc, updateDoc, writeBatch } from '../lib/fs';
 import { db } from '../firebase';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';

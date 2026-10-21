@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { deleteDoc, onSnapshot, orderBy, query, serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { orderBy, query, serverTimestamp } from 'firebase/firestore';
+import { deleteDoc, onSnapshot, setDoc, updateDoc } from '../lib/fs';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth, createAuthAccount } from '../firebase';
 import { useData } from '../data/DataProvider';

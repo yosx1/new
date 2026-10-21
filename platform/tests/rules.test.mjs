@@ -2,7 +2,7 @@
 import { test, before, after, beforeEach } from 'node:test';
 import { readFileSync } from 'node:fs';
 import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebase/rules-unit-testing';
-import { doc, setDoc, getDoc, updateDoc, writeBatch, serverTimestamp, addDoc, collection, deleteDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, writeBatch, serverTimestamp, addDoc, collection, deleteDoc, increment } from 'firebase/firestore';
 
 let env;
 const user = (uid, role, extra = {}) => ({ name: uid, email: `${uid}@kcp.iq`, role, discipline: null, departmentId: null, active: true, ...extra });
@@ -248,4 +248,20 @@ test('departments: the administrator manages them with valid data; nobody delete
   await assertSucceeds(setDoc(doc(as('admin'), 'departments/CML5'), d));
   await assertSucceeds(updateDoc(doc(as('admin'), 'departments/CML5'), { active: false, updatedAt: serverTimestamp() }));
   await assertFails(deleteDoc(doc(as('admin'), 'departments/CML5')));
+});
+
+test('usage: everyone adds to the daily counts, only upwards; only the administrator reads them', async () => {
+  const add = (uid, o = {}) => setDoc(doc(as(uid), 'usage/2026-10-21'), { reads: increment(10), writes: increment(2), deletes: increment(0), updatedAt: serverTimestamp(), ...o }, { merge: true });
+  await assertSucceeds(add('elec'));
+  await assertSucceeds(add('mgr'));
+  await assertFails(add('gone'));
+  await assertFails(add('elec', { reads: -5 }));
+  await assertFails(add('elec', { reads: increment(500000) }));
+  await assertFails(add('elec', { alerts: { reads: 100 } }));
+  await assertFails(add('elec', { other: 1 }));
+  await assertFails(setDoc(doc(as('elec'), 'usage/not-a-day'), { reads: 1, writes: 1, deletes: 0, updatedAt: serverTimestamp() }));
+  await assertFails(getDoc(doc(as('mgr'), 'usage/2026-10-21')));
+  const s = await assertSucceeds(getDoc(doc(as('admin'), 'usage/2026-10-21')));
+  if (s.data().reads !== 20 || s.data().writes !== 4) throw new Error('counts ' + JSON.stringify(s.data()));
+  await assertFails(deleteDoc(doc(as('admin'), 'usage/2026-10-21')));
 });

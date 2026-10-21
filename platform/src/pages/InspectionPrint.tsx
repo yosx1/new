@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { getDoc } from 'firebase/firestore';
+import { getDoc } from '../lib/fs';
 import { useI18n } from '../i18n/I18n';
 import { useData } from '../data/DataProvider';
 import { ref } from '../lib/db';

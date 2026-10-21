@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { GoogleAuthProvider, createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { doc, getDoc, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { getDoc, writeBatch } from '../lib/fs';
 import { auth, db, isConfigured } from '../firebase';
 import { useI18n } from '../i18n/I18n';
 import { Field, Spinner, useFeedback, errMsg } from '../components/ui';

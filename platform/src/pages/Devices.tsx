@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { deleteDoc, onSnapshot, orderBy, query, updateDoc } from 'firebase/firestore';
+import { orderBy, query } from 'firebase/firestore';
+import { deleteDoc, onSnapshot, updateDoc } from '../lib/fs';
 import { useI18n } from '../i18n/I18n';
 import { useDeviceDocId, useUser } from '../auth/Auth';
 import { audit, col, ref } from '../lib/db';

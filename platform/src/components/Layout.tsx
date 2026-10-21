@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
-import { updateDoc } from 'firebase/firestore';
+import { updateDoc } from '../lib/fs';
 import { auth } from '../firebase';
 import { useUser } from '../auth/Auth';
 import { useData } from '../data/DataProvider';

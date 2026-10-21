@@ -1,4 +1,5 @@
-import { addDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
+import { addDoc, getDoc } from './fs';
 import { col, ref } from './db';
 import type { Attachment, UserProfile } from '../types';
 

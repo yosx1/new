@@ -1,6 +1,5 @@
-import {
-  addDoc, deleteDoc, getDoc, getDocs, query, runTransaction, serverTimestamp, setDoc, updateDoc, where, writeBatch, type DocumentData,
-} from 'firebase/firestore';
+import { query, serverTimestamp, where, type DocumentData } from 'firebase/firestore';
+import { addDoc, deleteDoc, getDoc, getDocs, runTransaction, setDoc, updateDoc, writeBatch } from './fs';
 import { db } from '../firebase';
 import { audit, col, nextCode, ref } from './db';
 import { inspectionId, statusAfterWork, summarize } from './rules';

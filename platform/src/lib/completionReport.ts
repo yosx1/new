@@ -1,5 +1,5 @@
 /* When an inspection gets its final approval: notify management in the app and e-mail them the Excel results. */
-import { getDoc } from 'firebase/firestore';
+import { getDoc } from './fs';
 import { auth } from '../firebase';
 import { ref } from './db';
 import { notify } from './actions';

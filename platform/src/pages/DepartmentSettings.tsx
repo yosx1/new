@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { serverTimestamp, setDoc, updateDoc } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
+import { setDoc, updateDoc } from '../lib/fs';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';

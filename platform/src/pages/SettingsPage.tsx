@@ -1,12 +1,14 @@
-import { useState } from 'react';
-import { serverTimestamp, setDoc, updateDoc, terminate, clearIndexedDbPersistence } from 'firebase/firestore';
+import { useEffect, useState } from 'react';
+import { serverTimestamp, terminate, clearIndexedDbPersistence } from 'firebase/firestore';
+import { setDoc, updateDoc } from '../lib/fs';
 import { signOut } from 'firebase/auth';
 import { auth, db } from '../firebase';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { audit, ref } from '../lib/db';
-import { Badge, Card, Field, PageHead, errMsg, useFeedback } from '../components/ui';
+import { Badge, Card, Field, PageHead, Progress, errMsg, useFeedback } from '../components/ui';
+import { FREE_DAILY, onSnapshot, usageDay } from '../lib/fs';
 import { ReportSettings } from './ReportSettings';
 import { RolesMatrix } from './RolesMatrix';
 import { DepartmentSettings } from './DepartmentSettings';
@@ -93,9 +95,24 @@ export default function SettingsPage() {
 function PlanBilling() {
   const { t } = useI18n();
   const console = `https://console.firebase.google.com/project/${import.meta.env.VITE_FIREBASE_PROJECT_ID}`;
+  const [used, setUsed] = useState<Partial<Record<keyof typeof FREE_DAILY, number>> | null>(null);
+  useEffect(() => onSnapshot(ref('usage', usageDay()), s => setUsed(s.exists() ? s.data() : null), () => setUsed(null)), []);
   return (
     <Card title={t('bill.title')} className="mt">
       <p className="muted">{t('bill.desc')}</p>
+      <h3 className="mt">{t('bill.today')}</h3>
+      {(['reads', 'writes', 'deletes'] as const).map(k => {
+        const v = used?.[k] ?? 0, pct = Math.min(100, Math.round((v / FREE_DAILY[k]) * 100));
+        return (
+          <div className="bar-row mt" key={k}>
+            <span>{t('bill.' + k)}</span>
+            <Progress value={pct} tone={pct >= 90 ? 'red' : pct >= 75 ? 'orange' : 'green'} />
+            <span className="val">{pct}%</span>
+            <span className="note">{v.toLocaleString()} / {FREE_DAILY[k].toLocaleString()}</span>
+          </div>
+        );
+      })}
+      <p className="small muted mt">{t('bill.alerts')}</p>
       <div className="row wrap gap mt">
         <a className="btn primary" href={`${console}/usage/details`} target="_blank" rel="noopener noreferrer"><Icon name="lock" size={16} />{t('bill.upgrade')}</a>
         <a className="btn ghost" href={`${console}/usage`} target="_blank" rel="noopener noreferrer"><Icon name="chart" size={16} />{t('bill.usage')}</a>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { getDocs, limit, orderBy, query, startAfter, type QueryDocumentSnapshot } from 'firebase/firestore';
+import { limit, orderBy, query, startAfter, type QueryDocumentSnapshot } from 'firebase/firestore';
+import { getDocs } from '../lib/fs';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { col } from '../lib/db';

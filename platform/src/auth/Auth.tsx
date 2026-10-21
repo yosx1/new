@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { onAuthStateChanged, signOut, type User } from 'firebase/auth';
-import { getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc, writeBatch } from 'firebase/firestore';
+import { serverTimestamp } from 'firebase/firestore';
+import { getDoc, onSnapshot, setDoc, updateDoc, writeBatch } from '../lib/fs';
 import { auth, db } from '../firebase';
 import { ref } from '../lib/db';
 import type { UserProfile } from '../types';

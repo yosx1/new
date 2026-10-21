@@ -1,5 +1,6 @@
 /** Settings defaults and the four fixed departments of the cold run. */
-import { doc, getDocs, serverTimestamp, writeBatch } from 'firebase/firestore';
+import { doc, serverTimestamp } from 'firebase/firestore';
+import { getDocs, writeBatch } from '../lib/fs';
 import { db } from '../firebase';
 import { col } from '../lib/db';
 import type { Settings, UserProfile } from '../types';

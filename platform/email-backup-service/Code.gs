@@ -19,15 +19,20 @@ const WEB_API_KEY = 'PASTE_FIREBASE_WEB_API_KEY'; // the VITE_FIREBASE_API_KEY v
 const KEEP_BACKUPS = 12;
 const MAX_SENDS_PER_INSPECTION = 3;
 const COLLECTIONS = ['config', 'users', 'invites', 'devices', 'departments', 'equipment', 'shutdowns', 'documents',
-  'counters', 'inspections', 'notifications', 'audit', 'attachments'];
+  'counters', 'inspections', 'notifications', 'audit', 'attachments', 'usage'];
 const FS = 'https://firestore.googleapis.com/v1/projects/' + PROJECT_ID + '/databases/(default)/documents';
 
-/** Run once from the editor: authorises the script and schedules the weekly backup (Fridays, 02:00). */
+/** Run once from the editor: authorises the script and schedules the weekly backup (Fridays, 02:00) and the usage check. */
 function setup() {
-  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'weeklyBackup') ScriptApp.deleteTrigger(t); });
-  ScriptApp.newTrigger('weeklyBackup').timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(2).everyWeeks(1).create();
+  ensureTriggers_();
   getDoc_('config/settings'); // checks access to the database (and asks for permission)
-  return 'Weekly backup scheduled. Now deploy as a web app.';
+  return 'Weekly backup and usage alerts scheduled.';
+}
+
+function ensureTriggers_() {
+  const have = ScriptApp.getProjectTriggers().map(function (t) { return t.getHandlerFunction(); });
+  if (have.indexOf('weeklyBackup') < 0) ScriptApp.newTrigger('weeklyBackup').timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(2).everyWeeks(1).create();
+  if (have.indexOf('usageCheck') < 0) ScriptApp.newTrigger('usageCheck').timeBased().everyMinutes(30).create();
 }
 
 /* ---------------- web app ---------------- */
@@ -38,6 +43,7 @@ function doPost(e) {
     const caller = verifyCaller_(req.idToken);
     if (req.test) {
       if (caller.role !== 'admin') return json_({ ok: false, error: 'admin only' });
+      try { ensureTriggers_(); } catch (e) { /* run setup() from the editor instead */ }
       // A real e-mail to the administrator who pressed Test (at most 10 a day).
       const tp = PropertiesService.getScriptProperties();
       const day = 'test_' + Utilities.formatDate(new Date(), 'UTC', 'yyyyMMdd');
@@ -136,6 +142,87 @@ function weeklyBackup() {
         + '\nThis backup: ' + dir.getUrl() + '\n\n' + Object.keys(counts).map(function (k) { return k + ': ' + counts[k]; }).join('\n') });
   }
   return counts;
+}
+
+/* ---------------- free-plan usage alerts ---------------- */
+
+const FREE_DAILY = { reads: 50000, writes: 20000, deletes: 20000 };
+const FREE_STORAGE = 1024 * 1024 * 1024; // 1 GiB of Firestore data
+const MAIL_DAILY = 100;                  // MailApp recipients per day for a Gmail account
+const LEVELS = [25, 50, 75, 90, 100];
+const LABELS = {
+  reads: ['Loads (reads) today', 'التحميل (قراءات) اليوم'], writes: ['Saves (writes) today', 'الحفظ (كتابات) اليوم'],
+  deletes: ['Deletes today', 'الحذف اليوم'], storage: ['Stored data (photos and records)', 'البيانات المخزنة (الصور والسجلات)'],
+  mail: ['E-mails sent today', 'الرسائل المرسلة اليوم'],
+};
+
+/** Every 30 minutes: e-mails the administrators when a free limit passes 25, 50, 75, 90 or 100 %. */
+function usageCheck() {
+  const day = Utilities.formatDate(new Date(), 'America/Los_Angeles', 'yyyy-MM-dd'); // the free quota resets at midnight Pacific
+  const used = getDoc_('usage/' + day) || {};
+  const props = PropertiesService.getScriptProperties();
+  const rows = [];
+  const crossed = [];
+  function check(key, value, limit, scope) {
+    const pct = Math.round(value / limit * 100);
+    const level = LEVELS.filter(function (l) { return pct >= l; }).pop() || 0;
+    const pkey = 'alert_' + key + '_' + scope;
+    const sent = Number(props.getProperty(pkey) || 0);
+    if (level > sent) { crossed.push(key); props.setProperty(pkey, String(level)); }
+    if (key === 'storage' && level < sent) props.setProperty(pkey, String(level)); // space was freed
+    rows.push({ key: key, value: value, limit: limit, pct: pct, isNew: level > sent });
+  }
+  Object.keys(FREE_DAILY).forEach(function (k) { check(k, Number(used[k] || 0), FREE_DAILY[k], day); });
+  check('storage', storageBytes_(), FREE_STORAGE, 'all');
+  check('mail', Math.max(0, MAIL_DAILY - MailApp.getRemainingDailyQuota()), MAIL_DAILY, day);
+  cleanAlertProps_(props, day);
+  if (!crossed.length) return rows;
+
+  const admins = queryAll_('users').map(function (d) { return decode_(d.fields || {}); })
+    .filter(function (u) { return u.active === true && u.role === 'admin' && u.email; })
+    .map(function (u) { return String(u.email).toLowerCase(); });
+  if (!admins.length || MailApp.getRemainingDailyQuota() < admins.length) return rows;
+  const top = rows.filter(function (r) { return r.isNew; }).sort(function (a, b) { return b.pct - a.pct; })[0];
+  const fmt = function (r) { return r.key === 'storage' ? (r.value / 1048576).toFixed(0) + ' MB / ' + (r.limit / 1048576) + ' MB' : r.value + ' / ' + r.limit; };
+  const colour = function (p) { return p >= 100 ? '#c62828' : p >= 90 ? '#d84315' : p >= 75 ? '#ef6c00' : '#1565d8'; };
+  const table = function (ar) {
+    return '<table cellpadding="6" style="border-collapse:collapse">' + rows.map(function (r) {
+      return '<tr><td style="color:#667085">' + esc_(LABELS[r.key][ar ? 1 : 0]) + '</td><td><b style="color:' + colour(r.pct) + '">' + r.pct + '%</b></td><td>' + esc_(fmt(r)) + '</td><td>' + (r.isNew ? '⚠' : '') + '</td></tr>';
+    }).join('') + '</table>';
+  };
+  const subject = 'KCP Cold Run · ' + LABELS[top.key][0] + ' ' + top.pct + '% / ' + LABELS[top.key][1] + ' ' + top.pct + '%';
+  const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#142036">'
+    + '<h2 style="color:#0b2a5b;margin:0 0 8px">Free plan usage alert</h2>'
+    + '<p>One or more free limits of the platform passed a new level. Daily limits reset at midnight Pacific time (about 10–11 am in Baghdad). At 100% the platform pauses that kind of operation until the reset; add a payment method (Settings → Plan &amp; billing) to avoid it.</p>'
+    + table(false)
+    + '<hr style="border:none;border-top:1px solid #e4e7ec;margin:16px 0">'
+    + '<div dir="rtl"><h2 style="color:#0b2a5b;margin:0 0 8px">تنبيه استخدام الخطة المجانية</h2>'
+    + '<p>تجاوز حدٌّ أو أكثر من الحدود المجانية للمنصة مستوى جديداً. تبدأ الحدود اليومية من جديد عند منتصف الليل بتوقيت المحيط الهادئ (نحو 10–11 صباحاً بتوقيت بغداد). عند 100% يتوقف هذا النوع من العمليات حتى بدء اليوم الجديد؛ أضف وسيلة دفع (الإعدادات ← الخطة والدفع) لتجنب ذلك.</p>'
+    + table(true) + '</div>'
+    + '<p><a href="' + APP_URL + '/settings" style="background:#1565d8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Open Settings / فتح الإعدادات</a></p></div>';
+  MailApp.sendEmail({ to: admins.join(','), subject: subject, htmlBody: html, body: subject + '\n' + APP_URL + '/settings', name: 'KCP Cold Run Readiness' });
+  return rows;
+}
+
+/** Firestore data size, estimated cheaply: photo/file sizes summed by an aggregation, plus about 3 KB per record. */
+function storageBytes_() {
+  function agg(collection, aggregations) {
+    const r = api_(FS + ':runAggregationQuery', { method: 'post', contentType: 'application/json', payload: JSON.stringify({
+      structuredAggregationQuery: { structuredQuery: { from: [{ collectionId: collection, allDescendants: true }] }, aggregations: aggregations } }) });
+    return ((r[0] || {}).result || {}).aggregateFields || {};
+  }
+  const a = agg('attachments', [{ alias: 'b', sum: { field: { fieldPath: 'size' } } }, { alias: 'n', count: {} }]);
+  let bytes = Number(val_(a.b || { integerValue: 0 }) || 0) + Number(val_(a.n || { integerValue: 0 }) || 0) * 1024;
+  ['inspections', 'audit', 'notifications', 'equipment', 'users', 'documents'].forEach(function (c) {
+    bytes += Number(val_(agg(c, [{ alias: 'n', count: {} }]).n || { integerValue: 0 }) || 0) * 3072;
+  });
+  return bytes;
+}
+
+function cleanAlertProps_(props, day) {
+  Object.keys(props.getProperties()).forEach(function (k) {
+    if (/^alert_(reads|writes|deletes|mail)_/.test(k) && k.slice(-10) !== day) props.deleteProperty(k);
+  });
 }
 
 /* ---------------- helpers ---------------- */

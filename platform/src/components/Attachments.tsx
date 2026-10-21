@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { getDocs, query, where, deleteDoc } from 'firebase/firestore';
+import { query, where } from 'firebase/firestore';
+import { getDocs, deleteDoc } from '../lib/fs';
 import { col, ref } from '../lib/db';
 import { loadAttachment, openDataUrl, saveAttachment } from '../lib/files';
 import { useI18n } from '../i18n/I18n';

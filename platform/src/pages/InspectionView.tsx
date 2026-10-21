@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { onSnapshot } from 'firebase/firestore';
+import { onSnapshot } from '../lib/fs';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';

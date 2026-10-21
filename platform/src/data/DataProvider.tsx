@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { limit, onSnapshot, orderBy, query, where, type Query } from 'firebase/firestore';
+import { limit, orderBy, query, where, type Query } from 'firebase/firestore';
+import { onSnapshot, startMeter } from '../lib/fs';
 import { col, ref } from '../lib/db';
 import { useUser } from '../auth/Auth';
 import { ensureShutdown } from '../lib/actions';
@@ -59,6 +60,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     window.addEventListener('online', on); window.addEventListener('offline', off);
     return () => { window.removeEventListener('online', on); window.removeEventListener('offline', off); };
   }, []);
+
+  useEffect(() => startMeter(), []);
 
   useEffect(() => onSnapshot(ref('config', 'settings'), s => {
     if (s.exists()) setSettings({ ...DEFAULT_SETTINGS, ...(s.data() as Partial<Settings>) });
