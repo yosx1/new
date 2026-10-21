@@ -4,12 +4,15 @@ import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { inMyPool, STATUS_TONE } from '../lib/rules';
-import { Card, Empty, Kpi, PageHead, Progress, Spinner, StatusBadge } from '../components/ui';
+import { Card, Empty, Kpi, Progress, Spinner, StatusBadge } from '../components/ui';
 import { Donut } from '../components/Charts';
 import { ShutdownCard } from '../components/ShutdownCard';
 import { TipsCard } from '../components/Tips';
 import { Icon } from '../components/Icon';
+import { PlantScene } from '../components/PlantScene';
 import { DISCIPLINES, type InspectionStatus } from '../types';
+
+const greet = () => { const h = new Date().getHours(); return h < 12 ? 'dash.morning' : h < 17 ? 'dash.afternoon' : 'dash.evening'; };
 
 export default function Dashboard() {
   const { t, b, fmtDate } = useI18n();
@@ -31,8 +34,17 @@ export default function Dashboard() {
 
   return (
     <>
-      <PageHead title={t('dash.title')} sub={`${b(data.settings.plantName)} · ${fmtDate(new Date())}`}
-        actions={<button className="btn primary" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>} />
+      <section className="page-head dash-hero">
+        <PlantScene variant="banner" />
+        <div className="grow dash-hero-text">
+          <span className="dash-hello">{t(greet(), { name: user.name.split(' ')[0] })}</span>
+          <h1>{t('dash.title')}</h1>
+          <p>{b(data.settings.plantName)} · <bdi>{fmtDate(new Date())}</bdi>{data.shutdown && <> · <bdi>{data.shutdown.name}</bdi></>}</p>
+        </div>
+        <div className="row gap wrap dash-hero-actions">
+          <button className="btn primary" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>
+        </div>
+      </section>
       <TipsCard />
       <ShutdownCard />
 

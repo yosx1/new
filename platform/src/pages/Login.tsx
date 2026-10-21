@@ -7,6 +7,7 @@ import { useI18n } from '../i18n/I18n';
 import { Field, Spinner, useFeedback, errMsg } from '../components/ui';
 import { Icon } from '../components/Icon';
 import { NetworkBackground } from '../components/NetworkBackground';
+import { PlantScene } from '../components/PlantScene';
 
 export function Login({ reason }: { reason?: 'inactive' | 'revoked' | 'noProfile' }) {
   const { t, lang, setLang } = useI18n();
@@ -70,6 +71,7 @@ export function Login({ reason }: { reason?: 'inactive' | 'revoked' | 'noProfile
     <div className="login">
       <div className="login-hero">
         <NetworkBackground variant="dark" />
+        <PlantScene variant="hero" />
         <img src="/icon.svg" alt="" width={72} height={72} />
         <h1>{t('app.name')}</h1>
         <p>{t('plant.default')} · {t('app.sub')}</p>

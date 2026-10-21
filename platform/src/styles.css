@@ -388,3 +388,40 @@ a.lrow:hover, button.lrow:hover { border-color: #c6d3e6; }
   .part-detail { padding-inline-start: 0; }
 }
 .btn.danger-text { color: var(--red); } .btn.danger-text:hover:not(:disabled) { background: var(--red-soft); }
+
+/* ---------- plant skyline (sign-in hero and dashboard banner) ---------- */
+.plant-scene { display: block; pointer-events: none; }
+.plant-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.plant-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(11,42,91,.15), rgba(11,42,91,.85)); }
+.login-hero > .plant-scene { position: absolute; inset: auto 0 0 0; width: 100%; height: auto; aspect-ratio: 10 / 3; z-index: 0; }
+.login-hero { justify-content: flex-start; padding-top: clamp(48px, 14vh, 140px); }
+.ps-steam circle { fill: rgba(222,233,255,.16); transform-box: fill-box; transform-origin: center; animation: ps-steam 10s ease-in-out infinite; }
+.ps-steam circle:nth-child(2) { animation-delay: -3.3s; } .ps-steam circle:nth-child(3) { animation-delay: -6.6s; }
+@keyframes ps-steam { 0% { transform: translate(-10px, 26px) scale(.55); opacity: 0; } 25% { opacity: 1; } 100% { transform: translate(46px, -34px) scale(1.7); opacity: 0; } }
+.ps-kiln-turn { animation: ps-turn 1.8s linear infinite; }
+@keyframes ps-turn { to { stroke-dashoffset: -25; } }
+.ps-flame { animation: ps-flame 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes ps-flame { 0%, 100% { opacity: .65; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.08); } }
+.ps-lights rect { animation: ps-twinkle 6s ease-in-out infinite; }
+.ps-lights rect:nth-child(3n) { animation-delay: -2s; } .ps-lights rect:nth-child(3n+1) { animation-delay: -4s; }
+@keyframes ps-twinkle { 0%, 100% { opacity: .95; } 50% { opacity: .45; } }
+.ps-beacon { animation: ps-beacon 2s steps(1, end) infinite; } .ps-beacon-2 { animation-delay: -1s; }
+@keyframes ps-beacon { 0%, 60% { opacity: 1; } 61%, 100% { opacity: .15; } }
+@media (prefers-reduced-motion: reduce) { .plant-scene * { animation: none !important; } }
+
+.dash-hero { position: relative; overflow: hidden; isolation: isolate; align-items: flex-end; min-height: 168px; padding: 22px 24px;
+  border-radius: var(--radius); color: #fff; background: linear-gradient(120deg, #0b2a5b 0%, #164a9a 55%, #1565d8 100%); box-shadow: var(--shadow); }
+.dash-hero > .plant-scene { position: absolute; inset: auto 0 0 auto; height: 112%; width: auto; aspect-ratio: 10 / 3; max-width: none; z-index: -1; opacity: .95;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 30%); mask-image: linear-gradient(90deg, transparent, #000 30%); }
+[dir="rtl"] .dash-hero > .plant-scene { inset: auto auto 0 0; transform: scaleX(-1); }
+.dash-hero h1 { color: #fff; margin: 2px 0 4px; }
+.dash-hero p { color: #c7d6f3; margin: 0; }
+.dash-hello { display: inline-block; font-size: 13px; color: #9ec0ff; letter-spacing: .02em; }
+.dash-hero .btn.primary { background: #fff; color: var(--navy); border-color: #fff; }
+.dash-hero .btn.primary:hover { background: #e7f0ff; }
+@media (max-width: 760px) {
+  .dash-hero { min-height: 150px; padding: 18px; flex-wrap: wrap; align-items: flex-start; }
+  .dash-hero > .plant-scene { height: 100%; opacity: .5; }
+  .login-hero { padding-bottom: calc(30vw + 12px); }
+}
+@media print { .plant-scene { display: none !important; } }

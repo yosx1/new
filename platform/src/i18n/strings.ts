@@ -341,6 +341,9 @@ export const STRINGS: Record<string, Entry> = {
   'setup.notConfigured': ['Firebase is not configured. Copy .env.example to .env.local and fill in your project keys.', 'لم يتم إعداد Firebase. انسخ ‎.env.example إلى ‎.env.local وأدخل مفاتيح المشروع.'],
 
   // dashboard
+  'dash.morning': ['Good morning, {name}', 'صباح الخير، {name}'],
+  'dash.afternoon': ['Good afternoon, {name}', 'مساء الخير، {name}'],
+  'dash.evening': ['Good evening, {name}', 'مساء الخير، {name}'],
   'dash.title': ['Cold Run Readiness', 'جاهزية التشغيل البارد'],
   'dash.active': ['Active inspections', 'الفحوصات النشطة'],
   'dash.awaitingExec': ['Awaiting execution', 'بانتظار التنفيذ'],
