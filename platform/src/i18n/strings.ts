@@ -606,7 +606,7 @@ export const STRINGS: Record<string, Entry> = {
   'set.connected': ['Connected', 'متصل'],
   'set.notConnected': ['Not connected', 'غير متصل'],
   'set.test': ['Test', 'اختبار'],
-  'set.relayOk': ['The service answered correctly', 'استجابت الخدمة بشكل صحيح'],
+  'set.relayOk': ['Test e-mail sent to {email} — check your inbox (and Spam). {n} people receive approval e-mails.', 'أُرسل بريد اختبار إلى {email} — تحقق من البريد الوارد (والرسائل غير المرغوبة). يستلم {n} أشخاص رسائل الاعتماد.'],
   'set.relayFail': ['The service did not answer correctly', 'لم تستجب الخدمة بشكل صحيح'],
   'rep.emailSent': ['Approved — management notified and the Excel results e-mailed', 'تمت الموافقة — أُبلغت الإدارة وأُرسلت النتائج بملف Excel عبر البريد'],
   'rep.emailFailed': ['Approved and management notified, but the e-mail could not be sent. Export the Excel file and send it manually.', 'تمت الموافقة وأُبلغت الإدارة، لكن تعذّر إرسال البريد. صدّر ملف Excel وأرسله يدوياً.'],

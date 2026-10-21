@@ -38,7 +38,19 @@ function doPost(e) {
     const caller = verifyCaller_(req.idToken);
     if (req.test) {
       if (caller.role !== 'admin') return json_({ ok: false, error: 'admin only' });
-      return json_({ ok: true, recipients: recipients_(getDoc_('config/settings') || {}).length });
+      // A real e-mail to the administrator who pressed Test (at most 10 a day).
+      const tp = PropertiesService.getScriptProperties();
+      const day = 'test_' + Utilities.formatDate(new Date(), 'UTC', 'yyyyMMdd');
+      const n = Number(tp.getProperty(day) || 0);
+      if (n >= 10) return json_({ ok: false, error: 'too many tests today' });
+      const list = recipients_(getDoc_('config/settings') || {});
+      const ar = req.lang !== 'en';
+      MailApp.sendEmail({ to: caller.email, name: 'KCP Cold Run Readiness',
+        subject: ar ? 'اختبار خدمة البريد — KCP Cold Run' : 'E-mail service test — KCP Cold Run',
+        body: (ar ? 'خدمة البريد تعمل. عند اعتماد أي فحص يُرسل ملف Excel إلى:\n' : 'The e-mail service works. When an inspection is approved, the Excel file is sent to:\n')
+          + (list.length ? list.join('\n') : (ar ? '(لا يوجد مستلمون)' : '(no recipients)')) + '\n\n' + APP_URL });
+      tp.setProperty(day, String(n + 1));
+      return json_({ ok: true, sentTo: caller.email, recipients: list.length, quota: MailApp.getRemainingDailyQuota() });
     }
     if (['admin', 'manager'].indexOf(caller.role) < 0) return json_({ ok: false, error: 'not allowed' });
     if (!/^[\w-]{1,128}$/.test(req.inspectionId || '')) return json_({ ok: false, error: 'bad inspection' });

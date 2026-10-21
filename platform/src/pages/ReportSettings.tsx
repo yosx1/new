@@ -14,7 +14,7 @@ const parseEmails = (s: string) => [...new Set(s.split(/[\s,;]+/).map(x => x.tri
 
 /** Administrator settings: who receives completion reports, extra e-mail addresses, and the weekly backup. */
 export function ReportSettings() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const user = useUser();
   const data = useData();
   const { toast } = useFeedback();
@@ -47,9 +47,9 @@ export function ReportSettings() {
     setTesting(true);
     try {
       const res = await fetch(relay.trim(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ idToken: await auth.currentUser!.getIdToken(), test: true }) });
+        body: JSON.stringify({ idToken: await auth.currentUser!.getIdToken(), test: true, lang }) });
       const out = await res.json();
-      toast(out.ok ? t('set.relayOk') : `${t('set.relayFail')}: ${out.error ?? res.status}`, out.ok ? 'ok' : 'err');
+      toast(out.ok ? t('set.relayOk', { email: out.sentTo ?? '', n: out.recipients ?? 0 }) : `${t('set.relayFail')}: ${out.error ?? res.status}`, out.ok ? 'ok' : 'err');
     } catch { toast(t('set.relayFail'), 'err'); } finally { setTesting(false); }
   };
 
