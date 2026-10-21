@@ -84,7 +84,24 @@ export default function SettingsPage() {
       {admin && <ShutdownList />}
       <RolesMatrix />
       {admin && <ReportSettings />}
+      {admin && <PlanBilling />}
     </>
+  );
+}
+
+/** Administrator: links to the Firebase console to see usage or add a payment method (Blaze plan). */
+function PlanBilling() {
+  const { t } = useI18n();
+  const console = `https://console.firebase.google.com/project/${import.meta.env.VITE_FIREBASE_PROJECT_ID}`;
+  return (
+    <Card title={t('bill.title')} className="mt">
+      <p className="muted">{t('bill.desc')}</p>
+      <div className="row wrap gap mt">
+        <a className="btn primary" href={`${console}/usage/details`} target="_blank" rel="noopener noreferrer"><Icon name="lock" size={16} />{t('bill.upgrade')}</a>
+        <a className="btn ghost" href={`${console}/usage`} target="_blank" rel="noopener noreferrer"><Icon name="chart" size={16} />{t('bill.usage')}</a>
+      </div>
+      <p className="small muted mt">{t('bill.note')}</p>
+    </Card>
   );
 }
 
