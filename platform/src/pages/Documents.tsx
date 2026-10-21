@@ -5,7 +5,7 @@ import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { audit, col, ref } from '../lib/db';
-import { can } from '../lib/rules';
+import { isLead } from '../lib/rules';
 import { loadAttachment, openDataUrl, saveAttachment } from '../lib/files';
 import { Badge, Card, Empty, Field, Modal, PageHead, errMsg, useFeedback } from '../components/ui';
 import { Icon } from '../components/Icon';
@@ -22,9 +22,9 @@ export default function Documents() {
   const [rows, setRows] = useState<LibraryDoc[]>([]);
   const [q, setQ] = useState(params.get('q') ?? '');
   const [cat, setCat] = useState('');
-  const [form, setForm] = useState<null | { en: string; ar: string; category: string; url: string; file: File | null; departmentId: string; equipmentId: string; templateId: string; visibleTo: (Role | 'all')[] }>(null);
+  const [form, setForm] = useState<null | { en: string; ar: string; category: string; url: string; file: File | null; departmentId: string; equipmentId: string; visibleTo: (Role | 'all')[] }>(null);
   const [busy, setBusy] = useState(false);
-  const canAdd = can.createInspection(user);
+  const canAdd = isLead(user);
 
   useEffect(() => {
     // Non-admins can only query documents visible to them (enforced by security rules too).
@@ -46,7 +46,7 @@ export default function Documents() {
     try {
       const r = await addDoc(col('documents'), {
         title: { en: form.en, ar: form.ar }, category: form.category, url: form.url.trim(), attachmentId: null,
-        departmentId: form.departmentId || null, equipmentId: form.equipmentId || null, templateId: form.templateId || null,
+        departmentId: form.departmentId || null, equipmentId: form.equipmentId || null,
         visibleTo: form.visibleTo.length ? form.visibleTo : ['all'], createdAt: serverTimestamp(), createdBy: user.id,
       });
       if (form.file) {
@@ -64,7 +64,7 @@ export default function Documents() {
 
   return (
     <>
-      <PageHead title={t('doc.title')} actions={canAdd && <button className="btn primary" onClick={() => setForm({ en: '', ar: '', category: 'procedure', url: '', file: null, departmentId: '', equipmentId: '', templateId: '', visibleTo: ['all'] })}><Icon name="plus" />{t('doc.add')}</button>} />
+      <PageHead title={t('doc.title')} actions={canAdd && <button className="btn primary" onClick={() => setForm({ en: '', ar: '', category: 'procedure', url: '', file: null, departmentId: '', equipmentId: '', visibleTo: ['all'] })}><Icon name="plus" />{t('doc.add')}</button>} />
       <div className="filters">
         <div className="search" style={{ gridColumn: 'span 2' }}><Icon name="search" size={18} /><input type="search" placeholder={t('c.search')} value={q} onChange={e => setQ(e.target.value)} /></div>
         <select value={cat} onChange={e => setCat(e.target.value)}><option value="">{t('c.category')}: {t('c.all')}</option>{CATS.map(c => <option key={c} value={c}>{t('doc.cat.' + c)}</option>)}</select>
@@ -78,7 +78,7 @@ export default function Documents() {
                 <button className="grow" style={{ border: 0, background: 'none', textAlign: 'start', padding: 0 }} onClick={() => open(d)} disabled={!d.url && !d.attachmentId}>
                   <b>{b(d.title)}</b>
                   <div className="meta">{t('doc.cat.' + d.category)}
-                    {d.departmentId && ` · ${b(data.dept(d.departmentId)?.name)}`}{d.equipmentId && ` · ${data.eq(d.equipmentId)?.tag ?? ''}`}{d.templateId && ` · ${d.templateId}`}
+                    {d.departmentId && ` · ${b(data.dept(d.departmentId)?.name)}`}{d.equipmentId && ` · ${data.eq(d.equipmentId)?.name ?? ''}`}
                     {!d.url && !d.attachmentId && ` · ${t('doc.needFileOrUrl')}`}</div>
                 </button>
                 {!d.visibleTo.includes('all') && <Badge tone="purple" icon="lock">{d.visibleTo.length}</Badge>}
@@ -97,10 +97,9 @@ export default function Documents() {
           <Field label={t('c.category')}><select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })}>{CATS.map(c => <option key={c} value={c}>{t('doc.cat.' + c)}</option>)}</select></Field>
           <Field label={t('c.link')} hint={t('set.free')}><input type="url" className="ltr" value={form.url} onChange={e => setForm({ ...form, url: e.target.value })} placeholder="https://" /></Field>
           <Field label={t('c.addFile')} hint="≤ 650 KB"><input type="file" accept="application/pdf,image/*" onChange={e => setForm({ ...form, file: e.target.files?.[0] ?? null })} /></Field>
-          <div className="grid g3">
+          <div className="grid g2">
             <Field label={t('c.department')}><select value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}><option value="">—</option>{data.departments.map(d => <option key={d.id} value={d.id}>{b(d.name)}</option>)}</select></Field>
-            <Field label={t('c.equipment')}><select value={form.equipmentId} onChange={e => setForm({ ...form, equipmentId: e.target.value })}><option value="">—</option>{data.equipment.map(e => <option key={e.id} value={e.id}>{e.tag}</option>)}</select></Field>
-            <Field label={t('insp.template')}><select value={form.templateId} onChange={e => setForm({ ...form, templateId: e.target.value })}><option value="">—</option>{data.templates.map(x => <option key={x.id} value={x.id}>{x.code}</option>)}</select></Field>
+            <Field label={t('c.equipment')}><select value={form.equipmentId} onChange={e => setForm({ ...form, equipmentId: e.target.value })}><option value="">—</option>{data.equipment.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></Field>
           </div>
           <Field label={t('doc.visible')}>
             <div className="chips">

@@ -63,7 +63,7 @@ async function claimInvite(fbUser: User) {
   const i = inv.data();
   const b = writeBatch(db);
   b.set(ref('users', fbUser.uid), {
-    name: i.name || fbUser.displayName || email, email, role: i.role, departmentId: i.departmentId ?? null,
+    name: i.name || fbUser.displayName || email, email, role: i.role, discipline: i.discipline ?? null, departmentId: i.departmentId ?? null,
     phone: i.phone ?? '', active: true, lang: 'ar', createdAt: serverTimestamp(), createdBy: i.invitedBy,
   });
   b.delete(inv.ref);

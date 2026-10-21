@@ -2,6 +2,7 @@ rules_version = '2';
 
 // Cold Run Readiness – Karbala Cement Plant.
 // The Spark (free) plan has no Cloud Functions, so every permission and workflow guard lives here.
+// Roles: admin, manager (Cold Run Test Manager), member (team member with a discipline and department).
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -12,11 +13,11 @@ service cloud.firestore {
     function active() { return signedIn() && exists(userPath(request.auth.uid)) && me().active == true; }
     function role() { return me().role; }
     function hasRole(roles) { return active() && role() in roles; }
-    function staff() { return active() && role() != 'viewer'; }
-    function leads() { return ['supervisor', 'manager', 'admin']; }
+    function staff() { return active(); }
+    function leads() { return ['manager', 'admin']; }
+    function roles() { return ['admin', 'manager', 'member']; }
     function disciplines() { return ['mechanical', 'electrical', 'instrumentation', 'production']; }
     function setupPath() { return /databases/$(database)/documents/config/setup; }
-    function settings() { return get(/databases/$(database)/documents/config/settings).data; }
     function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
     function unchanged(keys) { return !changed().hasAny(keys); }
 
@@ -32,11 +33,28 @@ service cloud.firestore {
       allow read: if active();
       allow write: if hasRole(['admin']);
     }
+    // The current yearly shutdown.
+    match /config/shutdown {
+      allow read: if active();
+      allow write: if hasRole(leads()) && request.resource.data.currentId is string
+        && existsAfter(/databases/$(database)/documents/shutdowns/$(request.resource.data.currentId));
+    }
+    match /shutdowns/{id} {
+      allow read: if active();
+      allow create: if hasRole(leads()) && request.resource.data.status == 'open';
+      allow update: if hasRole(leads()) && resource.data.status == 'open' && request.resource.data.status == 'closed'
+        && request.resource.data.closedBy == request.auth.uid
+        && changed().hasOnly(['status', 'closedAt', 'closedBy', 'closedByName', 'archived']);
+      allow delete: if false;
+    }
 
     // ---------- users & devices ----------
+    function validProfile(d) {
+      return d.role in roles() && (d.role != 'member' || d.discipline in disciplines());
+    }
     match /users/{uid} {
       allow read: if signedIn() && (uid == request.auth.uid || active());
-      allow create: if hasRole(['admin'])
+      allow create: if (hasRole(['admin']) && validProfile(request.resource.data))
         || (uid == request.auth.uid && !exists(setupPath())
             && getAfter(setupPath()).data.adminUid == request.auth.uid
             && request.resource.data.role == 'admin' && request.resource.data.active == true)
@@ -48,11 +66,11 @@ service cloud.firestore {
         let i = get(inv).data;
         let d = request.resource.data;
         return uid == request.auth.uid && verifiedEmail() && exists(inv) && !existsAfter(inv)
-          && d.keys().hasOnly(['name', 'email', 'role', 'departmentId', 'phone', 'active', 'lang', 'createdAt', 'createdBy'])
-          && d.email.lower() == myEmail() && d.role == i.role && d.departmentId == i.departmentId
+          && d.keys().hasOnly(['name', 'email', 'role', 'discipline', 'departmentId', 'phone', 'active', 'lang', 'createdAt', 'createdBy'])
+          && d.email.lower() == myEmail() && d.role == i.role && d.discipline == i.discipline && d.departmentId == i.departmentId
           && d.active == true && d.createdBy == i.invitedBy && d.createdAt == request.time;
       }
-      allow update: if hasRole(['admin'])
+      allow update: if (hasRole(['admin']) && validProfile(request.resource.data))
         || (uid == request.auth.uid && active() && changed().hasOnly(['lang', 'phone', 'name']));
       allow delete: if false;
     }
@@ -64,9 +82,9 @@ service cloud.firestore {
     match /invites/{email} {
       allow read: if hasRole(['admin']) || (verifiedEmail() && myEmail() == email);
       allow create, update: if hasRole(['admin'])
-        && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'departmentId', 'phone', 'invitedBy', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['email', 'name', 'role', 'discipline', 'departmentId', 'phone', 'invitedBy', 'createdAt'])
         && request.resource.data.email == email && email.lower() == email
-        && request.resource.data.role in ['admin', 'supervisor', 'manager', 'mechanical', 'electrical', 'instrumentation', 'production', 'viewer']
+        && validProfile(request.resource.data)
         && request.resource.data.invitedBy == request.auth.uid;
       allow delete: if hasRole(['admin'])
         || (verifiedEmail() && myEmail() == email && existsAfter(userPath(request.auth.uid)));
@@ -83,16 +101,60 @@ service cloud.firestore {
 
     // ---------- master data ----------
     match /departments/{id} { allow read: if active(); allow write: if hasRole(['admin']); }
-    match /equipment/{id}   { allow read: if active(); allow write: if hasRole(['admin']); }
-
-    match /templates/{id} {
+    match /equipment/{id} {
       allow read: if active();
-      allow write: if hasRole(['admin']);
-      match /versions/{v} {
-        allow read: if active();
-        allow create: if hasRole(['admin']) && request.resource.data.createdBy == request.auth.uid;
-        allow update, delete: if false; // published versions are immutable
+      allow create, update: if hasRole(leads())
+        && request.resource.data.keys().hasOnly(['name', 'departmentId', 'parts', 'active', 'updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
+        && exists(/databases/$(database)/documents/departments/$(request.resource.data.departmentId))
+        && request.resource.data.parts is map && request.resource.data.parts.keys().hasOnly(disciplines())
+        && request.resource.data.active is bool;
+      allow delete: if false;
+    }
+
+    // ---------- inspections ----------
+    // One per equipment + discipline + shutdown (the id says so). Team members work on their own
+    // discipline and department; only the Cold Run Test Manager or an administrator approves and archives.
+    match /inspections/{id} {
+      function d() { return request.resource.data; }
+      function team(x) {
+        return hasRole(leads()) || (role() == 'member' && me().discipline == x.discipline
+          && (me().departmentId == null || me().departmentId == x.departmentId));
       }
+      function equipment() { return get(/databases/$(database)/documents/equipment/$(d().equipmentId)).data; }
+      function work() {
+        return resource.data.status in ['pool', 'corrective'] && team(resource.data)
+          && d().status in ['pool', 'corrective', 'waiting_approval']
+          && unchanged(['approval', 'archivedAt'])
+          && (d().status == 'pool' || d().summary.pending == 0)
+          && (d().status != 'waiting_approval' || d().summary.notok == d().summary.fixed);
+      }
+      function approve() {
+        return hasRole(leads()) && resource.data.status == 'waiting_approval' && d().status == 'approved'
+          && d().approval.by == request.auth.uid && changed().hasOnly(['status', 'approval', 'updatedAt', 'docVersion']);
+      }
+      function sendBack() {
+        return hasRole(leads()) && resource.data.status in ['waiting_approval', 'approved'] && d().status == 'pool'
+          && d().rejection.by == request.auth.uid && d().rejection.reason.size() >= 3
+          && changed().hasOnly(['status', 'approval', 'rejection', 'updatedAt', 'docVersion']);
+      }
+      function archive() {
+        return hasRole(leads()) && resource.data.status == 'approved' && d().status == 'archived'
+          && changed().hasOnly(['status', 'archivedAt', 'updatedAt', 'docVersion']);
+      }
+
+      allow read: if active();
+      allow create: if active() && team(d())
+        && id == d().shutdownId + '_' + d().equipmentId + '_' + d().discipline
+        && d().shutdownId == get(/databases/$(database)/documents/config/shutdown).data.currentId
+        && equipment().departmentId == d().departmentId && equipment().name == d().title
+        && d().discipline in disciplines()
+        && d().status == 'pool' && d().docVersion == 1 && d().createdBy == request.auth.uid
+        && d().approval == null && d().results.size() == 0;
+      allow update: if active() && d().docVersion == resource.data.docVersion + 1
+        && unchanged(['code', 'shutdownId', 'shutdownName', 'title', 'equipmentId', 'departmentId', 'discipline', 'parts', 'createdBy', 'createdByName', 'createdAt'])
+        && (work() || approve() || sendBack() || archive());
+      allow delete: if hasRole(['admin']) && resource.data.status == 'pool';
     }
 
     match /documents/{id} {
@@ -105,121 +167,6 @@ service cloud.firestore {
       allow read: if staff();
       allow write: if staff() && request.resource.data.value ==
         (resource == null ? 1 : resource.data.value + 1);
-    }
-
-    // ---------- inspections ----------
-    match /inspections/{id} {
-      function approvalKeyAllowed(k) {
-        return k == role()
-          || (k == 'final' && hasRole(leads()))
-          || (k in disciplines() && hasRole(['manager', 'admin']));
-      }
-      function approvalKeyOk(keys, k) {
-        let next = request.resource.data.approvals;
-        return !(k in keys) || (approvalKeyAllowed(k) && (!(k in next) || next[k].by == request.auth.uid));
-      }
-      function approvalsOk() {
-        let keys = request.resource.data.approvals.diff(resource.data.approvals).affectedKeys();
-        return keys.size() == 0
-          // leads may clear all approvals when rejecting / reopening
-          || (hasRole(leads()) && request.resource.data.approvals.size() == 0)
-          || (keys.size() == 1 && keys.hasOnly(['mechanical', 'electrical', 'instrumentation', 'production', 'final'])
-              && approvalKeyOk(keys, 'mechanical') && approvalKeyOk(keys, 'electrical')
-              && approvalKeyOk(keys, 'instrumentation') && approvalKeyOk(keys, 'production')
-              && approvalKeyOk(keys, 'final'));
-      }
-      function overrideOk() {
-        return unchanged(['override'])
-          || (role() in settings().overrideRoles
-              && request.resource.data.override.by == request.auth.uid
-              && request.resource.data.override.justification.size() >= 10);
-      }
-      function statusOk() {
-        let s = request.resource.data.summary;
-        let next = request.resource.data.status;
-        let prev = resource.data.status;
-        // Final approval: only leads, only with their own final sign-off, never with open critical
-        // items unless a documented override exists.
-        return (next != 'approved' || prev == 'approved'
-                || (hasRole(leads())
-                    && request.resource.data.approvals.final.decision == 'approved'
-                    && request.resource.data.approvals.final.by == request.auth.uid
-                    && s.mandatoryPending == 0 && s.pending == 0
-                    && ((s.criticalFail == 0 && s.openCritical == 0) || request.resource.data.override != null)))
-          && (prev != 'approved' || next == 'approved' || hasRole(leads()));
-      }
-      function infoFields() {
-        return ['title', 'workOrder', 'remarks', 'shift', 'supervisorUid', 'productionEngUid',
-                'maintenanceEngUid', 'assignedUids', 'inspectionDate', 'maintenanceCompletedAt', 'maintenanceType'];
-      }
-
-      allow read: if active();
-      allow create: if hasRole(leads())
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status in ['draft', 'maintenance_completed']
-        && request.resource.data.approvals.size() == 0
-        && request.resource.data.override == null
-        && request.resource.data.docVersion == 1;
-      allow update: if staff()
-        && request.resource.data.docVersion == resource.data.docVersion + 1
-        && unchanged(['code', 'createdBy', 'createdAt', 'checklist', 'templateId', 'templateVersion',
-                      'requiredApprovals', 'equipmentId', 'departmentId'])
-        && (hasRole(leads()) || !changed().hasAny(infoFields()))
-        && approvalsOk() && overrideOk() && statusOk();
-      allow delete: if hasRole(['admin']) && resource.data.status == 'draft';
-
-      match /results/{itemId} {
-        function inspection() { return get(/databases/$(database)/documents/inspections/$(id)).data; }
-        function mayExecute() {
-          return request.resource.data.discipline == role() || hasRole(['supervisor', 'admin']);
-        }
-        allow read: if active();
-        allow create: if staff() && mayExecute() && inspection().status != 'approved'
-          && request.resource.data.inspectorUid == request.auth.uid
-          && request.resource.data.rev == 1;
-        // rev must advance by exactly one: an offline edit based on an older version is rejected
-        // instead of silently overwriting a colleague's result.
-        allow update: if staff() && inspection().status != 'approved'
-          && request.resource.data.rev == resource.data.rev + 1
-          && request.resource.data.discipline == resource.data.discipline
-          && ((mayExecute() && request.resource.data.inspectorUid == request.auth.uid)
-              || (hasRole(leads()) && changed().hasOnly(['supervisorComment', 'rev', 'supervisorUid'])));
-        allow delete: if false;
-      }
-    }
-
-    // ---------- defects & corrective actions ----------
-    match /defects/{id} {
-      function lead() { return hasRole(leads()); }
-      function inPool() { return role() == resource.data.pool; }
-      function closeOk() {
-        let v = request.resource.data.verification;
-        return lead()
-          && resource.data.status in ['repair_completed', 'awaiting_verification']
-          && v.result == 'pass' && v.by == request.auth.uid
-          && resource.data.repair != null && resource.data.repair.by != request.auth.uid;
-      }
-      function workOk() {
-        return (inPool() || lead())
-          && (unchanged(['verification']) || (lead() && request.resource.data.verification.by == request.auth.uid))
-          && (unchanged(['assignedUid', 'assignedName']) || lead()
-              || request.resource.data.assignedUid == request.auth.uid
-              || (request.resource.data.assignedUid == null && resource.data.assignedUid == request.auth.uid))
-          && (unchanged(['pool', 'severity', 'targetDate']) || lead())
-          && (unchanged(['repair']) || request.resource.data.repair == null
-              || request.resource.data.repair.by == request.auth.uid);
-      }
-      allow read: if active();
-      allow create: if staff()
-        && request.resource.data.reportedBy == request.auth.uid
-        && request.resource.data.status in ['open', 'assigned']
-        && request.resource.data.verification == null
-        && request.resource.data.repair == null;
-      allow update: if staff() && unchanged(['code', 'inspectionId', 'reportedBy', 'reportedAt', 'equipmentId'])
-        && (request.resource.data.status == 'closed' && resource.data.status != 'closed' ? closeOk()
-            : resource.data.status == 'closed' ? lead()
-            : workOk());
-      allow delete: if false;
     }
 
     // ---------- files (stored in Firestore on the free plan) ----------
@@ -252,7 +199,7 @@ service cloud.firestore {
     }
 
     match /audit/{id} {
-      allow read: if hasRole(['admin', 'manager', 'supervisor']);
+      allow read: if hasRole(['admin', 'manager']);
       allow create: if active() && request.resource.data.uid == request.auth.uid
         && request.resource.data.at == request.time;
       allow update, delete: if false;

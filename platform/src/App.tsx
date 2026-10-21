@@ -16,12 +16,8 @@ const LOADERS = {
   NewInspection: () => import('./pages/NewInspection'),
   InspectionView: () => import('./pages/InspectionView'),
   InspectionPrint: () => import('./pages/InspectionPrint'),
-  Defects: () => import('./pages/Defects'),
-  DefectView: () => import('./pages/DefectView'),
   EquipmentPage: () => import('./pages/EquipmentPage'),
   EquipmentHistory: () => import('./pages/EquipmentHistory'),
-  Templates: () => import('./pages/Templates'),
-  TemplateEditor: () => import('./pages/TemplateEditor'),
   Users: () => import('./pages/Users'),
   Devices: () => import('./pages/Devices'),
   Documents: () => import('./pages/Documents'),
@@ -36,12 +32,8 @@ const Inspections = lazy(LOADERS.Inspections);
 const NewInspection = lazy(LOADERS.NewInspection);
 const InspectionView = lazy(LOADERS.InspectionView);
 const InspectionPrint = lazy(LOADERS.InspectionPrint);
-const Defects = lazy(LOADERS.Defects);
-const DefectView = lazy(LOADERS.DefectView);
 const EquipmentPage = lazy(LOADERS.EquipmentPage);
 const EquipmentHistory = lazy(LOADERS.EquipmentHistory);
-const Templates = lazy(LOADERS.Templates);
-const TemplateEditor = lazy(LOADERS.TemplateEditor);
 const Users = lazy(LOADERS.Users);
 const Devices = lazy(LOADERS.Devices);
 const Documents = lazy(LOADERS.Documents);
@@ -53,10 +45,6 @@ const Help = lazy(LOADERS.Help);
 function AdminOnly({ children }: { children: ReactNode }) {
   const u = useUser();
   return can.manageSystem(u) ? <>{children}</> : <Navigate to="/" replace />;
-}
-function LeadsOnly({ children }: { children: ReactNode }) {
-  const u = useUser();
-  return can.createInspection(u) ? <>{children}</> : <Navigate to="/" replace />;
 }
 
 function Preload() {
@@ -81,14 +69,10 @@ export default function App() {
             <Route index element={<Dashboard />} />
             <Route path="tasks" element={<Tasks />} />
             <Route path="inspections" element={<Inspections />} />
-            <Route path="inspections/new" element={<LeadsOnly><NewInspection /></LeadsOnly>} />
+            <Route path="inspections/new" element={<NewInspection />} />
             <Route path="inspections/:id" element={<InspectionView />} />
-            <Route path="defects" element={<Defects />} />
-            <Route path="defects/:id" element={<DefectView />} />
             <Route path="equipment" element={<EquipmentPage />} />
             <Route path="equipment/:id" element={<EquipmentHistory />} />
-            <Route path="templates" element={<AdminOnly><Templates /></AdminOnly>} />
-            <Route path="templates/:id" element={<AdminOnly><TemplateEditor /></AdminOnly>} />
             <Route path="users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="devices" element={<AdminOnly><Devices /></AdminOnly>} />
             <Route path="documents" element={<Documents />} />

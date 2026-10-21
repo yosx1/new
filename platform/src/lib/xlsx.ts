@@ -48,6 +48,7 @@ const STYLES = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <borders count="2"><border/><border><left style="thin"><color rgb="FFE2E7EF"/></left><right style="thin"><color rgb="FFE2E7EF"/></right><top style="thin"><color rgb="FFE2E7EF"/></top><bottom style="thin"><color rgb="FFE2E7EF"/></bottom></border></borders>
 <cellStyleXfs count="1"><xf/></cellStyleXfs>
 <cellXfs count="5"><xf/><xf fontId="1" fillId="2" borderId="1" applyFont="1" applyFill="1" applyBorder="1"><alignment vertical="center" wrapText="1"/></xf><xf borderId="1" applyBorder="1"><alignment vertical="top" wrapText="1"/></xf><xf fontId="2" applyFont="1"/><xf fontId="3" applyFont="1"/></cellXfs>
+<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>
 </styleSheet>`;
 
 export function buildXlsx(sheets: Sheet[], rtl = false): Uint8Array {

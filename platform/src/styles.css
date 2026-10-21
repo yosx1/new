@@ -364,3 +364,26 @@ a.lrow:hover, button.lrow:hover { border-color: #c6d3e6; }
 /* In-page loading: no layout jump, and nothing is shown at all for quick (cached) loads. */
 .content .center-screen { min-height: 45vh; animation: appear-late .6s steps(1, end) both; }
 @keyframes appear-late { 0% { visibility: hidden; } 40% { visibility: visible; } }
+
+/* ---------- cold run: parts, action bar, shutdown ---------- */
+.mt0 { margin: 6px 0 0; } .mt-xs { margin-top: 6px; }
+.tone-text-red { color: var(--red); } .tone-text-purple { color: var(--purple); }
+.tab-n { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; margin-inline-start: 4px; border-radius: 99px; background: var(--gray-soft); color: var(--text); font-size: 12px; }
+.tabs button.on .tab-n { background: var(--primary-soft); color: var(--primary-dark); }
+.chip b { margin-inline-start: 4px; font-weight: 700; }
+.shutdown-card .card-head h3 { display: flex; align-items: center; gap: 8px; }
+.part-row { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; }
+.part-row.bad { border-color: #f3b4b0; background: #fffafa; }
+.part-n { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: var(--gray-soft); color: var(--muted); font-weight: 700; font-size: 13px; flex-shrink: 0; }
+.part-row b { font-weight: 600; } .part-row .meta { font-size: 12.5px; color: var(--muted); }
+.part-detail { margin: 10px 0 2px; padding-inline-start: 40px; font-size: 14px; }
+.part-detail p { margin: 0 0 6px; }
+.qbtns { display: flex; gap: 6px; flex-shrink: 0; }
+.part-preview { margin: 0; padding-inline-start: 22px; columns: 2; column-gap: 32px; line-height: 1.9; }
+.action-bar { position: sticky; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px -20px -20px; padding: 12px 20px; background: rgba(255,255,255,.96); backdrop-filter: blur(6px); border-top: 1px solid var(--line); }
+.action-bar:empty { display: none; }
+@media (max-width: 960px) {
+  .action-bar { bottom: calc(64px + env(safe-area-inset-bottom)); margin: 14px -14px -14px; padding: 10px 14px; }
+  .part-preview { columns: 1; }
+  .part-detail { padding-inline-start: 0; }
+}

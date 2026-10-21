@@ -1,155 +1,86 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { limit, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
-import { col } from '../lib/db';
-import { ACTIVE_STATUSES, can, completionRate, departmentReadiness, isOverdue, OPEN_DEFECT, poolsForUser, STATUS_TONE } from '../lib/rules';
-import { filterDefects, filterInspections } from '../lib/filtering';
-import { Card, DefectBadge, Empty, Kpi, PageHead, Progress, SeverityBadge, Spinner, StatusBadge } from '../components/ui';
+import { inMyPool, STATUS_TONE } from '../lib/rules';
+import { Card, Empty, Kpi, PageHead, Progress, Spinner, StatusBadge } from '../components/ui';
 import { Donut } from '../components/Charts';
-import { EMPTY_FILTERS, Filters, type FilterState } from '../components/Filters';
-import { Tip, TipsCard } from '../components/Tips';
+import { ShutdownCard } from '../components/ShutdownCard';
+import { TipsCard } from '../components/Tips';
 import { Icon } from '../components/Icon';
-import type { AuditEvent, InspectionStatus } from '../types';
-import { addDays, today } from '../lib/db';
+import { DISCIPLINES, type InspectionStatus } from '../types';
 
 export default function Dashboard() {
   const { t, b, fmtDate } = useI18n();
   const user = useUser();
   const data = useData();
   const nav = useNavigate();
-  const [f, setF] = useState<FilterState>(EMPTY_FILTERS);
-  const [activity, setActivity] = useState<AuditEvent[]>([]);
-
-  useEffect(() => {
-    if (!can.seeAudit(user)) return;
-    return onSnapshot(query(col('audit'), orderBy('at', 'desc'), limit(10)),
-      s => setActivity(s.docs.map(d => ({ id: d.id, ...d.data() }) as AuditEvent)), () => {});
-  }, [user]);
-
-  const insp = useMemo(() => filterInspections(data.inspections, f), [data.inspections, f]);
-  const defs = useMemo(() => filterDefects(data.defects, { ...f, status: '' }), [data.defects, f]);
-  const open = defs.filter(OPEN_DEFECT);
-  const by = (s: InspectionStatus[]) => insp.filter(i => s.includes(i.status)).length;
-  const myPools = poolsForUser(user);
-  const mine = data.inspections.filter(i => i.pools?.some(p => myPools.includes(p))).length
-    + data.defects.filter(d => OPEN_DEFECT(d) && (d.assignedUid === user.id || (d.pool === user.role && !d.assignedUid))).length;
-  const soon = addDays(today(), 3);
-  const followUps = open.filter(d => d.targetDate && d.targetDate <= soon).sort((a, b2) => a.targetDate.localeCompare(b2.targetDate));
+  const sdId = data.shutdown?.id;
+  const current = useMemo(() => data.inspections.filter(i => i.shutdownId === sdId), [data.inspections, sdId]);
 
   if (!data.loaded) return <div className="center-screen"><Spinner /></div>;
 
-  const go = (status?: string) => nav('/inspections' + (status ? `?status=${status}` : ''));
-  const statusSegments = (['maintenance_completed', 'in_progress', 'failed_ca', 'awaiting_verification', 'awaiting_dept_approval', 'ready_for_review', 'approved', 'rejected'] as InspectionStatus[])
-    .map(s => ({ label: t('st.' + s), value: by([s]), tone: STATUS_TONE[s] }));
+  const by = (s: InspectionStatus) => current.filter(i => i.status === s).length;
+  const myPool = data.inspections.filter(i => i.status === 'pool' && inMyPool(user, i)).length;
+  const poolAll = by('pool');
+  const active = by('corrective') + by('waiting_approval') + by('approved');
+  const done = data.inspections.filter(i => i.status === 'archived').length;
+  const go = (s: string) => nav('/inspections?status=' + s);
+  const segments = (['pool', 'corrective', 'waiting_approval', 'approved'] as InspectionStatus[]).map(s => ({ label: t('st.' + s), value: by(s), tone: STATUS_TONE[s] }));
 
   return (
     <>
       <PageHead title={t('dash.title')} sub={`${b(data.settings.plantName)} · ${fmtDate(new Date())}`}
-        actions={can.createInspection(user) && <button className="btn primary" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>} />
-
-      {can.manageSystem(user) && data.departments.length === 0 && (
-        <Tip id="start">{t('tip.start')} <Link to="/help">{t('help.open')}</Link></Tip>
-      )}
+        actions={<button className="btn primary" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>} />
       <TipsCard />
+      <ShutdownCard />
 
-      <Filters value={f} onChange={setF} show={['dept', 'eq', 'from', 'to', 'status', 'disc']} />
-
-      <div className="kpis mb">
-        <Kpi label={t('dash.myPool')} value={mine} tone="orange" icon="tasks" onClick={() => nav('/tasks')} />
-        <Kpi label={t('dash.active')} value={by(ACTIVE_STATUSES)} tone="blue" icon="checklist" onClick={() => go()} />
-        <Kpi label={t('dash.awaitingExec')} value={by(['maintenance_completed'])} tone="gray" icon="clock" onClick={() => go('maintenance_completed')} />
-        <Kpi label={t('dash.inProgress')} value={by(['in_progress'])} tone="orange" icon="sync" onClick={() => go('in_progress')} />
-        <Kpi label={t('dash.awaitingCA')} value={by(['failed_ca', 'awaiting_verification'])} tone="red" icon="alert" onClick={() => go('failed_ca')} />
-        <Kpi label={t('dash.awaitingApproval')} value={by(['awaiting_dept_approval', 'ready_for_review'])} tone="purple" icon="shield" onClick={() => go('awaiting_dept_approval')} />
-        <Kpi label={t('dash.completed')} value={by(['approved'])} tone="green" icon="check" onClick={() => go('approved')} />
-        <Kpi label={t('dash.criticalOpen')} value={open.filter(d => d.severity === 'critical').length} tone="red" icon="alert" onClick={() => nav('/defects?view=critical')} />
-        <Kpi label={t('dash.overdueCA')} value={open.filter(d => isOverdue(d)).length} tone="red" icon="clock" onClick={() => nav('/defects?view=overdue')} />
+      <div className="kpis mt mb">
+        <Kpi label={user.role === 'member' ? t('dash.myPool') : t('dash.pool')} value={user.role === 'member' ? myPool : poolAll} tone="blue" icon="tasks" onClick={() => (user.role === 'member' ? nav('/tasks') : go('pool'))} />
+        <Kpi label={t('dash.active')} value={active} tone="orange" icon="checklist" onClick={() => nav('/inspections?status=active')} />
+        <Kpi label={t('st.corrective')} value={by('corrective')} tone="red" icon="alert" onClick={() => go('corrective')} />
+        <Kpi label={t('st.waiting_approval')} value={by('waiting_approval')} tone="purple" icon="shield" onClick={() => go('waiting_approval')} />
+        <Kpi label={t('st.approved')} value={by('approved')} tone="green" icon="check" onClick={() => go('approved')} />
+        <Kpi label={t('st.archived')} value={done} tone="gray" icon="history" onClick={() => go('archived')} />
       </div>
 
       <div className="grid g2">
-        <Card title={t('dash.readinessByDept')}>
+        <Card title={t('dash.byDept')}>
           <div className="bars">
-            {data.departments.filter(d => d.active && (!f.dept || d.id === f.dept)).map(d => {
-              const r = departmentReadiness(insp, data.defects, d.id);
+            {data.departments.map(d => {
+              const expected = data.equipment.filter(e => e.active && e.departmentId === d.id)
+                .reduce((n, e) => n + DISCIPLINES.filter(x => e.parts?.[x]?.length).length, 0);
+              const ok = current.filter(i => i.departmentId === d.id && i.status === 'approved').length;
+              const pct = expected ? Math.round((ok / expected) * 100) : 0;
               return (
                 <div className="bar-row" key={d.id}>
                   <span className="ellipsis">{b(d.name)}</span>
-                  <Progress value={r.pct ?? 0} tone={r.blocked ? 'red' : r.pct === 100 ? 'green' : 'blue'} />
-                  <span className="val">{r.pct === null ? '—' : r.pct + '%'}</span>
-                  <span className="note">{r.total ? `${r.ready}/${r.total} ${t('dash.ready')}` : t('dash.noInspected')}{r.blocked ? ` · ${r.blocked} ${t('dash.blocked')}` : ''}</span>
+                  <Progress value={pct} tone={pct === 100 ? 'green' : 'blue'} />
+                  <span className="val">{expected ? pct + '%' : '—'}</span>
+                  <span className="note">{t('dash.deptNote', { a: ok, b: expected })}</span>
                 </div>
               );
             })}
           </div>
-          <p className="muted small mt">{t('dash.readinessNote')}</p>
+          <p className="muted small mt">{t('dash.deptHint')}</p>
         </Card>
-        <Card title={t('dash.statusMix')}><Donut segments={statusSegments} /></Card>
+        <Card title={t('dash.statusMix')}><Donut segments={segments} /></Card>
       </div>
 
-      <div className="grid g2 mt">
-        <Card title={t('dash.recentDefects')} actions={<Link to="/defects" className="btn link sm">{t('c.view')}</Link>}>
-          {defs.length === 0 ? <Empty icon="check" /> : (
-            <div className="list">
-              {defs.slice(0, 6).map(d => (
-                <Link key={d.id} to={`/defects/${d.id}`} className="lrow">
-                  <div className="grow"><b className="mono">{d.code}</b> · <span>{d.equipmentTag}</span>
-                    <div className="meta ellipsis">{d.description}</div></div>
-                  <SeverityBadge s={d.severity} /><span className="hide-mobile"><DefectBadge s={d.status} /></span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </Card>
-        <Card title={t('dash.followUp')}>
-          {followUps.length === 0 ? <Empty icon="check" /> : (
-            <div className="list">
-              {followUps.slice(0, 6).map(d => (
-                <Link key={d.id} to={`/defects/${d.id}`} className={'lrow ' + (isOverdue(d) ? 'tone-border-red' : 'tone-border-orange')}>
-                  <div className="grow"><b className="mono">{d.code}</b> · {t('disc.' + d.pool)}
-                    <div className="meta">{d.assignedName || t('c.unassigned')}</div></div>
-                  <span className={isOverdue(d) ? 'badge tone-red' : 'badge tone-orange'}>{isOverdue(d) ? t('c.overdue') : ''} {d.targetDate}</span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-
-      <div className="grid g2 mt">
-        <Card title={t('nav.inspections')} actions={<Link to="/inspections" className="btn link sm">{t('c.view')}</Link>}>
-          {insp.length === 0 ? <Empty /> : (
-            <div className="list">
-              {insp.slice(0, 6).map(i => (
-                <Link key={i.id} to={`/inspections/${i.id}`} className="lrow">
-                  <div className="grow"><b>{i.equipmentTag}</b> · <span className="mono">{i.code}</span>
-                    <div className="meta ellipsis">{b(i.equipmentName)} · {i.inspectionDate}</div>
-                    <Progress value={completionRate(i.summary)} tone={i.summary.fail ? 'red' : 'green'} /></div>
-                  <StatusBadge status={i.status} />
-                </Link>
-              ))}
-            </div>
-          )}
-        </Card>
-        {can.seeAudit(user) && (
-          <Card title={t('dash.recentActivity')} actions={<Link to="/audit" className="btn link sm">{t('c.view')}</Link>}>
-            {activity.length === 0 ? <Empty /> : (
-              <div className="list">
-                {activity.map(a => (
-                  <div key={a.id} className="lrow">
-                    <Icon name="history" />
-                    <div className="grow"><b>{a.userName}</b> <span className="muted small">{a.action}</span>
-                      <div className="meta ellipsis">{a.label} {a.note && `· ${a.note}`}</div></div>
-                    <small className="muted ltr">{fmtDate(a.at, true)}</small>
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
+      <Card title={t('dash.latest')} className="mt" actions={<Link to="/inspections" className="btn link sm">{t('c.view')}</Link>}>
+        {current.length === 0 ? <Empty>{t('dash.noneYet')}</Empty> : (
+          <div className="list">
+            {current.slice(0, 8).map(i => (
+              <Link key={i.id} to={`/inspections/${i.id}`} className="lrow">
+                <div className="grow"><b>{i.title}</b> · <span className="muted">{t('disc.' + i.discipline)}</span>
+                  <div className="meta ellipsis">{b(data.dept(i.departmentId)?.name)} · <span className="mono">{i.code}</span> · {i.createdByName}</div></div>
+                <StatusBadge status={i.status} />
+              </Link>
+            ))}
+          </div>
         )}
-      </div>
+      </Card>
     </>
   );
 }

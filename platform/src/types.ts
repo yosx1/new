@@ -1,19 +1,11 @@
 import type { Timestamp } from 'firebase/firestore';
 
-export type Role =
-  | 'admin'
-  | 'supervisor'
-  | 'manager'
-  | 'mechanical'
-  | 'electrical'
-  | 'instrumentation'
-  | 'production'
-  | 'viewer';
+export type Role = 'admin' | 'manager' | 'member';
+export const ROLES: Role[] = ['admin', 'manager', 'member'];
 
-/** Disciplines own checklist sections, defect pools and departmental approvals. */
+/** Every piece of equipment has parts in each discipline; a team member inspects the parts of their own discipline. */
 export type Discipline = 'mechanical' | 'electrical' | 'instrumentation' | 'production';
 export const DISCIPLINES: Discipline[] = ['mechanical', 'electrical', 'instrumentation', 'production'];
-export const ROLES: Role[] = ['admin', 'supervisor', 'manager', 'mechanical', 'electrical', 'instrumentation', 'production', 'viewer'];
 
 export type Lang = 'ar' | 'en';
 export type TS = Timestamp | null;
@@ -25,6 +17,9 @@ export interface UserProfile {
   name: string;
   email: string;
   role: Role;
+  /** Team members only: the parts they inspect. */
+  discipline?: Discipline | null;
+  /** Team members only: their department (null = all departments). */
   departmentId?: string | null;
   phone?: string;
   active: boolean;
@@ -57,202 +52,73 @@ export interface Department {
 
 export interface Equipment {
   id: string;
-  tag: string;
-  name: Bilingual;
+  name: string;
   departmentId: string;
-  line?: string;
-  category: string;
-  location?: string;
-  manufacturer?: string;
-  model?: string;
-  parentId?: string | null;
-  templateIds?: string[];
-  active: boolean;
-  notes?: string;
-}
-
-export interface ChecklistItemDef {
-  id: string;
-  label: Bilingual;
-  mandatory: boolean;
-  critical: boolean;
-  /** Measurement is shown only when unit is set. Limits are equipment-specific and optional. */
-  measure?: { unit: string; min?: number | null; max?: number | null } | null;
-  naReasonRequired?: boolean;
-  photoRequired?: boolean;
-  procedureRef?: string;
-  guidance?: Bilingual;
-}
-
-export interface ChecklistSection {
-  id: string;
-  title: Bilingual;
-  discipline: Discipline;
-  stage: string;
-  items: ChecklistItemDef[];
-}
-
-export interface Template {
-  id: string;
-  code: string;
-  name: Bilingual;
-  equipmentCategories: string[];
-  maintenanceTypes: string[];
-  requiredApprovals: Discipline[];
-  currentVersion: number;
+  parts: Record<Discipline, string[]>;
   active: boolean;
   updatedAt?: TS;
-  updatedBy?: string;
 }
 
-export interface TemplateVersion {
-  id: string; // version number as string
-  version: number;
-  sections: ChecklistSection[];
-  notes?: string;
-  createdAt: TS;
-  createdBy: string;
-  createdByName: string;
+/** The yearly shutdown that every cold run belongs to. */
+export interface Shutdown {
+  id: string;
+  name: string;
+  year: number;
+  status: 'open' | 'closed';
+  startedAt: TS;
+  closedAt?: TS;
+  closedBy?: string;
+  closedByName?: string;
+  /** Number of inspections archived when it was closed. */
+  archived?: number;
 }
 
-export type ItemStatus = 'pass' | 'fail' | 'pending' | 'na';
-
-export type InspectionStatus =
-  | 'draft'
-  | 'maintenance_completed'
-  | 'in_progress'
-  | 'failed_ca'
-  | 'awaiting_verification'
-  | 'awaiting_dept_approval'
-  | 'ready_for_review'
-  | 'approved'
-  | 'rejected';
-
-export interface ApprovalRecord {
-  decision: 'approved' | 'rejected';
+export type PartStatus = 'pending' | 'ok' | 'notok';
+export interface PartResult {
+  status: PartStatus;
+  note: string;
+  photoIds: string[];
   by: string;
   byName: string;
   at: TS;
-  comment?: string;
+  /** Corrective maintenance done on a "Not OK" part. */
+  fix?: { note: string; photoIds: string[]; by: string; byName: string; at: TS } | null;
 }
 
-export interface InspectionSummary {
-  total: number;
-  pass: number;
-  fail: number;
-  pending: number;
-  na: number;
-  mandatoryPending: number;
-  criticalFail: number;
-  openDefects: number;
-  openCritical: number;
-  awaitingVerification: number;
-  sections: Record<string, { done: number; total: number; fail: number }>;
-}
+/** pool = waiting in the team's pool; corrective / waiting_approval / approved = active; archived = done. */
+export type InspectionStatus = 'pool' | 'corrective' | 'waiting_approval' | 'approved' | 'archived';
+export const ACTIVE_STATUSES: InspectionStatus[] = ['corrective', 'waiting_approval', 'approved'];
+
+export interface InspectionSummary { total: number; ok: number; notok: number; fixed: number; pending: number }
 
 export interface Inspection {
   id: string;
   code: string;
+  shutdownId: string;
+  shutdownName: string;
+  /** Always the equipment name. */
   title: string;
-  plantName: string;
-  departmentId: string;
   equipmentId: string;
-  equipmentTag: string;
-  equipmentName: Bilingual;
-  equipmentCategory: string;
-  workOrder: string;
-  maintenanceType: string;
-  maintenanceCompletedAt: string; // yyyy-mm-dd
-  inspectionDate: string; // yyyy-mm-dd
-  shift: string;
-  supervisorUid: string;
-  productionEngUid?: string | null;
-  maintenanceEngUid?: string | null;
-  assignedUids: string[];
-  remarks?: string;
-  templateId: string;
-  templateCode: string;
-  templateName: Bilingual;
-  templateVersion: number;
-  checklist: ChecklistSection[];
-  requiredApprovals: Discipline[];
-  approvals: Partial<Record<Discipline | 'final', ApprovalRecord>>;
-  override?: { by: string; byName: string; at: TS; justification: string } | null;
-  status: InspectionStatus;
+  departmentId: string;
+  discipline: Discipline;
+  parts: { id: string; name: string }[];
+  results: Record<string, PartResult>;
   summary: InspectionSummary;
-  /** Task pools this inspection currently feeds, e.g. "exec:mechanical", "approve:electrical", "review". */
-  pools: string[];
-  createdAt: TS;
+  status: InspectionStatus;
   createdBy: string;
   createdByName: string;
+  createdAt: TS;
   updatedAt: TS;
+  submittedAt?: TS;
+  approval?: { by: string; byName: string; at: TS; comment: string } | null;
+  rejection?: { by: string; byName: string; at: TS; reason: string } | null;
+  archivedAt?: TS;
   docVersion: number;
-}
-
-export interface ItemResult {
-  id: string; // item id
-  sectionId: string;
-  discipline: Discipline;
-  status: ItemStatus;
-  value?: number | null;
-  unit?: string;
-  comment?: string;
-  naReason?: string;
-  inspectorUid: string;
-  inspectorName: string;
-  at: TS;
-  assignedUid?: string | null;
-  defectId?: string | null;
-  photoIds?: string[];
-  supervisorComment?: string;
-  rev: number;
-}
-
-export type Severity = 'critical' | 'high' | 'medium' | 'low';
-export const SEVERITIES: Severity[] = ['critical', 'high', 'medium', 'low'];
-
-export type DefectStatus =
-  | 'open'
-  | 'assigned'
-  | 'in_progress'
-  | 'repair_completed'
-  | 'awaiting_verification'
-  | 'closed';
-export const DEFECT_FLOW: DefectStatus[] = ['open', 'assigned', 'in_progress', 'repair_completed', 'awaiting_verification', 'closed'];
-
-export interface Defect {
-  id: string;
-  code: string;
-  inspectionId: string;
-  inspectionCode: string;
-  departmentId: string;
-  equipmentId: string;
-  equipmentTag: string;
-  itemId: string;
-  itemLabel: Bilingual;
-  description: string;
-  severity: Severity;
-  /** Responsible discipline = the pool that sees this defect. */
-  pool: Discipline;
-  assignedUid?: string | null;
-  assignedName?: string | null;
-  reportedAt: TS;
-  reportedBy: string;
-  reportedByName: string;
-  targetDate: string; // yyyy-mm-dd
-  correctiveAction?: string;
-  photoIds?: string[];
-  status: DefectStatus;
-  repair?: { by: string; byName: string; at: TS; notes?: string } | null;
-  verification?: { result: 'pass' | 'fail'; by: string; byName: string; at: TS; notes?: string } | null;
-  closedAt?: TS;
-  reopenCount?: number;
-  updatedAt: TS;
 }
 
 export interface Attachment {
   id: string;
-  ownerType: 'result' | 'defect' | 'inspection' | 'document' | 'equipment';
+  ownerType: 'result' | 'inspection' | 'document' | 'equipment';
   ownerId: string;
   inspectionId?: string | null;
   kind: 'before' | 'after' | 'evidence' | 'file';
@@ -272,7 +138,6 @@ export interface LibraryDoc {
   attachmentId?: string | null;
   departmentId?: string | null;
   equipmentId?: string | null;
-  templateId?: string | null;
   /** Roles that can open the document; 'all' means everyone. */
   visibleTo: (Role | 'all')[];
   createdAt: TS;
@@ -304,11 +169,6 @@ export interface AppNotification {
 
 export interface Settings {
   plantName: Bilingual;
-  shifts: string[];
-  maintenanceTypes: string[];
-  equipmentCategories: string[];
-  overrideRoles: Role[];
-  defectTargetDays: Record<Severity, number>;
   /** Who gets the completion report when an inspection is approved. Empty = all active managers and administrators. */
   reportRecipientUids?: string[];
   /** Extra addresses (outside the platform) that also receive the e-mail. */

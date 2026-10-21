@@ -7,7 +7,7 @@ import { useUser } from '../auth/Auth';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { ref } from '../lib/db';
-import { can, poolsForUser } from '../lib/rules';
+import { can, inMyPool } from '../lib/rules';
 import { Icon } from './Icon';
 import { NetworkBackground } from './NetworkBackground';
 
@@ -26,28 +26,20 @@ export function Layout() {
   // Keep the profile language in step so notifications/reports use it next time.
   useEffect(() => { if (user.lang !== lang) updateDoc(ref('users', user.id), { lang }).catch(() => {}); }, [lang, user.id, user.lang]);
 
-  const myPools = useMemo(() => poolsForUser(user), [user]);
-  const taskCount = useMemo(() => {
-    const insp = data.inspections.filter(i => i.pools?.some(p => myPools.includes(p))).length;
-    const defs = data.defects.filter(d => d.status !== 'closed' && (d.assignedUid === user.id
-      || (d.pool === user.role && !d.assignedUid)
-      || (can.verifyDefect(user, d) && ['repair_completed', 'awaiting_verification'].includes(d.status)))).length;
-    return insp + defs;
-  }, [data.inspections, data.defects, myPools, user]);
+  const taskCount = useMemo(() => data.inspections.filter(i => i.shutdownId === data.shutdown?.id
+    && (user.role === 'member' ? inMyPool(user, i) : i.status === 'waiting_approval')).length, [data.inspections, data.shutdown, user]);
   const unread = data.notifications.filter(n => !n.read);
 
   const main: NavItem[] = [
     { to: '/', icon: 'dashboard', key: 'nav.dashboard' },
     { to: '/tasks', icon: 'tasks', key: 'nav.tasks', badge: taskCount },
     { to: '/inspections', icon: 'checklist', key: 'nav.inspections' },
-    { to: '/defects', icon: 'alert', key: 'nav.defects' },
     { to: '/equipment', icon: 'factory', key: 'nav.equipment' },
     { to: '/reports', icon: 'chart', key: 'nav.reports' },
     { to: '/documents', icon: 'book', key: 'nav.documents' },
     { to: '/help', icon: 'info', key: 'nav.help' },
   ];
   const admin: NavItem[] = [
-    { to: '/templates', icon: 'list', key: 'nav.templates', show: can.manageSystem(user) },
     { to: '/users', icon: 'users', key: 'nav.users', show: can.manageSystem(user) },
     { to: '/devices', icon: 'phone', key: 'nav.devices', show: can.manageSystem(user) },
     { to: '/audit', icon: 'shield', key: 'nav.audit', show: can.seeAudit(user) },
@@ -66,9 +58,7 @@ export function Layout() {
         <img src="/icon.svg" alt="" width={38} height={38} />
         <div><b>{t('app.name')}</b><small>{b(data.settings.plantName)}</small></div>
       </div>
-      {can.createInspection(user) && (
-        <button className="btn primary block new-btn" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>
-      )}
+      <button className="btn primary block new-btn" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>
       <nav className="nav">{main.map(link)}</nav>
       <div className="nav-title">{t('nav.admin')}</div>
       <nav className="nav">{admin.map(link)}</nav>

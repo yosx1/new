@@ -5,17 +5,15 @@ import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebas
 import { doc, setDoc, getDoc, updateDoc, writeBatch, serverTimestamp, addDoc, collection, deleteDoc } from 'firebase/firestore';
 
 let env;
-const role = (uid, r, extra = {}) => ({ name: uid, email: `${uid}@kcp.iq`, role: r, active: true, departmentId: null, ...extra });
-
-const summary = (o = {}) => ({
-  total: 2, pass: 2, fail: 0, pending: 0, na: 0, mandatoryPending: 0, criticalFail: 0,
-  openDefects: 0, openCritical: 0, awaitingVerification: 0, sections: {}, ...o,
-});
+const user = (uid, role, extra = {}) => ({ name: uid, email: `${uid}@kcp.iq`, role, discipline: null, departmentId: null, active: true, ...extra });
+const SD = 'SD-2026-A';
+const summary = (o = {}) => ({ total: 2, ok: 0, notok: 0, fixed: 0, pending: 2, ...o });
 const inspection = (o = {}) => ({
-  code: 'CR-2026-0001', title: 't', departmentId: 'KLN', equipmentId: 'KLN-MD01', checklist: [], templateId: 'T',
-  templateVersion: 1, requiredApprovals: ['mechanical'], approvals: {}, override: null, status: 'in_progress',
-  summary: summary(), pools: [], createdBy: 'sup', createdAt: 1, docVersion: 1, ...o,
+  code: 'CR-2026-0001', shutdownId: SD, shutdownName: 'Annual shutdown 2026', title: 'Kiln main drive', equipmentId: 'E1', departmentId: 'KLN',
+  discipline: 'electrical', parts: [{ id: 'p1', name: 'Motor' }, { id: 'p2', name: 'MCC panel' }], results: {}, summary: summary(),
+  status: 'pool', createdBy: 'elec', createdByName: 'elec', createdAt: 1, updatedAt: 1, approval: null, rejection: null, docVersion: 1, ...o,
 });
+const ID = `${SD}_E1_electrical`;
 
 before(async () => {
   env = await initializeTestEnvironment({
@@ -30,157 +28,177 @@ beforeEach(async () => {
   await env.withSecurityRulesDisabled(async ctx => {
     const db = ctx.firestore();
     await setDoc(doc(db, 'config/setup'), { adminUid: 'admin' });
-    await setDoc(doc(db, 'config/settings'), { overrideRoles: ['manager', 'admin'] });
-    for (const [uid, r] of [['admin', 'admin'], ['sup', 'supervisor'], ['sup2', 'supervisor'], ['mgr', 'manager'],
-      ['mech', 'mechanical'], ['mech2', 'mechanical'], ['elec', 'electrical'], ['prod', 'production'], ['view', 'viewer']]) {
-      await setDoc(doc(db, 'users', uid), role(uid, r));
-    }
-    await setDoc(doc(db, 'users', 'gone'), role('gone', 'mechanical', { active: false }));
-    await setDoc(doc(db, 'inspections/I1'), inspection());
-    await setDoc(doc(db, 'inspections/I1/results/a'), { discipline: 'mechanical', status: 'pass', inspectorUid: 'mech', rev: 1 });
-    await setDoc(doc(db, 'defects/D1'), {
-      code: 'DF-1', inspectionId: 'I1', reportedBy: 'mech', reportedAt: 1, equipmentId: 'KLN-MD01', pool: 'mechanical',
-      severity: 'critical', status: 'repair_completed', assignedUid: 'mech', repair: { by: 'sup', at: 1 }, verification: null,
-    });
+    await setDoc(doc(db, 'config/shutdown'), { currentId: SD });
+    await setDoc(doc(db, `shutdowns/${SD}`), { name: 'Annual shutdown 2026', year: 2026, status: 'open' });
+    for (const d of ['RML', 'KLN', 'CLR', 'CML']) await setDoc(doc(db, `departments/${d}`), { code: d, name: { en: d, ar: d }, order: 1, active: true });
+    await setDoc(doc(db, 'equipment/E1'), { name: 'Kiln main drive', departmentId: 'KLN', parts: { electrical: ['Motor', 'MCC panel'], mechanical: ['Gearbox'] }, active: true });
+    for (const [uid, role, extra] of [
+      ['admin', 'admin'], ['mgr', 'manager'],
+      ['elec', 'member', { discipline: 'electrical', departmentId: 'KLN' }],
+      ['elec2', 'member', { discipline: 'electrical', departmentId: null }],
+      ['elecRM', 'member', { discipline: 'electrical', departmentId: 'RML' }],
+      ['mech', 'member', { discipline: 'mechanical', departmentId: 'KLN' }],
+    ]) await setDoc(doc(db, 'users', uid), user(uid, role, extra));
+    await setDoc(doc(db, 'users/gone'), user('gone', 'member', { discipline: 'electrical', departmentId: 'KLN', active: false }));
+    await setDoc(doc(db, `inspections/${ID}`), inspection());
   });
 });
 
 const as = uid => env.authenticatedContext(uid).firestore();
+const ins = (db, id = ID) => doc(db, 'inspections', id);
+const setAs = (status, extra = {}) => env.withSecurityRulesDisabled(ctx => updateDoc(ins(ctx.firestore()), { status, ...extra }));
 
 test('first administrator bootstrap only works once', async () => {
   await env.withSecurityRulesDisabled(async ctx => deleteDoc(doc(ctx.firestore(), 'config/setup')));
   const db = as('first');
   const b = writeBatch(db);
-  b.set(doc(db, 'users/first'), role('first', 'admin'));
+  b.set(doc(db, 'users/first'), user('first', 'admin'));
   b.set(doc(db, 'config/setup'), { adminUid: 'first' });
   await assertSucceeds(b.commit());
   const db2 = as('second');
   const b2 = writeBatch(db2);
-  b2.set(doc(db2, 'users/second'), role('second', 'admin'));
+  b2.set(doc(db2, 'users/second'), user('second', 'admin'));
   b2.set(doc(db2, 'config/setup'), { adminUid: 'second' });
   await assertFails(b2.commit());
 });
 
-test('users cannot raise their own role; deactivated users lose access', async () => {
-  await assertFails(updateDoc(doc(as('mech'), 'users/mech'), { role: 'admin' }));
-  await assertSucceeds(updateDoc(doc(as('mech'), 'users/mech'), { lang: 'en' }));
-  await assertSucceeds(getDoc(doc(as('gone'), 'users/gone'))); // can see own (inactive) profile
-  await assertFails(getDoc(doc(as('gone'), 'inspections/I1')));
-  await assertFails(getDoc(doc(env.unauthenticatedContext().firestore(), 'inspections/I1')));
+test('users cannot raise their own role or change their team; deactivated users lose access', async () => {
+  await assertFails(updateDoc(doc(as('elec'), 'users/elec'), { role: 'admin' }));
+  await assertFails(updateDoc(doc(as('elec'), 'users/elec'), { discipline: 'mechanical' }));
+  await assertSucceeds(updateDoc(doc(as('elec'), 'users/elec'), { lang: 'en' }));
+  await assertSucceeds(getDoc(doc(as('gone'), 'users/gone')));
+  await assertFails(getDoc(ins(as('gone'))));
+  await assertFails(getDoc(ins(env.unauthenticatedContext().firestore())));
+  // a team member needs a discipline; unknown roles are refused
+  await assertFails(setDoc(doc(as('admin'), 'users/x'), user('x', 'member')));
+  await assertFails(setDoc(doc(as('admin'), 'users/y'), user('y', 'viewer')));
+  await assertSucceeds(setDoc(doc(as('admin'), 'users/z'), user('z', 'member', { discipline: 'production', departmentId: 'CML' })));
 });
 
-test('only leads create inspections', async () => {
-  const data = inspection({ status: 'maintenance_completed', createdBy: 'mech' });
-  await assertFails(setDoc(doc(as('mech'), 'inspections/I2'), data));
-  await assertSucceeds(setDoc(doc(as('sup'), 'inspections/I2'), { ...data, createdBy: 'sup' }));
+test('creating: own discipline and department only, one per equipment + discipline + shutdown', async () => {
+  const mk = (uid, d = 'electrical', o = {}) => setDoc(ins(as(uid), `${SD}_E1_${d}`), inspection({ discipline: d, createdBy: uid, ...o }));
+  await env.withSecurityRulesDisabled(ctx => deleteDoc(ins(ctx.firestore())));
+  await assertFails(mk('mech'));                            // electrical parts, mechanical engineer
+  await assertFails(mk('elecRM'));                          // other department
+  await assertFails(setDoc(ins(as('elec'), 'random-id'), inspection({ createdBy: 'elec' }))); // id must be shutdown_equipment_discipline
+  await assertFails(mk('elec', 'electrical', { title: 'Something else' }));    // title = equipment name
+  await assertFails(mk('elec', 'electrical', { shutdownId: 'SD-OLD' }));        // current shutdown only
+  await assertFails(mk('elec', 'electrical', { status: 'approved' }));
+  await assertSucceeds(mk('elec'));
+  await assertSucceeds(mk('mech', 'mechanical'));
+  await assertFails(mk('elec2'));                           // a second one for the same equipment + discipline
+  await assertSucceeds(mk('mgr', 'instrumentation'));      // the manager may start any discipline
 });
 
-test('results: own discipline only, and stale revisions are rejected', async () => {
-  const base = { discipline: 'electrical', status: 'pass', inspectorUid: 'mech', rev: 1 };
-  await assertFails(setDoc(doc(as('mech'), 'inspections/I1/results/b'), base));
-  await assertSucceeds(setDoc(doc(as('elec'), 'inspections/I1/results/b'), { ...base, inspectorUid: 'elec' }));
-  // mech2 continues mech's work (pool hand-over) with the next revision
-  await assertSucceeds(setDoc(doc(as('mech2'), 'inspections/I1/results/a'), { discipline: 'mechanical', status: 'fail', inspectorUid: 'mech2', rev: 2 }));
-  // an offline edit based on rev 1 must not overwrite rev 2
-  await assertFails(setDoc(doc(as('mech'), 'inspections/I1/results/a'), { discipline: 'mechanical', status: 'pass', inspectorUid: 'mech', rev: 2 }));
+test('checking parts: the team works it, other teams cannot', async () => {
+  const save = (uid, extra) => updateDoc(ins(as(uid)), { 'results.p1': { status: 'ok', note: '', photoIds: [], by: uid }, summary: summary({ ok: 1, pending: 1 }), docVersion: 2, ...extra });
+  await assertFails(save('mech'));
+  await assertFails(save('elecRM'));
+  await assertFails(save('elec', { docVersion: 1 }));       // stale version
+  await assertFails(save('elec', { title: 'renamed' }));    // identity is fixed
+  await assertSucceeds(save('elec2'));                      // colleague, all departments
 });
 
-test('approval keys are restricted to the approver discipline', async () => {
-  const at = { decision: 'approved', at: 1 };
-  await assertFails(updateDoc(doc(as('elec'), 'inspections/I1'), { approvals: { mechanical: { ...at, by: 'elec' } }, docVersion: 2 }));
-  await assertFails(updateDoc(doc(as('mech'), 'inspections/I1'), { approvals: { mechanical: { ...at, by: 'mech2' } }, docVersion: 2 }));
-  await assertSucceeds(updateDoc(doc(as('mech'), 'inspections/I1'), { approvals: { mechanical: { ...at, by: 'mech' } }, docVersion: 2 }));
+test('submitting: corrective needs every part checked; waiting approval needs every Not OK fixed', async () => {
+  await assertFails(updateDoc(ins(as('elec')), { status: 'waiting_approval', summary: summary({ ok: 1, pending: 1 }), docVersion: 2 }));
+  await assertFails(updateDoc(ins(as('elec')), { status: 'waiting_approval', summary: summary({ ok: 1, notok: 1, pending: 0 }), docVersion: 2 }));
+  await assertSucceeds(updateDoc(ins(as('elec')), { status: 'corrective', summary: summary({ ok: 1, notok: 1, pending: 0 }), docVersion: 2 }));
+  await assertFails(updateDoc(ins(as('elec')), { status: 'approved', docVersion: 3 }));
+  await assertSucceeds(updateDoc(ins(as('elec')), { status: 'waiting_approval', summary: summary({ ok: 1, notok: 1, fixed: 1, pending: 0 }), docVersion: 3 }));
+  await assertFails(updateDoc(ins(as('elec')), { 'results.p1': { status: 'notok' }, docVersion: 4 })); // locked while waiting
 });
 
-test('final approval: leads only, blocked by critical failures unless a manager overrides', async () => {
-  const final = by => ({ approvals: { mechanical: { decision: 'approved', by: 'mech' }, final: { decision: 'approved', by } } });
-  await env.withSecurityRulesDisabled(async ctx => updateDoc(doc(ctx.firestore(), 'inspections/I1'),
-    { approvals: { mechanical: { decision: 'approved', by: 'mech' } }, summary: summary({ criticalFail: 1, fail: 1, pass: 1 }) }));
-  await assertFails(updateDoc(doc(as('prod'), 'inspections/I1'), { ...final('prod'), status: 'approved', docVersion: 2 }));
-  await assertFails(updateDoc(doc(as('sup'), 'inspections/I1'), { ...final('sup'), status: 'approved', docVersion: 2 }));
-  const override = by => ({ by, justification: 'Approved disposition MOC-2026-17', at: 1 });
-  await assertFails(updateDoc(doc(as('sup'), 'inspections/I1'), { ...final('sup'), override: override('sup'), status: 'approved', docVersion: 2 }));
-  await assertSucceeds(updateDoc(doc(as('mgr'), 'inspections/I1'), { ...final('mgr'), override: override('mgr'), status: 'approved', docVersion: 2 }));
+test('approval and sending back: Cold Run Test Manager or administrator only', async () => {
+  await setAs('waiting_approval', { summary: summary({ ok: 2, pending: 0 }), docVersion: 3 });
+  const approve = uid => updateDoc(ins(as(uid)), { status: 'approved', approval: { by: uid, byName: uid, at: 1, comment: '' }, docVersion: 4 });
+  await assertFails(approve('elec'));
+  await assertFails(updateDoc(ins(as('mgr')), { status: 'approved', approval: { by: 'admin', at: 1 }, docVersion: 4 })); // in own name only
+  await assertSucceeds(approve('mgr'));
+  await assertFails(updateDoc(ins(as('mgr')), { status: 'pool', rejection: { by: 'mgr', reason: 'x' }, docVersion: 5 })); // reason too short
+  await assertSucceeds(updateDoc(ins(as('admin')), { status: 'pool', approval: null, rejection: { by: 'admin', reason: 'Recheck the motor' }, docVersion: 5 }));
 });
 
-test('docVersion must advance (no blind overwrite of inspection)', async () => {
-  await assertFails(updateDoc(doc(as('mech'), 'inspections/I1'), { pools: [] }));
-  await assertFails(updateDoc(doc(as('mech'), 'inspections/I1'), { checklist: [{}], docVersion: 2 }));
+test('archiving: approved inspections only, by the manager or administrator', async () => {
+  const arch = uid => updateDoc(ins(as(uid)), { status: 'archived', archivedAt: serverTimestamp(), docVersion: 2 });
+  await assertFails(arch('mgr'));                           // still in the pool
+  await setAs('approved');
+  await assertFails(arch('elec'));
+  await assertSucceeds(arch('mgr'));
+  await assertFails(updateDoc(ins(as('admin')), { status: 'pool', docVersion: 3 })); // done is final
 });
 
-test('defects: technicians cannot close; the repairer cannot verify own repair', async () => {
-  const close = by => ({ status: 'closed', verification: { result: 'pass', by, at: 1 } });
-  await assertFails(updateDoc(doc(as('mech'), 'defects/D1'), close('mech')));
-  await assertFails(updateDoc(doc(as('sup'), 'defects/D1'), close('sup'))); // sup did the repair
-  await assertSucceeds(updateDoc(doc(as('sup2'), 'defects/D1'), close('sup2')));
-  await assertFails(updateDoc(doc(as('mech'), 'defects/D1'), { status: 'open' })); // reopen = leads only
-  await assertSucceeds(updateDoc(doc(as('sup'), 'defects/D1'), { status: 'open', verification: null }));
+test('shutdown: managers start and close it; members cannot', async () => {
+  await assertFails(updateDoc(doc(as('elec'), `shutdowns/${SD}`), { status: 'closed', closedBy: 'elec' }));
+  await assertSucceeds(updateDoc(doc(as('mgr'), `shutdowns/${SD}`), { status: 'closed', closedBy: 'mgr', closedByName: 'mgr', closedAt: serverTimestamp(), archived: 1 }));
+  await assertFails(setDoc(doc(as('elec'), 'config/shutdown'), { currentId: SD }));
+  const m = as('mgr');
+  const b = writeBatch(m);
+  b.set(doc(m, 'shutdowns/SD-2027-B'), { name: 'Annual shutdown 2027', year: 2027, status: 'open' });
+  b.set(doc(m, 'config/shutdown'), { currentId: 'SD-2027-B' });
+  await assertSucceeds(b.commit());
+  await assertFails(setDoc(doc(as('mgr'), 'config/shutdown'), { currentId: 'does-not-exist' }));
 });
 
-test('defect pool: other disciplines cannot work it; pool members can take it over', async () => {
-  await assertFails(updateDoc(doc(as('elec'), 'defects/D1'), { status: 'in_progress' }));
-  await assertSucceeds(updateDoc(doc(as('mech2'), 'defects/D1'), { assignedUid: 'mech2', assignedName: 'mech2' }));
-  await assertFails(updateDoc(doc(as('mech2'), 'defects/D1'), { severity: 'low' }));
-  // a repair can only be recorded in one's own name (prevents dodging independent verification)
-  await assertFails(updateDoc(doc(as('mech2'), 'defects/D1'), { repair: { by: 'mech', at: 1 } }));
-  await assertSucceeds(updateDoc(doc(as('mech2'), 'defects/D1'), { repair: { by: 'mech2', at: 1 } }));
+test('equipment: managers and administrators manage it, with valid data only', async () => {
+  const e = { name: 'Cooler fan', departmentId: 'CLR', parts: { mechanical: ['Impeller'] }, active: true, updatedAt: serverTimestamp() };
+  await assertFails(setDoc(doc(as('elec'), 'equipment/E2'), e));
+  await assertSucceeds(setDoc(doc(as('mgr'), 'equipment/E2'), e));
+  await assertFails(setDoc(doc(as('mgr'), 'equipment/E3'), { ...e, departmentId: 'NOPE' }));
+  await assertFails(setDoc(doc(as('mgr'), 'equipment/E4'), { ...e, parts: { welding: ['x'] } }));
+  await assertFails(setDoc(doc(as('mgr'), 'equipment/E5'), { ...e, tag: 'x' }));
 });
 
 test('audit trail is append-only', async () => {
-  const db = as('mech');
-  const r = await assertSucceeds(addDoc(collection(db, 'audit'), { uid: 'mech', action: 'x', at: serverTimestamp() }));
+  const db = as('elec');
+  const r = await assertSucceeds(addDoc(collection(db, 'audit'), { uid: 'elec', action: 'x', at: serverTimestamp() }));
   await assertFails(updateDoc(doc(as('admin'), 'audit', r.id), { action: 'y' }));
   await assertFails(deleteDoc(doc(as('admin'), 'audit', r.id)));
   await assertFails(addDoc(collection(db, 'audit'), { uid: 'someone-else', action: 'x', at: serverTimestamp() }));
+  await assertFails(getDoc(doc(as('elec'), 'audit', r.id)));
+  await assertSucceeds(getDoc(doc(as('mgr'), 'audit', r.id)));
 });
 
 test('devices: a revoked device cannot restore itself', async () => {
-  const db = as('mech');
-  await assertSucceeds(setDoc(doc(db, 'devices/mech_dev1'), { uid: 'mech', revoked: false }));
-  await assertSucceeds(updateDoc(doc(as('admin'), 'devices/mech_dev1'), { revoked: true }));
-  await assertFails(updateDoc(doc(db, 'devices/mech_dev1'), { revoked: false }));
-  await assertFails(setDoc(doc(db, 'devices/elec_dev1'), { uid: 'mech', revoked: false }));
-});
-
-test('viewers are read-only', async () => {
-  await assertSucceeds(getDoc(doc(as('view'), 'inspections/I1')));
-  await assertFails(addDoc(collection(as('view'), 'defects'), { reportedBy: 'view', status: 'open', verification: null, repair: null }));
+  const db = as('elec');
+  await assertSucceeds(setDoc(doc(db, 'devices/elec_dev1'), { uid: 'elec', revoked: false }));
+  await assertSucceeds(updateDoc(doc(as('admin'), 'devices/elec_dev1'), { revoked: true }));
+  await assertFails(updateDoc(doc(db, 'devices/elec_dev1'), { revoked: false }));
+  await assertFails(setDoc(doc(db, 'devices/mech_dev1'), { uid: 'elec', revoked: false }));
 });
 
 test('notifications: only well-formed in-app messages to existing users', async () => {
-  const db = as('sup');
-  const ok = { toUid: 'mech', title: { en: 'Hi', ar: 'مرحبا' }, link: '/inspections/I1', read: false, createdAt: serverTimestamp() };
+  const db = as('mgr');
+  const ok = { toUid: 'elec', title: { en: 'Hi', ar: 'مرحبا' }, link: `/inspections/${ID}`, read: false, createdAt: serverTimestamp() };
   await assertSucceeds(addDoc(collection(db, 'notifications'), ok));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: 'https://evil.example' }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, link: '//evil.example' }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, toUid: 'nobody' }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, read: true }));
   await assertFails(addDoc(collection(db, 'notifications'), { ...ok, extra: 1 }));
-  await assertFails(addDoc(collection(as('view'), 'notifications'), ok));
   const r = await addDoc(collection(db, 'notifications'), ok);
-  await assertFails(getDoc(doc(as('elec'), 'notifications', r.id)));
-  await assertSucceeds(updateDoc(doc(as('mech'), 'notifications', r.id), { read: true }));
-  await assertFails(updateDoc(doc(as('mech'), 'notifications', r.id), { link: '/x' }));
+  await assertFails(getDoc(doc(as('mech'), 'notifications', r.id)));
+  await assertSucceeds(updateDoc(doc(as('elec'), 'notifications', r.id), { read: true }));
+  await assertFails(updateDoc(doc(as('elec'), 'notifications', r.id), { link: '/x' }));
 });
 
-test('invitations: admin invites by email; only that verified email can claim, once, with the invited role', async () => {
+test('invitations: admin invites by email; only that verified email can claim, once, with the invited role and team', async () => {
   const adb = as('admin');
-  const inv = { email: 'new@kcp.iq', name: 'New', role: 'electrical', departmentId: null, phone: '', invitedBy: 'admin', createdAt: 1 };
-  await assertFails(setDoc(doc(as('sup'), 'invites/new@kcp.iq'), { ...inv, invitedBy: 'sup' }));
+  const inv = { email: 'new@kcp.iq', name: 'New', role: 'member', discipline: 'electrical', departmentId: 'KLN', phone: '', invitedBy: 'admin', createdAt: 1 };
+  await assertFails(setDoc(doc(as('mgr'), 'invites/new@kcp.iq'), { ...inv, invitedBy: 'mgr' }));
   await assertFails(setDoc(doc(adb, 'invites/New@kcp.iq'), { ...inv, email: 'New@kcp.iq' }));
   await assertFails(setDoc(doc(adb, 'invites/new@kcp.iq'), { ...inv, role: 'owner' }));
   await assertSucceeds(setDoc(doc(adb, 'invites/new@kcp.iq'), inv));
 
-  const profile = { name: 'New', email: 'new@kcp.iq', role: 'electrical', departmentId: null, phone: '', active: true, lang: 'ar', createdAt: serverTimestamp(), createdBy: 'admin' };
+  const profile = { name: 'New', email: 'new@kcp.iq', role: 'member', discipline: 'electrical', departmentId: 'KLN', phone: '', active: true, lang: 'ar', createdAt: serverTimestamp(), createdBy: 'admin' };
   const claim = (db, uid, p = profile) => { const b = writeBatch(db); b.set(doc(db, 'users', uid), p); b.delete(doc(db, 'invites/new@kcp.iq')); return b.commit(); };
   const ctx = (uid, email, verified = true) => env.authenticatedContext(uid, { email, email_verified: verified }).firestore();
 
-  await assertFails(claim(ctx('x1', 'other@kcp.iq'), 'x1'));                       // different email
-  await assertFails(claim(ctx('x2', 'new@kcp.iq', false), 'x2'));                  // unverified email
-  await assertFails(claim(ctx('x3', 'new@kcp.iq'), 'x3', { ...profile, role: 'admin' })); // role escalation
-  const keep = ctx('x4', 'new@kcp.iq'); // claiming without consuming the invitation
-  await assertFails(setDoc(doc(keep, 'users/x4'), profile));
+  await assertFails(claim(ctx('x1', 'other@kcp.iq'), 'x1'));                         // different email
+  await assertFails(claim(ctx('x2', 'new@kcp.iq', false), 'x2'));                    // unverified email
+  await assertFails(claim(ctx('x3', 'new@kcp.iq'), 'x3', { ...profile, role: 'admin' }));          // role escalation
+  await assertFails(claim(ctx('x3', 'new@kcp.iq'), 'x3', { ...profile, discipline: 'mechanical' })); // other team
+  await assertFails(setDoc(doc(ctx('x4', 'new@kcp.iq'), 'users/x4'), profile));      // must consume the invitation
   await assertSucceeds(getDoc(doc(ctx('x5', 'NEW@kcp.iq'), 'invites/new@kcp.iq')));
   await assertSucceeds(claim(ctx('x5', 'NEW@kcp.iq'), 'x5'));
-  await assertFails(claim(ctx('x6', 'new@kcp.iq'), 'x6'));                         // already used
+  await assertFails(claim(ctx('x6', 'new@kcp.iq'), 'x6'));                           // already used
 });

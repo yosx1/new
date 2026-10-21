@@ -17,8 +17,8 @@ const PROJECT_ID = 'kcp-coldrun-2026';
 const APP_URL = 'https://' + PROJECT_ID + '.web.app';
 const KEEP_BACKUPS = 12;
 const MAX_SENDS_PER_INSPECTION = 3;
-const COLLECTIONS = ['config', 'users', 'invites', 'devices', 'departments', 'equipment', 'templates', 'versions', 'documents',
-  'counters', 'inspections', 'results', 'defects', 'notifications', 'audit', 'attachments'];
+const COLLECTIONS = ['config', 'users', 'invites', 'devices', 'departments', 'equipment', 'shutdowns', 'documents',
+  'counters', 'inspections', 'notifications', 'audit', 'attachments'];
 const FS = 'https://firestore.googleapis.com/v1/projects/' + PROJECT_ID + '/databases/(default)/documents';
 
 /* ---------------- web app ---------------- */
@@ -31,7 +31,7 @@ function doPost(e) {
       if (caller.role !== 'admin') return json_({ ok: false, error: 'admin only' });
       return json_({ ok: true, recipients: recipients_(getDoc_('config/settings') || {}).length });
     }
-    if (['admin', 'manager', 'supervisor'].indexOf(caller.role) < 0) return json_({ ok: false, error: 'not allowed' });
+    if (['admin', 'manager'].indexOf(caller.role) < 0) return json_({ ok: false, error: 'not allowed' });
     if (!/^[\w-]{1,128}$/.test(req.inspectionId || '')) return json_({ ok: false, error: 'bad inspection' });
     const insp = getDoc_('inspections/' + req.inspectionId);
     if (!insp || insp.status !== 'approved') return json_({ ok: false, error: 'inspection not approved' });
@@ -49,14 +49,17 @@ function doPost(e) {
 
     const ar = req.lang !== 'en';
     const s = insp.summary || {};
-    const fin = (insp.approvals && insp.approvals.final) || {};
+    const fin = insp.approval || {};
+    const DISC = { mechanical: ['Mechanical', 'ميكانيك'], electrical: ['Electrical', 'كهرباء'], instrumentation: ['Instrumentation & Control', 'السيطرة والأجهزة'], production: ['Production', 'الإنتاج'] };
+    const disc = (DISC[insp.discipline] || [insp.discipline, insp.discipline])[ar ? 1 : 0];
     const link = APP_URL + '/inspections/' + req.inspectionId;
-    const subject = (ar ? 'تمت الموافقة على الفحص ' : 'Inspection approved: ') + insp.code + ' · ' + insp.equipmentTag;
+    const subject = (ar ? 'تم اعتماد فحص ' : 'Inspection approved: ') + insp.title + ' · ' + disc + ' · ' + insp.code;
     const rows = [
-      [ar ? 'المعدة' : 'Equipment', insp.equipmentTag + ' – ' + ((insp.equipmentName || {})[ar ? 'ar' : 'en'] || '')],
-      [ar ? 'أمر العمل' : 'Work order', insp.workOrder || ''],
-      [ar ? 'البنود' : 'Items', (s.total || 0) + ' · ' + (ar ? 'مطابق ' : 'pass ') + (s.pass || 0) + ' · ' + (ar ? 'غير مطابق ' : 'fail ') + (s.fail || 0) + ' · N/A ' + (s.na || 0)],
-      [ar ? 'الموافقة النهائية' : 'Final approval', (fin.byName || caller.name) + (insp.override ? (ar ? ' (بتجاوز موثّق)' : ' (with documented override)') : '')],
+      [ar ? 'المعدة' : 'Equipment', insp.title],
+      [ar ? 'الاختصاص' : 'Discipline', disc],
+      [ar ? 'التوقف السنوي' : 'Shutdown', insp.shutdownName || ''],
+      [ar ? 'الأجزاء' : 'Parts', (s.total || 0) + ' · ' + (ar ? 'سليم ' : 'OK ') + (s.ok || 0) + ' · ' + (ar ? 'غير سليم ' : 'Not OK ') + (s.notok || 0) + ' · ' + (ar ? 'تم الإصلاح ' : 'fixed ') + (s.fixed || 0)],
+      [ar ? 'اعتمده' : 'Approved by', fin.byName || caller.name],
     ];
     const html = '<div dir="' + (ar ? 'rtl' : 'ltr') + '" style="font-family:Arial,sans-serif;font-size:14px;color:#142036">'
       + '<h2 style="color:#0b2a5b;margin:0 0 12px">' + esc_(subject) + '</h2><table cellpadding="6" style="border-collapse:collapse">'

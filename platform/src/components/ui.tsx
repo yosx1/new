@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState, ty
 import { Icon } from './Icon';
 import { useI18n } from '../i18n/I18n';
 import { STATUS_TONE } from '../lib/rules';
-import type { DefectStatus, InspectionStatus, ItemStatus, Severity } from '../types';
+import type { InspectionStatus, PartStatus } from '../types';
 
 /* ---------- badges ---------- */
 export function Badge({ tone = 'gray', children, icon }: { tone?: string; children: ReactNode; icon?: string }) {
@@ -12,25 +12,12 @@ export function StatusBadge({ status }: { status: InspectionStatus }) {
   const { t } = useI18n();
   return <Badge tone={STATUS_TONE[status]}>{t('st.' + status)}</Badge>;
 }
-const ITEM_TONE: Record<ItemStatus, [string, string]> = {
-  pass: ['green', 'check'], fail: ['red', 'x'], pending: ['orange', 'clock'], na: ['gray', 'minus'],
-};
-export function ItemBadge({ status }: { status: ItemStatus }) {
+const PART_TONE: Record<PartStatus, [string, string]> = { ok: ['green', 'check'], notok: ['red', 'x'], pending: ['orange', 'clock'] };
+export function PartBadge({ status, fixed }: { status: PartStatus; fixed?: boolean }) {
   const { t } = useI18n();
-  const [tone, icon] = ITEM_TONE[status];
-  return <Badge tone={tone} icon={icon}>{t('item.' + status)}</Badge>;
-}
-const SEV_TONE: Record<Severity, string> = { critical: 'red', high: 'orange', medium: 'yellow', low: 'gray' };
-export function SeverityBadge({ s }: { s: Severity }) {
-  const { t } = useI18n();
-  return <Badge tone={SEV_TONE[s]} icon={s === 'critical' ? 'alert' : undefined}>{t('sev.' + s)}</Badge>;
-}
-const DS_TONE: Record<DefectStatus, string> = {
-  open: 'red', assigned: 'orange', in_progress: 'orange', repair_completed: 'purple', awaiting_verification: 'purple', closed: 'green',
-};
-export function DefectBadge({ s }: { s: DefectStatus }) {
-  const { t } = useI18n();
-  return <Badge tone={DS_TONE[s]}>{t('ds.' + s)}</Badge>;
+  if (status === 'notok' && fixed) return <Badge tone="purple" icon="check">{t('part.fixed')}</Badge>;
+  const [tone, icon] = PART_TONE[status];
+  return <Badge tone={tone} icon={icon}>{t('part.' + status)}</Badge>;
 }
 
 /* ---------- layout bits ---------- */
