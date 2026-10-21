@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { updateDoc } from 'firebase/firestore';
@@ -115,7 +115,7 @@ export function Layout() {
             )}
           </div>
         </header>
-        <main className="content"><Outlet /></main>
+        <main className="content"><Suspense fallback={<div className="page-loading" />}><Outlet /></Suspense></main>
       </div>
 
       <nav className="bottombar">

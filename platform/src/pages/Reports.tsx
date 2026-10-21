@@ -8,6 +8,7 @@ import { downloadText, toCsv } from '../lib/files';
 import { downloadXlsx } from '../lib/xlsx';
 import { Card, Empty, Kpi, PageHead, StatusBadge } from '../components/ui';
 import { EMPTY_FILTERS, Filters, type FilterState } from '../components/Filters';
+import { Tip } from '../components/Tips';
 import { Icon } from '../components/Icon';
 import { DISCIPLINES, SEVERITIES, type Defect, type Inspection } from '../types';
 
@@ -151,6 +152,7 @@ export default function Reports() {
         <button className="btn ghost" onClick={() => downloadText(`${r}-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(report.csv))}><Icon name="download" />{t('c.exportCsv')}</button>
         <button className="btn ghost" onClick={() => window.print()}><Icon name="printer" />{t('c.print')}</button>
       </>} />
+      <Tip id="reports">{t('tip.reports')}</Tip>
       <div className="no-print">
         <Field2 label={t('rep.choose')}>
           <div className="chips mb">{REPORTS.map(x => <button key={x} className={'chip' + (r === x ? ' on' : '')} onClick={() => setR(x)}>{t(KEY[x])}</button>)}</div>

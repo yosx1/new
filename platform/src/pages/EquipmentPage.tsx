@@ -10,6 +10,7 @@ import { can, OPEN_DEFECT } from '../lib/rules';
 import { Badge, Card, Empty, Field, Modal, PageHead, StatusBadge, errMsg, useFeedback } from '../components/ui';
 import { Icon } from '../components/Icon';
 import type { Department, Equipment } from '../types';
+import { Tip } from '../components/Tips';
 
 const blankEq = (): Omit<Equipment, 'id'> => ({
   tag: '', name: { en: '', ar: '' }, departmentId: '', line: '', category: '', location: '', manufacturer: '', model: '',
@@ -92,6 +93,7 @@ export default function EquipmentPage() {
         <button className="btn ghost" onClick={() => setDeptForm({ code: '', name: { en: '', ar: '' }, order: data.departments.length + 1, active: true })}><Icon name="plus" />{t('eq.addDept')}</button>
         <button className="btn primary" onClick={() => setEqForm(blankEq())}><Icon name="plus" />{t('eq.add')}</button>
       </>} />
+      {admin && <Tip id="equipment">{t('tip.equipment')}</Tip>}
       <div className="filters">
         <div className="search" style={{ gridColumn: 'span 2' }}><Icon name="search" size={18} /><input type="search" placeholder={t('c.search')} value={q} onChange={e => setQ(e.target.value)} /></div>
         {admin && <label className="check"><input type="checkbox" checked={showInactive} onChange={e => setShowInactive(e.target.checked)} />{t('c.inactive')}</label>}

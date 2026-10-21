@@ -12,6 +12,7 @@ import { ReportSettings } from './ReportSettings';
 import { RolesMatrix } from './RolesMatrix';
 import { Icon } from '../components/Icon';
 import { ROLES, SEVERITIES, type Role, type Settings } from '../types';
+import { Tip } from '../components/Tips';
 
 const csv = (a: string[]) => a.join(', ');
 const parse = (s: string) => s.split(',').map(x => x.trim()).filter(Boolean);
@@ -63,6 +64,7 @@ export default function SettingsPage() {
   return (
     <>
       <PageHead title={t('nav.settings')} />
+      {admin && <Tip id="settings">{t('tip.settings')}</Tip>}
       <div className="grid g2">
         <Card title={t('nav.profile')}>
           <div className="stack">

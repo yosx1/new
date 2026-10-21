@@ -358,3 +358,9 @@ a.lrow:hover, button.lrow:hover { border-color: #c6d3e6; }
 .priv td.c, .priv th:not(:first-child) { text-align: center; }
 .priv .yes { color: var(--green); } .priv .no { color: #c3cad6; }
 .priv tbody tr:hover { background: var(--gray-soft); }
+/* shown only while a page's code is still downloading: a thin bar, the layout stays put */
+.page-loading { height: 3px; margin: -20px -20px 17px; background: linear-gradient(90deg, transparent, var(--primary), transparent); background-size: 40% 100%; background-repeat: no-repeat; animation: page-load 1s linear infinite; }
+@keyframes page-load { from { background-position: -40% 0; } to { background-position: 140% 0; } }
+/* In-page loading: no layout jump, and nothing is shown at all for quick (cached) loads. */
+.content .center-screen { min-height: 45vh; animation: appear-late .6s steps(1, end) both; }
+@keyframes appear-late { 0% { visibility: hidden; } 40% { visibility: visible; } }

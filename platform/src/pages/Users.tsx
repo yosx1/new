@@ -149,8 +149,7 @@ export default function Users() {
           <button className="btn ghost" onClick={() => setForm(null)}>{t('c.cancel')}</button>
           <button className="btn primary" disabled={busy} onClick={save}>{t('c.save')}</button></>}>
           <Field label={t('c.name')} required><input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} /></Field>
-          <Field label={t('auth.email')} required><input type="email" className="ltr" value={form.email} disabled={!!form.id} onChange={e => setForm({ ...form, email: e.target.value })} /></Field>
-          {!form.id && <p className="alert info">{t('usr.inviteHow')}</p>}
+          <Field label={t('auth.email')} required hint={!form.id ? t('usr.inviteHow') : undefined}><input type="email" className="ltr" value={form.email} disabled={!!form.id} onChange={e => setForm({ ...form, email: e.target.value })} /></Field>
           {!form.id && <Field label={t('usr.tempPassword')} hint={t('usr.tempPasswordHint')}><input type="text" className="ltr" minLength={8} autoComplete="off" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} /></Field>}
           <Field label={t('usr.role')} required><select value={form.role} disabled={form.id === me.id} onChange={e => setForm({ ...form, role: e.target.value as Role })}>
             {ROLES.map(r => <option key={r} value={r}>{t('role.' + r)}</option>)}</select></Field>

@@ -10,6 +10,7 @@ import { filterInspections } from '../lib/filtering';
 import { downloadText, toCsv } from '../lib/files';
 import { Card, Empty, PageHead, Progress, StatusBadge } from '../components/ui';
 import { EMPTY_FILTERS, Filters, type FilterState } from '../components/Filters';
+import { Tip } from '../components/Tips';
 import { Icon } from '../components/Icon';
 import type { Inspection } from '../types';
 
@@ -54,6 +55,7 @@ export default function Inspections() {
         <button className="btn ghost" onClick={exportCsv}><Icon name="download" />{t('c.exportCsv')}</button>
         {can.createInspection(user) && <button className="btn primary" onClick={() => nav('/inspections/new')}><Icon name="plus" />{t('nav.new')}</button>}
       </>} />
+      <Tip id="inspections">{t('tip.inspections')}</Tip>
       <Filters value={f} onChange={setF} />
       <Card>
         {rows.length === 0 ? <Empty>{t('c.noResults')}</Empty> : (

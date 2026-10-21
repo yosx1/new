@@ -7,6 +7,7 @@ import { can, completionRate, disciplineOf, isOverdue, OPEN_DEFECT, poolsForUser
 import { updateDefect } from '../lib/actions';
 import { Card, DefectBadge, Empty, PageHead, Progress, SeverityBadge, StatusBadge, useFeedback, errMsg } from '../components/ui';
 import type { Defect, Inspection } from '../types';
+import { Tip } from '../components/Tips';
 
 export default function Tasks() {
   const { t, b } = useI18n();
@@ -81,6 +82,7 @@ export default function Tasks() {
   return (
     <>
       <PageHead title={t('tasks.title')} sub={`${t('role.' + user.role)} — ${t('tasks.desc')}`} />
+      <Tip id="tasks">{t('tip.tasks')}</Tip>
       {total === 0 ? <Card><Empty icon="check">{t('tasks.none')}</Empty></Card> : (
         <div className="stack">
           {sections.filter(([, x]) => x.length).map(([k, rows]) => (
