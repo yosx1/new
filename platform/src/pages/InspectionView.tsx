@@ -8,6 +8,9 @@ import { col, ref } from '../lib/db';
 import {
   approvalBlockers, can, completionRate, missingApprovals, passRate,
 } from '../lib/rules';
+import { downloadXlsx } from '../lib/xlsx';
+import { inspectionFileName, inspectionSheets } from '../lib/inspectionExport';
+import { sendCompletionReport } from '../lib/completionReport';
 import { approveDiscipline, finalApprove, reopenInspection, saveResult, summaryStale, syncInspection, updateInfo } from '../lib/actions';
 import {
   Badge, Card, DefectBadge, Empty, Field, ItemBadge, Kpi, Modal, PageHead, SeverityBadge, Spinner, StatusBadge, Tabs, errMsg, useFeedback,
@@ -15,17 +18,18 @@ import {
 import { OwnerFiles } from '../components/Attachments';
 import { Icon } from '../components/Icon';
 import { ItemSheet } from './ItemSheet';
-import type { AuditEvent, ChecklistItemDef, ChecklistSection, Discipline, Inspection, ItemResult, ItemStatus } from '../types';
+import type { AuditEvent, ChecklistItemDef, ChecklistSection, Defect, Discipline, Inspection, ItemResult, ItemStatus } from '../types';
 
 type Tab = 'execute' | 'review' | 'info';
 
 export default function InspectionView() {
   const { id = '' } = useParams();
   const [params, setParams] = useSearchParams();
-  const { t, b } = useI18n();
+  const { t, b, lang } = useI18n();
   const user = useUser();
   const data = useData();
   const nav = useNavigate();
+  const exportCtx = (i: Inspection) => ({ lang, deptName: b(data.dept(i.departmentId)?.name), plantName: b(data.settings.plantName) });
   const { toast } = useFeedback();
   const [insp, setInsp] = useState<Inspection | null | undefined>(undefined);
   const [results, setResults] = useState<Record<string, ItemResult>>({});
@@ -92,6 +96,7 @@ export default function InspectionView() {
         sub={<>{b(insp.equipmentName)} · {t('insp.wo')} {insp.workOrder} · {b(data.dept(insp.departmentId)?.name)}</>}
         actions={<>
           <StatusBadge status={insp.status} />
+          <button className="btn ghost sm" onClick={() => downloadXlsx(inspectionFileName(insp), inspectionSheets(insp, results, defects, exportCtx(insp)), lang === 'ar')}><Icon name="download" size={16} />{t('c.exportXlsx')}</button>
           <Link className="btn ghost sm" to={`/print/inspection/${insp.id}`} target="_blank"><Icon name="printer" size={16} />{t('insp.reportPdf')}</Link>
         </>} />
 
@@ -171,7 +176,7 @@ export default function InspectionView() {
         </>
       )}
 
-      {tab === 'review' && <Review insp={insp} />}
+      {tab === 'review' && <Review insp={insp} results={results} defects={defects} />}
       {tab === 'info' && <Info insp={insp} />}
 
       {sheet && <ItemSheet insp={insp} section={sheet.section} item={sheet.item} result={results[sheet.item.id]} results={results}
@@ -180,8 +185,8 @@ export default function InspectionView() {
   );
 }
 
-function Review({ insp }: { insp: Inspection }) {
-  const { t, fmtDate } = useI18n();
+function Review({ insp, results, defects }: { insp: Inspection; results: Record<string, ItemResult>; defects: Defect[] }) {
+  const { t, b, fmtDate, lang } = useI18n();
   const user = useUser();
   const data = useData();
   const { toast, confirm } = useFeedback();
@@ -194,6 +199,7 @@ function Review({ insp }: { insp: Inspection }) {
   const missing = missingApprovals(insp);
   const execDone = insp.summary.pending === 0 && insp.summary.fail === 0 && insp.summary.openDefects === 0;
   const canOverride = can.override(user, data.settings);
+  const exportCtx = (i: Inspection) => ({ lang, deptName: b(data.dept(i.departmentId)?.name), plantName: b(data.settings.plantName) });
 
   const run = async () => {
     if (!dialog) return;
@@ -205,6 +211,11 @@ function Review({ insp }: { insp: Inspection }) {
       if (dialog.kind === 'reject') await approveDiscipline(user, insp, dialog.d!, 'rejected', comment.trim());
       if (dialog.kind === 'final') await finalApprove(user, insp, comment.trim());
       if (dialog.kind === 'override') await finalApprove(user, insp, '', comment.trim());
+      if ((dialog.kind === 'final' || dialog.kind === 'override') && navigator.onLine) {
+        sendCompletionReport(user, data.settings, data.users, insp.id, results, defects, exportCtx(insp))
+          .then(r => toast(r === 'sent' ? t('rep.emailSent') : r === 'failed' ? t('rep.emailFailed') : t('rep.notified'), r === 'failed' ? 'err' : 'ok'))
+          .catch(() => {});
+      }
       if (dialog.kind === 'reopen') await reopenInspection(user, insp, comment.trim());
       toast(navigator.onLine ? t('c.saved') : t('c.savedOffline'));
       setDialog(null); setComment('');
@@ -262,7 +273,6 @@ function Review({ insp }: { insp: Inspection }) {
               <Icon name="shield" />{t('insp.override')}</button>
           </div>
         )}
-        <p className="alert safety mt"><Icon name="shield" />{t('insp.safety')}</p>
       </Card>
 
       {dialog && (

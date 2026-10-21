@@ -8,6 +8,7 @@ import { ref, today } from '../lib/db';
 import { createInspection } from '../lib/actions';
 import { saveAttachment } from '../lib/files';
 import { Card, Field, PageHead, useFeedback, errMsg, Badge } from '../components/ui';
+import { Tip } from '../components/Tips';
 import { Icon } from '../components/Icon';
 import type { Discipline, Equipment, Template, TemplateVersion } from '../types';
 
@@ -125,6 +126,7 @@ export default function NewInspection() {
   return (
     <>
       <PageHead title={t('nav.new')} back={() => nav(-1)} />
+      <Tip id="newInsp">{t('tip.newInsp')}</Tip>
       <div className="stepper">
         {[t('insp.step1'), t('insp.step2'), t('insp.step3')].map((label, i) => (
           <div key={i} className={'step' + (step === i + 1 ? ' on' : step > i + 1 ? ' done' : '')}>
@@ -220,7 +222,6 @@ export default function NewInspection() {
               </Field>
               {version && (
                 <div className="mt stack">
-                  <p className="alert warn small">{t('tpl.exampleWarn')}</p>
                   {version.sections.map(s => (
                     <div key={s.id} className="lrow">
                       <div className="grow"><b>{b(s.title)}</b><div className="meta">{s.stage} · {t('disc.' + s.discipline)}</div></div>
@@ -248,7 +249,6 @@ export default function NewInspection() {
             <dt>{t('insp.requiredApprovals')}</dt><dd>{tpl.requiredApprovals.map(x => t('disc.' + x)).join('، ')} + {t('disc.final')}</dd>
             {files.length > 0 && <><dt>{t('c.attachments')}</dt><dd>{files.map(f => f.name).join(', ')}</dd></>}
           </dl>
-          <p className="alert safety mt"><Icon name="shield" />{t('insp.safety')}</p>
         </Card>
       )}
 

@@ -5,6 +5,7 @@ import { useI18n } from '../i18n/I18n';
 import { filterDefects, filterInspections } from '../lib/filtering';
 import { completionRate, departmentReadiness, isOverdue, OPEN_DEFECT, passRate } from '../lib/rules';
 import { downloadText, toCsv } from '../lib/files';
+import { downloadXlsx } from '../lib/xlsx';
 import { Card, Empty, Kpi, PageHead, StatusBadge } from '../components/ui';
 import { EMPTY_FILTERS, Filters, type FilterState } from '../components/Filters';
 import { Icon } from '../components/Icon';
@@ -22,7 +23,7 @@ const avg = (xs: (number | null)[]) => { const v = xs.filter((x): x is number =>
 const fmtH = (h: number | null) => (h == null ? '—' : h < 48 ? `${h.toFixed(1)} h` : `${(h / 24).toFixed(1)} d`);
 
 export default function Reports() {
-  const { t, b, fmtDate } = useI18n();
+  const { t, b, fmtDate, lang } = useI18n();
   const data = useData();
   const [r, setR] = useState<R>('plant');
   const [f, setF] = useState<FilterState>(EMPTY_FILTERS);
@@ -125,9 +126,28 @@ export default function Reports() {
     }
   }, [r, insp, defs, data, t, b, fmtDate]);
 
+  // Excel: the report on screen, with the filters that produced it written above the table.
+  const exportXlsx = () => {
+    const filters = [
+      f.dept && `${t('c.department')}: ${b(data.dept(f.dept)?.name)}`,
+      f.eq && `${t('c.equipment')}: ${data.equipment.find(e => e.id === f.eq)?.tag ?? f.eq}`,
+      f.disc && `${t('c.discipline')}: ${t('disc.' + f.disc)}`,
+      f.from && `${t('c.from')}: ${f.from}`,
+      f.to && `${t('c.to')}: ${f.to}`,
+    ].filter(Boolean).join(' · ');
+    const header = report.cols.length === report.csv[0]?.length ? report.cols : report.csv[0].map(String);
+    downloadXlsx(`${t(KEY[r])} ${new Date().toISOString().slice(0, 10)}.xlsx`, [{
+      name: t(KEY[r]),
+      title: [t(KEY[r]), `${b(data.settings.plantName)} · ${t('rep.generated')} ${fmtDate(new Date(), true)}`, `${t('c.filters')}: ${filters || t('c.all')}`,
+        ...(report.metrics ?? []).map(([k, v]) => `${k}: ${typeof v === 'string' || typeof v === 'number' ? v : ''}`)],
+      header, rows: report.csv.slice(1),
+    }], lang === 'ar');
+  };
+
   return (
     <>
       <PageHead title={t('rep.title')} actions={<>
+        <button className="btn primary" onClick={exportXlsx}><Icon name="download" />{t('c.exportXlsx')}</button>
         <button className="btn ghost" onClick={() => downloadText(`${r}-${new Date().toISOString().slice(0, 10)}.csv`, toCsv(report.csv))}><Icon name="download" />{t('c.exportCsv')}</button>
         <button className="btn ghost" onClick={() => window.print()}><Icon name="printer" />{t('c.print')}</button>
       </>} />

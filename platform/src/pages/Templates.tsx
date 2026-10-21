@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { Badge, Card, Empty, PageHead } from '../components/ui';
+import { Tip } from '../components/Tips';
 import { Icon } from '../components/Icon';
 
 export default function Templates() {
@@ -11,7 +12,7 @@ export default function Templates() {
   return (
     <>
       <PageHead title={t('tpl.title')} actions={<button className="btn primary" onClick={() => nav('/templates/new')}><Icon name="plus" />{t('tpl.add')}</button>} />
-      <p className="alert warn mb">{t('tpl.exampleWarn')}</p>
+      <Tip id="templates">{t('tip.templates')}</Tip>
       <Card>
         {data.templates.length === 0 ? <Empty /> : (
           <div className="list">

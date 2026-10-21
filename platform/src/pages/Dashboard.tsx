@@ -10,6 +10,7 @@ import { filterDefects, filterInspections } from '../lib/filtering';
 import { Card, DefectBadge, Empty, Kpi, PageHead, Progress, SeverityBadge, Spinner, StatusBadge } from '../components/ui';
 import { Donut } from '../components/Charts';
 import { EMPTY_FILTERS, Filters, type FilterState } from '../components/Filters';
+import { TipsCard } from '../components/Tips';
 import { Icon } from '../components/Icon';
 import type { AuditEvent, InspectionStatus } from '../types';
 import { addDays, today } from '../lib/db';
@@ -52,7 +53,7 @@ export default function Dashboard() {
       {can.manageSystem(user) && data.departments.length === 0 && (
         <p className="alert info mb">{t('setup.seed')} → <Link to="/settings">{t('nav.settings')}</Link></p>
       )}
-      <p className="alert safety mb"><Icon name="shield" />{t('insp.safety')}</p>
+      <TipsCard />
 
       <Filters value={f} onChange={setF} show={['dept', 'eq', 'from', 'to', 'status', 'disc']} />
 

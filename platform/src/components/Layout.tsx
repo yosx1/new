@@ -9,6 +9,7 @@ import { useI18n } from '../i18n/I18n';
 import { ref } from '../lib/db';
 import { can, poolsForUser } from '../lib/rules';
 import { Icon } from './Icon';
+import { NetworkBackground } from './NetworkBackground';
 
 interface NavItem { to: string; icon: string; key: string; show?: boolean; badge?: number }
 
@@ -43,6 +44,7 @@ export function Layout() {
     { to: '/equipment', icon: 'factory', key: 'nav.equipment' },
     { to: '/reports', icon: 'chart', key: 'nav.reports' },
     { to: '/documents', icon: 'book', key: 'nav.documents' },
+    { to: '/help', icon: 'info', key: 'nav.help' },
   ];
   const admin: NavItem[] = [
     { to: '/templates', icon: 'list', key: 'nav.templates', show: can.manageSystem(user) },
@@ -80,6 +82,7 @@ export function Layout() {
 
   return (
     <div className="shell">
+      <div className="app-bg" aria-hidden="true"><NetworkBackground variant="light" /></div>
       <aside className="sidebar">{sidebar}</aside>
       {drawer && <div className="overlay" onClick={() => setDrawer(false)}><aside className="sidebar drawer" onClick={e => e.stopPropagation()}>{sidebar}</aside></div>}
 

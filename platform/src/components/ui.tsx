@@ -98,13 +98,17 @@ export function Field({ label, children, hint, required, error }: { label: React
 export function Modal({ title, onClose, children, footer, wide }: { title: ReactNode; onClose: () => void; children: ReactNode; footer?: ReactNode; wide?: boolean }) {
   const { t } = useI18n();
   const box = useRef<HTMLDivElement>(null);
+  // Callers pass a new onClose on every render; keep the latest in a ref so the effect below
+  // runs only when the modal opens (re-running it would steal focus back to the first field).
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
-    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const k = (e: KeyboardEvent) => { if (e.key === 'Escape') closeRef.current(); };
     document.addEventListener('keydown', k);
     document.body.classList.add('no-scroll');
     box.current?.querySelector<HTMLElement>('input,select,textarea')?.focus();
     return () => { document.removeEventListener('keydown', k); document.body.classList.remove('no-scroll'); };
-  }, [onClose]);
+  }, []);
   return (
     <div className="overlay" onMouseDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div className={'modal' + (wide ? ' wide' : '')} role="dialog" aria-modal="true" ref={box}>

@@ -5,6 +5,7 @@ import { auth, db, isConfigured } from '../firebase';
 import { useI18n } from '../i18n/I18n';
 import { Field, Spinner, useFeedback, errMsg } from '../components/ui';
 import { Icon } from '../components/Icon';
+import { NetworkBackground } from '../components/NetworkBackground';
 
 export function Login({ reason }: { reason?: 'inactive' | 'revoked' | 'noProfile' }) {
   const { t, lang, setLang } = useI18n();
@@ -67,10 +68,13 @@ export function Login({ reason }: { reason?: 'inactive' | 'revoked' | 'noProfile
   return (
     <div className="login">
       <div className="login-hero">
+        <NetworkBackground variant="dark" />
         <img src="/icon.svg" alt="" width={72} height={72} />
         <h1>{t('app.name')}</h1>
         <p>{t('plant.default')} · {t('app.sub')}</p>
       </div>
+      <div className="login-side">
+      <NetworkBackground variant="light" />
       <div className="login-card">
         <button className="btn ghost sm lang-btn" onClick={() => setLang(lang === 'ar' ? 'en' : 'ar')}><Icon name="globe" size={16} />{t('lang.switch')}</button>
         {!isConfigured ? <p className="alert warn">{t('setup.notConfigured')}</p>
@@ -101,6 +105,7 @@ export function Login({ reason }: { reason?: 'inactive' | 'revoked' | 'noProfile
               <button type="button" className="btn link" onClick={reset}>{t('auth.forgot')}</button>
             </form>
           )}
+      </div>
       </div>
     </div>
   );

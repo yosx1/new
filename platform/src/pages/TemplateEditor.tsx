@@ -104,7 +104,6 @@ export default function TemplateEditor() {
           {!isNew && <button className="btn ghost" onClick={saveMetaOnly}>{t('c.save')}</button>}
           <button className="btn primary" onClick={() => setPublish(true)}><Icon name="check" />{t('tpl.publish')}</button>
         </>} />
-      <p className="alert warn mb">{t('tpl.exampleWarn')}</p>
 
       <Card>
         <div className="grid g3">

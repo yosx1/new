@@ -9,6 +9,7 @@ import { audit, col, ref } from '../lib/db';
 import { releaseUserWork } from '../lib/actions';
 import { OPEN_DEFECT } from '../lib/rules';
 import { Badge, Card, Field, Modal, PageHead, errMsg, useFeedback } from '../components/ui';
+import { Tip } from '../components/Tips';
 import { Icon } from '../components/Icon';
 import { ROLES, type Role, type UserProfile } from '../types';
 
@@ -91,6 +92,7 @@ export default function Users() {
     <>
       <PageHead title={t('usr.title')} sub={`${data.users.filter(u => u.active).length} ${t('c.active')}`}
         actions={<button className="btn primary" onClick={() => setForm({ name: '', email: '', role: 'mechanical', departmentId: '', phone: '', active: true, password: '' })}><Icon name="plus" />{t('usr.add')}</button>} />
+      <Tip id="users">{t('tip.users')}</Tip>
       <div className="filters">
         <div className="search" style={{ gridColumn: 'span 2' }}><Icon name="search" size={18} /><input type="search" placeholder={t('c.search')} value={q} onChange={e => setQ(e.target.value)} /></div>
         <select value={roleF} onChange={e => setRoleF(e.target.value)}><option value="">{t('usr.role')}: {t('c.all')}</option>{ROLES.map(r => <option key={r} value={r}>{t('role.' + r)}</option>)}</select>

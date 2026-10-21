@@ -26,6 +26,7 @@ const Documents = lazy(() => import('./pages/Documents'));
 const Reports = lazy(() => import('./pages/Reports'));
 const Audit = lazy(() => import('./pages/Audit'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const Help = lazy(() => import('./pages/Help'));
 
 function AdminOnly({ children }: { children: ReactNode }) {
   const u = useUser();
@@ -63,6 +64,7 @@ export default function App() {
             <Route path="reports" element={<Reports />} />
             <Route path="audit" element={<Audit />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="help" element={<Help />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
         </Routes>

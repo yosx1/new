@@ -8,6 +8,8 @@ import { useUser } from '../auth/Auth';
 import { audit, ref } from '../lib/db';
 import { seedExampleData } from '../data/seed';
 import { Card, Field, PageHead, errMsg, useFeedback } from '../components/ui';
+import { ReportSettings } from './ReportSettings';
+import { RolesMatrix } from './RolesMatrix';
 import { Icon } from '../components/Icon';
 import { ROLES, SEVERITIES, type Role, type Settings } from '../types';
 
@@ -38,7 +40,7 @@ export default function SettingsPage() {
       overrideRoles: sys.overrideRoles, defectTargetDays: sys.days,
     };
     try {
-      await setDoc(ref('config', 'settings'), { ...next, updatedAt: serverTimestamp(), updatedBy: user.id });
+      await setDoc(ref('config', 'settings'), { ...next, updatedAt: serverTimestamp(), updatedBy: user.id }, { merge: true });
       audit(user, 'settings.edit', 'config', 'settings', { after: { overrideRoles: next.overrideRoles } });
       toast(t('c.saved'));
     } catch (e) { toast(errMsg(e, t), 'err'); }
@@ -109,6 +111,8 @@ export default function SettingsPage() {
           <button className="btn primary mt" onClick={saveSys}>{t('c.save')}</button>
         </Card>
       )}
+      <RolesMatrix />
+      {admin && <ReportSettings />}
     </>
   );
 }

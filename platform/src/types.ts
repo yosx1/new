@@ -309,4 +309,12 @@ export interface Settings {
   equipmentCategories: string[];
   overrideRoles: Role[];
   defectTargetDays: Record<Severity, number>;
+  /** Who gets the completion report when an inspection is approved. Empty = all active managers and administrators. */
+  reportRecipientUids?: string[];
+  /** Extra addresses (outside the platform) that also receive the e-mail. */
+  reportEmails?: string[];
+  /** Google Apps Script web-app URL that sends the e-mails (the free plan has no server of its own). */
+  emailRelayUrl?: string;
+  /** The weekly Google Drive backup folder is shared with this address. */
+  backupEmail?: string;
 }

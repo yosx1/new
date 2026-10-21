@@ -7,6 +7,7 @@ import { isOverdue, OPEN_DEFECT } from '../lib/rules';
 import { downloadText, toCsv } from '../lib/files';
 import { Badge, Card, DefectBadge, Empty, PageHead, SeverityBadge, Tabs } from '../components/ui';
 import { EMPTY_FILTERS, Filters, type FilterState } from '../components/Filters';
+import { Tip } from '../components/Tips';
 import { Icon } from '../components/Icon';
 import { DEFECT_FLOW, DISCIPLINES, type Defect } from '../types';
 
@@ -53,6 +54,7 @@ export default function Defects() {
   return (
     <>
       <PageHead title={t('def.title')} sub={`${rows.length}`} actions={<button className="btn ghost" onClick={exportCsv}><Icon name="download" />{t('c.exportCsv')}</button>} />
+      <Tip id="defects">{t('tip.defects')}</Tip>
       <Tabs<View> value={view} onChange={v => setParams({ view: v })} tabs={[
         ['open', t('def.openOnly')], ['critical', t('def.critical')], ['overdue', t('def.overdue')], ['byDisc', t('def.byDept')], ['all', t('def.all')],
       ]} />
