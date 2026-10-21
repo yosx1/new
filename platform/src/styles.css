@@ -348,8 +348,8 @@ a.lrow:hover, button.lrow:hover { border-color: #c6d3e6; }
   background: radial-gradient(120% 80% at 0% 100%, rgba(11,42,91,.85), transparent 60%); }
 .login-side { position: relative; overflow: hidden; display: flex; background: linear-gradient(180deg, #fff, #f5f8fd); }
 .login-side .login-card { z-index: 1; }
-.app-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-.shell > .main { position: relative; z-index: 1; }
+.app-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+.shell { isolation: isolate; } /* the backdrop sits behind the content without trapping pop-ups below the sidebar */
 @media print { .net-bg, .app-bg { display: none !important; } }
 .priv { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .priv th, .priv td { padding: 8px 6px; border-bottom: 1px solid var(--line); text-align: start; vertical-align: middle; }
