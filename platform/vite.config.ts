@@ -24,6 +24,8 @@ export default defineConfig({
       },
       workbox: {
         navigateFallback: '/index.html',
+        // The PDF guides are real files, not app routes.
+        navigateFallbackDenylist: [/^\/guide\//],
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         runtimeCaching: [
           {

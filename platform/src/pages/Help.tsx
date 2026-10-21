@@ -15,7 +15,8 @@ export default function Help() {
 
   return (
     <>
-      <PageHead title={t('help.title')} sub={t('help.sub')} />
+      <PageHead title={t('help.title')} sub={t('help.sub')} actions={
+        <a className="btn primary" href={`/guide/Cold-Run-Readiness-Guide-${lang === 'ar' ? 'AR' : 'EN'}.pdf`} target="_blank" rel="noopener"><Icon name="download" />{t('help.pdf')}</a>} />
       <div className="guide">
         {sections.map(s => (
           <Card key={s.id} className={'guide-sec' + (open === s.id ? ' open' : '')}>
@@ -28,7 +29,8 @@ export default function Help() {
           </Card>
         ))}
       </div>
-      <p className="muted small mt">{t('help.tipsBack')} <button className="btn link sm" onClick={resetTips}>{t('help.showTips')}</button></p>
+      <p className="muted small mt">{t('help.pdfBoth')} <a href="/guide/Cold-Run-Readiness-Guide-EN-AR.pdf" target="_blank" rel="noopener">English + العربية (PDF)</a></p>
+      <p className="muted small">{t('help.tipsBack')} <button className="btn link sm" onClick={resetTips}>{t('help.showTips')}</button></p>
     </>
   );
 }

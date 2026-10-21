@@ -10,6 +10,8 @@ export const STRINGS: Record<string, Entry> = {
   // guide & tips
   'help.title': ['Guide & Tips', 'الدليل والنصائح'],
   'help.sub': ['How the platform works, step by step, for your role', 'طريقة عمل المنصة خطوة بخطوة حسب دورك'],
+  'help.pdf': ['Download the full guide (PDF)', 'تنزيل الدليل الكامل (PDF)'],
+  'help.pdfBoth': ['Both languages in one file:', 'اللغتان في ملف واحد:'],
   'help.tip': ['Tip', 'نصيحة'],
   'help.next': ['Next tip', 'النصيحة التالية'],
   'help.open': ['Open the guide', 'افتح الدليل'],
