@@ -46,11 +46,18 @@ export default function NewInspection() {
       <Tip id="newInsp">{t('tip.newInsp')}</Tip>
       {!sd ? <Card><p className="muted">{t('sd.none')}</p></Card> : (
         <Card>
+          {/* in the order they are chosen: department → equipment → discipline (the title follows the equipment) */}
           <div className="grid g2">
             <Field label={t('c.department')}>
               <select value={dept} disabled={member && !!user.departmentId} onChange={e => { setDept(e.target.value); setEqId(''); }}>
                 <option value="">{t('c.all')}</option>
                 {data.departments.map(x => <option key={x.id} value={x.id}>{b(x.name)}</option>)}
+              </select>
+            </Field>
+            <Field label={t('c.equipment')} required>
+              <select value={eqId} onChange={e => setEqId(e.target.value)}>
+                <option value="">{choices.length ? t('insp.chooseEq') : t('insp.noEquipment')}</option>
+                {choices.map(e => <option key={e.id} value={e.id}>{e.name}{dept ? '' : ` — ${b(data.dept(e.departmentId)?.name)}`}</option>)}
               </select>
             </Field>
             <Field label={t('c.discipline')}>
@@ -60,12 +67,6 @@ export default function NewInspection() {
                   {discs.map(x => <option key={x} value={x}>{t('disc.' + x)} ({eq?.parts[x].length})</option>)}
                 </select>
               )}
-            </Field>
-            <Field label={t('c.equipment')} required>
-              <select value={eqId} onChange={e => setEqId(e.target.value)}>
-                <option value="">{choices.length ? t('insp.chooseEq') : t('insp.noEquipment')}</option>
-                {choices.map(e => <option key={e.id} value={e.id}>{e.name}{dept ? '' : ` — ${b(data.dept(e.departmentId)?.name)}`}</option>)}
-              </select>
             </Field>
             <Field label={t('insp.titleField')}><input disabled value={eq?.name ?? ''} placeholder={t('insp.titleAuto')} /></Field>
           </div>
