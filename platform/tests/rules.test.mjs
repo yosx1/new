@@ -99,13 +99,22 @@ test('checking parts: the team works it, other teams cannot', async () => {
   await assertSucceeds(save('elec2'));                      // colleague, all departments
 });
 
-test('submitting: corrective needs every part checked; waiting approval needs every Not OK fixed', async () => {
+test('submitting: corrective needs every part checked and a work order; waiting approval needs every Not OK fixed', async () => {
   await assertFails(updateDoc(ins(as('elec')), { status: 'waiting_approval', summary: summary({ ok: 1, pending: 1 }), docVersion: 2 }));
   await assertFails(updateDoc(ins(as('elec')), { status: 'waiting_approval', summary: summary({ ok: 1, notok: 1, pending: 0 }), docVersion: 2 }));
-  await assertSucceeds(updateDoc(ins(as('elec')), { status: 'corrective', summary: summary({ ok: 1, notok: 1, pending: 0 }), docVersion: 2 }));
-  await assertFails(updateDoc(ins(as('elec')), { status: 'approved', docVersion: 3 }));
-  await assertSucceeds(updateDoc(ins(as('elec')), { status: 'waiting_approval', summary: summary({ ok: 1, notok: 1, fixed: 1, pending: 0 }), docVersion: 3 }));
-  await assertFails(updateDoc(ins(as('elec')), { 'results.p1': { status: 'notok' }, docVersion: 4 })); // locked while waiting
+  const toCorrective = { status: 'corrective', summary: summary({ ok: 1, notok: 1, pending: 0 }), docVersion: 2 };
+  await assertFails(updateDoc(ins(as('elec')), toCorrective));                               // no work order
+  await assertFails(updateDoc(ins(as('elec')), { ...toCorrective, workOrder: '' }));
+  await assertFails(updateDoc(ins(as('elec')), { ...toCorrective, workOrder: 'x'.repeat(41) }));
+  await assertFails(updateDoc(ins(as('elec')), { ...toCorrective, workOrder: 153 }));
+  await assertSucceeds(updateDoc(ins(as('elec')), { ...toCorrective, workOrder: 'WO-2026-0153' }));
+  await assertFails(updateDoc(ins(as('elec')), { workOrder: null, docVersion: 3 }));         // cannot be removed
+  await assertFails(updateDoc(ins(as('mech')), { workOrder: 'WO-1', docVersion: 3 }));       // other team
+  await assertSucceeds(updateDoc(ins(as('elec')), { workOrder: 'WO-2026-0154', docVersion: 3 })); // corrected by the team
+  await assertFails(updateDoc(ins(as('elec')), { status: 'approved', docVersion: 4 }));
+  await assertSucceeds(updateDoc(ins(as('elec')), { status: 'waiting_approval', summary: summary({ ok: 1, notok: 1, fixed: 1, pending: 0 }), docVersion: 4 }));
+  await assertFails(updateDoc(ins(as('elec')), { 'results.p1': { status: 'notok' }, docVersion: 5 })); // locked while waiting
+  await assertFails(updateDoc(ins(as('elec')), { workOrder: 'WO-9', docVersion: 5 }));       // and so is the work order
 });
 
 test('approval and sending back: Cold Run Test Manager or administrator only', async () => {

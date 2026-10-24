@@ -13,7 +13,7 @@ export function InspectionRow({ i }: { i: Inspection }) {
     <Link to={`/inspections/${i.id}`} className="lrow">
       <div className="grow">
         <b>{i.title}</b> · <span className="muted">{t('disc.' + i.discipline)}</span>
-        <div className="meta ellipsis">{b(data.dept(i.departmentId)?.name)} · <span className="mono">{i.code}</span> · {i.createdByName}
+        <div className="meta ellipsis">{b(data.dept(i.departmentId)?.name)} · <span className="mono">{i.code}</span>{i.workOrder ? <> · {t('wo.label')} <bdi className="mono">{i.workOrder}</bdi></> : null} · {i.createdByName}
           {s.notok > s.fixed ? ` · ${s.notok - s.fixed} ${t('part.notok')}` : ''}</div>
         {i.status === 'pool' && <Progress value={completion(s)} tone={s.notok ? 'red' : 'green'} />}
       </div>

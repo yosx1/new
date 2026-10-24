@@ -50,10 +50,10 @@ export default function Reports() {
         for (const i of insp) for (const p of i.parts) {
           const x = i.results[p.id];
           if (x?.status !== 'notok') continue;
-          rows.push([i.title, b(data.dept(i.departmentId)?.name), t('disc.' + i.discipline), p.name, x.note, x.byName, x.fix ? t('part.fixed') : t('rep.open'), x.fix?.note ?? '', x.fix?.byName ?? '', i.code, t('st.' + i.status)]);
+          rows.push([i.title, b(data.dept(i.departmentId)?.name), t('disc.' + i.discipline), p.name, x.note, x.byName, i.workOrder ?? '', x.fix ? t('part.fixed') : t('rep.open'), x.fix?.note ?? '', x.fix?.byName ?? '', i.code, t('st.' + i.status)]);
           links.push(i.id);
         }
-        return { cols: [t('c.equipment'), t('c.department'), t('c.discipline'), t('insp.part'), t('insp.problem'), t('insp.checkedBy'), t('c.status'), t('insp.fixNote'), t('insp.fixedBy'), t('insp.id'), t('rep.inspStatus')], rows, links };
+        return { cols: [t('c.equipment'), t('c.department'), t('c.discipline'), t('insp.part'), t('insp.problem'), t('insp.checkedBy'), t('wo.label'), t('c.status'), t('insp.fixNote'), t('insp.fixedBy'), t('insp.id'), t('rep.inspStatus')], rows, links };
       }
       case 'notstarted': {
         const sd = f.shutdown || data.shutdown?.id || '';
@@ -63,8 +63,8 @@ export default function Reports() {
         return { cols: [t('c.equipment'), t('c.department'), t('c.discipline'), t('insp.parts')], rows };
       }
       case 'inspections': return {
-        cols: [t('insp.id'), t('c.equipment'), t('c.department'), t('c.discipline'), t('c.status'), t('insp.parts'), t('part.ok'), t('part.notok'), t('part.fixed'), t('part.pending'), t('insp.by'), t('insp.approvedByCol'), t('sd.title')],
-        rows: insp.map(i => [i.code, i.title, b(data.dept(i.departmentId)?.name), t('disc.' + i.discipline), t('st.' + i.status), i.summary.total, i.summary.ok, i.summary.notok, i.summary.fixed, i.summary.pending, i.createdByName, i.approval?.byName ?? '', i.shutdownName]),
+        cols: [t('insp.id'), t('c.equipment'), t('c.department'), t('c.discipline'), t('c.status'), t('insp.parts'), t('part.ok'), t('part.notok'), t('part.fixed'), t('part.pending'), t('wo.label'), t('insp.by'), t('insp.approvedByCol'), t('sd.title')],
+        rows: insp.map(i => [i.code, i.title, b(data.dept(i.departmentId)?.name), t('disc.' + i.discipline), t('st.' + i.status), i.summary.total, i.summary.ok, i.summary.notok, i.summary.fixed, i.summary.pending, i.workOrder ?? '', i.createdByName, i.approval?.byName ?? '', i.shutdownName]),
         links: insp.map(i => i.id),
       };
       case 'people': {

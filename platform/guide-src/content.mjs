@@ -76,7 +76,7 @@ export const CHAPTERS = [
       table([T('Stage', 'المرحلة'), T('What happens', 'ما يحدث')], [
         [T('New Inspection', 'فحص جديد'), T('A team member (or the manager) starts it for an equipment. The title is the equipment name.', 'يبدؤه عضو الفريق (أو المدير) لمعدة. العنوان هو اسم المعدة.')],
         [T('Waiting in pool', 'بانتظار الفريق'), T('The team checks every part: OK or Not OK. Then presses Submit.', 'يفحص الفريق كل جزء: سليم أو غير سليم. ثم يضغط إرسال.')],
-        [T('Active · Corrective maintenance', 'نشط · صيانة تصحيحية'), T('At least one part was Not OK. The team repairs it and marks it Fixed.', 'جزء واحد على الأقل غير سليم. يصلحه الفريق ويؤشر "تم الإصلاح".')],
+        [T('Active · Corrective maintenance', 'نشط · صيانة تصحيحية'), T('At least one part was Not OK. A work order number is required; the team repairs the part and marks it Fixed.', 'جزء واحد على الأقل غير سليم. رقم أمر العمل إلزامي؛ ويصلح الفريق الجزء ويؤشر "تم الإصلاح".')],
         [T('Active · Waiting approval', 'نشط · بانتظار الموافقة'), T('Everything is OK or fixed. The Cold Run Test Manager reviews it.', 'كل شيء سليم أو تم إصلاحه. يراجعه مدير اختبار التشغيل البارد.')],
         [T('Active · Approved', 'نشط · معتمد'), T('Approved. Management is notified and receives the Excel results.', 'معتمد. تُبلَّغ الإدارة ويصلها ملف النتائج (Excel).')],
         [T('Done', 'منجز'), T('When all inspections are approved, the manager closes the shutdown: everything moves to Done and the active count goes back to 0. The next shutdown keeps the same year until the administrator changes it.', 'عند اعتماد جميع الفحوصات يغلق المدير التوقف: ينتقل كل شيء إلى المنجز ويعود عدد الفحوصات النشطة إلى الصفر. ويحتفظ التوقف التالي بالسنة نفسها حتى يغيّرها مدير النظام.')],
@@ -108,9 +108,10 @@ export const CHAPTERS = [
         T('Not OK asks for a short description of the problem. Add a photo with the camera button, then <b>Save as Not OK</b>.', 'غير سليم يطلب وصفاً قصيراً للمشكلة. أضف صورة بزر الكاميرا ثم <b>حفظ كغير سليم</b>.'),
         T('Chose wrongly? Tap the highlighted <b>✓</b> again to clear it. Tapping a highlighted <b>✕</b> asks first, because it removes the note and photo; use <b>Edit</b> to change only the note.', 'اخترت خطأً؟ اضغط <b>✓</b> المؤشَّر مرة أخرى لإلغائه. أما الضغط على <b>✕</b> المؤشَّر فيطلب التأكيد لأنه يحذف الملاحظة والصورة؛ استخدم <b>تعديل</b> لتغيير الملاحظة فقط.'),
         T('Colleagues of the same team can work on the same inspection; everything is saved as you go.', 'يمكن لزملاء الفريق العمل على الفحص نفسه؛ ويُحفظ كل شيء أولاً بأول.'),
-        T('When every part is checked, press <b>Submit inspection</b>. With a Not OK part it goes to <b>Corrective maintenance</b>; otherwise to <b>Waiting approval</b>.', 'عند فحص جميع الأجزاء اضغط <b>إرسال الفحص</b>. إذا وُجد جزء غير سليم ينتقل إلى <b>صيانة تصحيحية</b>؛ وإلا إلى <b>بانتظار الموافقة</b>.'),
+        T('When every part is checked, press <b>Submit inspection</b>. With a Not OK part the platform asks for the <b>work order</b> number raised in the maintenance system (required), then the inspection goes to <b>Corrective maintenance</b>; otherwise to <b>Waiting approval</b>.', 'عند فحص جميع الأجزاء اضغط <b>إرسال الفحص</b>. إذا وُجد جزء غير سليم تطلب المنصة رقم <b>أمر العمل</b> الصادر من نظام الصيانة (إلزامي)، ثم ينتقل الفحص إلى <b>صيانة تصحيحية</b>؛ وإلا إلى <b>بانتظار الموافقة</b>.'),
       ),
       img('checked', 'Parts checked: one OK, one Not OK with its description and photo', 'أجزاء مفحوصة: جزء سليم وآخر غير سليم مع الوصف والصورة'),
+      img('workorder', 'Submitting with a Not OK part: the work order number is required', 'الإرسال مع جزء غير سليم: رقم أمر العمل إلزامي'),
       tip('Add a photo to every Not OK part — it saves time for the repair and for the approval.', 'أضف صورة لكل جزء غير سليم — توفر الوقت على الإصلاح والاعتماد.'),
     ],
   },
@@ -119,7 +120,7 @@ export const CHAPTERS = [
     body: [
       who('Team members', 'أعضاء الفريق'),
       steps(
-        T('The inspection is in <b>Waiting in your pool</b> under <b>Corrective maintenance</b>.', 'يظهر الفحص في <b>بانتظار فريقك</b> تحت <b>صيانة تصحيحية</b>.'),
+        T('The inspection is in <b>Waiting in your pool</b> under <b>Corrective maintenance</b>, with its <b>work order</b> number at the top. Wrong number? Press <b>Edit</b> next to it (possible until the inspection leaves corrective maintenance).', 'يظهر الفحص في <b>بانتظار فريقك</b> تحت <b>صيانة تصحيحية</b>، ورقم <b>أمر العمل</b> في أعلاه. رقم خاطئ؟ اضغط <b>تعديل</b> بجانبه (ممكن حتى يخرج الفحص من الصيانة التصحيحية).'),
         T('After the repair, open the Not OK part and press <b>Mark fixed</b>. Write what was done and add an "after" photo.', 'بعد الإصلاح افتح الجزء غير السليم واضغط <b>تم الإصلاح</b>. اكتب ما تم وأضف صورة "بعد".'),
         T('When the last Not OK part is fixed, the inspection moves to <b>Waiting approval</b> automatically.', 'عند إصلاح آخر جزء غير سليم ينتقل الفحص تلقائياً إلى <b>بانتظار الموافقة</b>.'),
       ),
@@ -259,6 +260,7 @@ export const CHAPTERS = [
         [T('"Your account has no profile yet"', '"لا يوجد ملف لحسابك بعد"'), T('Ask the administrator to add you with the exact e-mail you use.', 'اطلب من مدير النظام إضافتك بالبريد نفسه الذي تستخدمه.')],
         [T('I cannot see any equipment to start', 'لا أرى أي معدة لأبدأها'), T('Your department has no equipment with parts of your discipline yet, or your role/department is not set. Ask the manager.', 'لا توجد بعد معدات في قسمك لها أجزاء من اختصاصك، أو لم يُحدد دورك/قسمك. اسأل المدير.')],
         [T('"This inspection already exists"', '"هذا الفحص موجود مسبقاً"'), T('Your team started it already — it opens so you can continue.', 'بدأه فريقك مسبقاً — يُفتح لتتابع العمل.')],
+        [T('It asks for a work order', 'يطلب رقم أمر العمل'), T('Some parts are Not OK: enter the work order number raised for the repair. Without it the inspection cannot go to corrective maintenance.', 'بعض الأجزاء غير سليمة: أدخل رقم أمر العمل الصادر للإصلاح. بدونه لا ينتقل الفحص إلى الصيانة التصحيحية.')],
         [T('Submit is greyed out', 'زر الإرسال غير مفعّل'), T('Some parts are still not checked; the bar at the bottom says how many.', 'بعض الأجزاء لم تُفحص بعد؛ يوضح الشريط أسفل الصفحة عددها.')],
         [T('The archive button does not appear', 'زر الأرشفة لا يظهر'), T('Not every inspection of the shutdown is approved yet.', 'لم تُعتمد جميع فحوصات التوقف بعد.')],
         [T('CSV rows were skipped', 'تم تخطي صفوف في ملف CSV'), T('The preview says why: unknown department, empty equipment name or unknown part type.', 'توضح المعاينة السبب: قسم غير معروف، أو اسم معدة فارغ، أو نوع جزء غير معروف.')],

@@ -85,6 +85,7 @@ function doPost(e) {
       [ar ? 'المعدة' : 'Equipment', insp.title],
       [ar ? 'الاختصاص' : 'Discipline', disc],
       [ar ? 'التوقف السنوي' : 'Shutdown', insp.shutdownName || ''],
+      ...(insp.workOrder ? [[ar ? 'أمر العمل' : 'Work order', insp.workOrder]] : []),
       [ar ? 'الأجزاء' : 'Parts', (s.total || 0) + ' · ' + (ar ? 'سليم ' : 'OK ') + (s.ok || 0) + ' · ' + (ar ? 'غير سليم ' : 'Not OK ') + (s.notok || 0) + ' · ' + (ar ? 'تم الإصلاح ' : 'fixed ') + (s.fixed || 0)],
       [ar ? 'اعتمده' : 'Approved by', fin.byName || caller.name],
     ];

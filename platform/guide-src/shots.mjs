@@ -40,7 +40,7 @@ const mk = async (e, d, status, results, by, extra = {}) => {
 };
 const drive = E('Kiln main drive'), sep = E('Raw mill separator');
 const checked = await mk(drive, 'electrical', 'pool', { p1: { status: 'ok' }, p2: { status: 'notok', note: 'Cable gland loose at the MCC panel entry' } }, ali);
-const corrective = await mk(drive, 'mechanical', 'corrective', { p1: { status: 'ok' }, p2: { status: 'notok', note: 'Oil leak at the pinion seal' } }, omar);
+const corrective = await mk(drive, 'mechanical', 'corrective', { p1: { status: 'ok' }, p2: { status: 'notok', note: 'Oil leak at the pinion seal' } }, omar, { workOrder: 'WO-2026-0153' });
 const waiting = await mk(sep, 'electrical', 'waiting_approval', { p1: { status: 'ok' } }, ali);
 
 // example usage of the day, so the Plan & billing card shows its bars
@@ -81,6 +81,9 @@ for (const lang of ['en', 'ar']) {
   await go(a, '/tasks'); await shot(a, 'pool', lang);
   await go(a, '/inspections/new'); await a.locator('select').nth(1).selectOption({ index: 2 }); await shot(a, 'new', lang);
   await go(a, `/inspections/${checked}`); await a.waitForSelector('.part-row'); await shot(a, 'checked', lang);
+  for (const r of await a.locator('.part-row').all()) if (!(await r.locator('.qbtn.on').count())) { await r.locator('.qbtn.pass').click(); await a.waitForTimeout(500); }
+  await a.locator('.action-bar .btn.primary').click(); await a.locator('.modal input').fill('WO-2026-0153'); await shot(a, 'workorder', lang);
+  await a.locator('.modal').getByRole('button', { name: /Cancel|إلغاء/ }).click();
 
   const o = await pageFor(lang, 'omar@kcp.iq');
   await go(o, `/inspections/${corrective}`); await o.waitForSelector('.part-row');

@@ -21,7 +21,7 @@ export const GUIDE: GuideSection[] = [
     steps: [
       ['New Inspection: choose the equipment — the title is the equipment name and the parts of your discipline are listed automatically.', 'فحص جديد: اختر المعدة — يكون العنوان اسم المعدة وتُدرج أجزاء اختصاصك تلقائياً.'],
       ['Waiting in your pool: your team checks every part and marks it OK or Not OK, then presses Submit.', 'بانتظار فريقك: يفحص فريقك كل جزء ويحدده سليم أو غير سليم، ثم يضغط إرسال.'],
-      ['Active — Corrective maintenance: parts that were Not OK are repaired and marked Fixed.', 'نشط — صيانة تصحيحية: تُصلح الأجزاء غير السليمة ويُؤشَّر عليها "تم الإصلاح".'],
+      ['Active — Corrective maintenance: a work order number is required; parts that were Not OK are repaired and marked Fixed.', 'نشط — صيانة تصحيحية: رقم أمر العمل إلزامي؛ وتُصلح الأجزاء غير السليمة ويُؤشَّر عليها "تم الإصلاح".'],
       ['Active — Waiting approval: the Cold Run Test Manager or Administrator approves it, or sends it back with a reason.', 'نشط — بانتظار الموافقة: يعتمده مدير اختبار التشغيل البارد أو مدير النظام، أو يعيده مع ذكر السبب.'],
       ['Active — Approved. When every inspection of the shutdown is approved, "Close shutdown & archive" moves them all to Done and the count starts again from 0.', 'نشط — معتمد. عندما تُعتمد جميع فحوصات التوقف، ينقلها زر "إغلاق التوقف والأرشفة" إلى المنجز ويبدأ العدّ من الصفر.'],
     ],
@@ -33,7 +33,7 @@ export const GUIDE: GuideSection[] = [
       ['Not OK asks for a short description of the problem; add a photo — it saves time for the repair.', 'غير سليم يطلب وصفاً قصيراً للمشكلة؛ أضف صورة — توفر الوقت على الإصلاح.'],
       ['Chose wrongly? Tap the highlighted ✓ again to clear the part. A highlighted ✕ asks first, because it removes the note and photo.', 'اخترت خطأً؟ اضغط ✓ المؤشَّر مرة أخرى لإلغاء الجزء. أما ✕ المؤشَّر فيطلب التأكيد لأنه يحذف الملاحظة والصورة.'],
       ['Colleagues of the same discipline and department can share the work on one inspection.', 'يمكن لزملاء الاختصاص والقسم نفسه تقاسم العمل على الفحص الواحد.'],
-      ['When every part is checked, press Submit inspection.', 'عند فحص جميع الأجزاء اضغط إرسال الفحص.'],
+      ['When every part is checked, press Submit inspection. With Not OK parts you must enter the work order number for the repair.', 'عند فحص جميع الأجزاء اضغط إرسال الفحص. مع وجود أجزاء غير سليمة يجب إدخال رقم أمر العمل الخاص بالإصلاح.'],
       ['During corrective maintenance, open each Not OK part, press Mark fixed and write what was done. The last fix sends it for approval.', 'أثناء الصيانة التصحيحية افتح كل جزء غير سليم واضغط "تم الإصلاح" واكتب ما تم. آخر إصلاح يرسل الفحص للموافقة.'],
     ],
   },

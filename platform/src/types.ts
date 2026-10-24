@@ -112,6 +112,8 @@ export interface Inspection {
   submittedAt?: TS;
   approval?: { by: string; byName: string; at: TS; comment: string } | null;
   rejection?: { by: string; byName: string; at: TS; reason: string } | null;
+  /** Maintenance work order raised for the Not OK parts (required for corrective maintenance). */
+  workOrder?: string | null;
   archivedAt?: TS;
   docVersion: number;
 }

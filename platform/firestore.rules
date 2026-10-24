@@ -139,8 +139,12 @@ service cloud.firestore {
           && d().status in ['pool', 'corrective', 'waiting_approval']
           && unchanged(['approval', 'archivedAt'])
           && (d().status == 'pool' || d().summary.pending == 0)
-          && (d().status != 'waiting_approval' || d().summary.notok == d().summary.fixed);
+          && (d().status != 'waiting_approval' || d().summary.notok == d().summary.fixed)
+          // corrective maintenance needs a work order number (1–40 characters); once there it can be corrected, not removed
+          && (d().status != 'corrective' || woOk() || (resource.data.status == 'corrective' && unchanged(['workOrder'])))
+          && (!changed().hasAny(['workOrder']) || woOk());
       }
+      function woOk() { return d().get('workOrder', null) is string && d().workOrder.size() >= 1 && d().workOrder.size() <= 40; }
       function approve() {
         return hasRole(leads()) && resource.data.status == 'waiting_approval' && d().status == 'approved'
           && d().approval.by == request.auth.uid && changed().hasOnly(['status', 'approval', 'updatedAt', 'docVersion']);

@@ -81,7 +81,7 @@ export const STRINGS: Record<string, Entry> = {
   'insp.allFixed': ['All parts fixed — sent for approval', 'أُصلحت جميع الأجزاء — أُرسل الفحص للموافقة'],
   'insp.submit': ['Submit inspection', 'إرسال الفحص'],
   'insp.submitHint': ['{n} part(s) still to check', 'بقي {n} جزء للفحص'],
-  'insp.submitCorrective': ['Some parts are Not OK — submitting starts corrective maintenance.', 'بعض الأجزاء غير سليمة — الإرسال يبدأ الصيانة التصحيحية.'],
+  'insp.submitCorrective': ['Some parts are Not OK — submitting starts corrective maintenance and asks for the work order number.', 'بعض الأجزاء غير سليمة — الإرسال يبدأ الصيانة التصحيحية ويطلب رقم أمر العمل.'],
   'insp.submitReady': ['All parts OK — submit it for approval.', 'جميع الأجزاء سليمة — أرسله للموافقة.'],
   'insp.toCorrective': ['Submitted — corrective maintenance needed for the Not OK parts', 'أُرسل — تلزم صيانة تصحيحية للأجزاء غير السليمة'],
   'insp.toApproval': ['Submitted — waiting approval', 'أُرسل — بانتظار الموافقة'],
@@ -341,6 +341,12 @@ export const STRINGS: Record<string, Entry> = {
   'setup.notConfigured': ['Firebase is not configured. Copy .env.example to .env.local and fill in your project keys.', 'لم يتم إعداد Firebase. انسخ ‎.env.example إلى ‎.env.local وأدخل مفاتيح المشروع.'],
 
   // dashboard
+  'wo.label': ['Work order', 'أمر العمل'],
+  'wo.title': ['Work order for corrective maintenance', 'أمر العمل للصيانة التصحيحية'],
+  'wo.desc': ['{n} part(s) are Not OK. Enter the maintenance work order raised for the repair — it is required before the inspection goes to corrective maintenance.', 'يوجد {n} جزء غير سليم. أدخل رقم أمر العمل الصادر للإصلاح — وهو مطلوب قبل انتقال الفحص إلى الصيانة التصحيحية.'],
+  'wo.hint': ['The number from the maintenance system (e.g. WO-2026-0153).', 'الرقم من نظام الصيانة (مثلاً WO-2026-0153).'],
+  'wo.submit': ['Submit to corrective maintenance', 'إرسال إلى الصيانة التصحيحية'],
+  'wo.required': ['Enter the work order number', 'أدخل رقم أمر العمل'],
   'dash.morning': ['Good morning, {name}', 'صباح الخير، {name}'],
   'dash.afternoon': ['Good afternoon, {name}', 'مساء الخير، {name}'],
   'dash.evening': ['Good evening, {name}', 'مساء الخير، {name}'],

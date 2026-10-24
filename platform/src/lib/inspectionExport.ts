@@ -33,6 +33,7 @@ export function inspectionSheets(insp: Inspection, c: ExportCtx): Sheet[] {
       [L('Shutdown', 'التوقف السنوي'), insp.shutdownName],
       [L('Status', 'الحالة'), L(...(ST[insp.status] ?? [insp.status, insp.status]))],
       [L('Started by', 'بدأه'), insp.createdByName],
+      [L('Work order', 'أمر العمل'), insp.workOrder ?? ''],
       [L('Parts', 'الأجزاء'), s.total],
       [L('OK', 'سليم'), s.ok],
       [L('Not OK', 'غير سليم'), s.notok],

@@ -148,15 +148,29 @@ export async function savePart(user: UserProfile, inspId: string, partId: string
 }
 
 /** The team hands the inspection on: corrective maintenance if any part is Not OK, otherwise waiting approval. */
-export async function submitInspection(user: UserProfile, insp: Inspection) {
+export async function submitInspection(user: UserProfile, insp: Inspection, workOrder = '') {
   let next = 'pool';
+  const wo = cleanWorkOrder(workOrder);
   await mutateInspection(insp.id, cur => {
     const summary = summarize(cur.parts, cur.results);
     next = statusAfterWork(summary);
-    return { summary, status: next, submittedAt: serverTimestamp(), rejection: null };
+    // corrective maintenance needs the work order raised for it
+    if (next === 'corrective' && !wo) throw new Error('work-order');
+    return { summary, status: next, submittedAt: serverTimestamp(), rejection: null, ...(next === 'corrective' ? { workOrder: wo } : {}) };
   });
-  audit(user, 'inspection.submit', 'inspection', insp.id, { label: `${insp.code} · ${insp.title}`, note: next });
+  audit(user, 'inspection.submit', 'inspection', insp.id, { label: `${insp.code} · ${insp.title}`, note: next === 'corrective' ? `${next} · WO ${wo}` : next });
   return next;
+}
+
+export const WORK_ORDER_MAX = 40;
+export const cleanWorkOrder = (s: string) => s.replace(/\s+/g, ' ').trim().slice(0, WORK_ORDER_MAX);
+
+/** Corrects the work order number while the inspection is in corrective maintenance. */
+export async function setWorkOrder(user: UserProfile, insp: Inspection, workOrder: string) {
+  const wo = cleanWorkOrder(workOrder);
+  if (!wo) throw new Error('work-order');
+  await mutateInspection(insp.id, () => ({ workOrder: wo }));
+  audit(user, 'inspection.workOrder', 'inspection', insp.id, { label: `${insp.code} · ${insp.title}`, before: { workOrder: insp.workOrder ?? null }, after: { workOrder: wo } });
 }
 
 /** Corrective maintenance done on a Not OK part; when the last one is fixed the inspection waits for approval. */

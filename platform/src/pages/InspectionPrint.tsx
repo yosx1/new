@@ -51,6 +51,7 @@ export default function InspectionPrint() {
         <tbody>
           <tr><th>{t('c.equipment')}</th><td>{insp.title}</td><th>{t('c.department')}</th><td>{b(data.dept(insp.departmentId)?.name)}</td></tr>
           <tr><th>{t('c.discipline')}</th><td>{t('disc.' + insp.discipline)}</td><th>{t('insp.by')}</th><td>{insp.createdByName} · {fmtDate(insp.createdAt)}</td></tr>
+          {insp.workOrder && <tr><th>{t('wo.label')}</th><td colSpan={3} className="mono"><bdi>{insp.workOrder}</bdi></td></tr>}
         </tbody>
       </table>
 

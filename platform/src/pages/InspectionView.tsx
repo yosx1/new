@@ -5,7 +5,7 @@ import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { ref } from '../lib/db';
-import { approveInspection, deleteInspection, fixPart, rejectInspection, savePart, submitInspection } from '../lib/actions';
+import { WORK_ORDER_MAX, approveInspection, cleanWorkOrder, deleteInspection, fixPart, rejectInspection, savePart, setWorkOrder, submitInspection } from '../lib/actions';
 import { can } from '../lib/rules';
 import { downloadXlsx } from '../lib/xlsx';
 import { inspectionFileName, inspectionSheets } from '../lib/inspectionExport';
@@ -27,6 +27,9 @@ export default function InspectionView() {
   const [own, setInsp] = useState<Inspection | null | undefined>(undefined);
   const insp = live ?? own;
   const [dialog, setDialog] = useState<'approve' | 'reject' | null>(null);
+  // work order: asked when the inspection goes to corrective maintenance, editable while it is there
+  const [woDialog, setWoDialog] = useState<'submit' | 'edit' | null>(null);
+  const [wo, setWo] = useState('');
   const [comment, setComment] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -52,10 +55,21 @@ export default function InspectionView() {
     try { await deleteInspection(user, insp); if (insp.status === 'archived') data.refreshPast(); toast(t('insp.deleted')); nav('/inspections', { replace: true }); }
     catch (e) { toast(errMsg(e, t), 'err'); setBusy(false); }
   };
-  const submit = () => run(async () => {
-    const next = await submitInspection(user, insp);
-    toast(next === 'corrective' ? t('insp.toCorrective') : t('insp.toApproval'));
-  });
+  const submit = () => {
+    // Not OK parts still open → corrective maintenance, which needs its work order first
+    if (s.notok > s.fixed) { setWo(insp.workOrder ?? ''); setWoDialog('submit'); return; }
+    run(async () => { await submitInspection(user, insp); toast(t('insp.toApproval')); });
+  };
+  const saveWo = () => {
+    const v = cleanWorkOrder(wo);
+    if (!v) { toast(t('wo.required'), 'err'); return; }
+    const mode = woDialog;
+    run(async () => {
+      if (mode === 'submit') { await submitInspection(user, insp, v); toast(t('insp.toCorrective')); }
+      else { await setWorkOrder(user, insp, v); toast(t('c.saved')); }
+      setWoDialog(null);
+    });
+  };
   const decide = () => {
     if (dialog === 'reject' && comment.trim().length < 3) { toast(t('insp.reasonRequired'), 'err'); return; }
     run(async () => {
@@ -82,6 +96,11 @@ export default function InspectionView() {
           {can.manageSystem(user) && <button className="btn ghost sm danger-text" disabled={busy} onClick={remove}><Icon name="trash" size={16} />{t('c.delete')}</button>}
         </>} />
 
+      {insp.workOrder && insp.status !== 'pool' && (
+        <p className="alert info mb wo-line"><Icon name="file" size={16} /> {t('wo.label')}: <b className="mono"><bdi>{insp.workOrder}</bdi></b>
+          {work && insp.status === 'corrective' && <button className="btn link sm" onClick={() => { setWo(insp.workOrder ?? ''); setWoDialog('edit'); }}><Icon name="edit" size={14} />{t('c.edit')}</button>}
+        </p>
+      )}
       {insp.status === 'pool' && insp.rejection && (
         <p className="alert warn mb"><b>{t('insp.sentBack', { name: insp.rejection.byName })}</b> {insp.rejection.reason}</p>
       )}
@@ -125,6 +144,18 @@ export default function InspectionView() {
             <button className="btn ghost" disabled={busy} onClick={() => setDialog('reject')}>{t('insp.reject')}</button></>
         )}
       </div>
+
+      {woDialog && (
+        <Modal title={t('wo.title')} onClose={() => setWoDialog(null)} footer={<>
+          <button className="btn ghost" onClick={() => setWoDialog(null)}>{t('c.cancel')}</button>
+          <button className="btn primary" disabled={busy || !cleanWorkOrder(wo)} onClick={saveWo}>{woDialog === 'submit' ? t('wo.submit') : t('c.save')}</button></>}>
+          {woDialog === 'submit' && <p className="muted">{t('wo.desc', { n: s.notok - s.fixed })}</p>}
+          <Field label={t('wo.label')} required hint={t('wo.hint')}>
+            <input className="ltr mono" value={wo} maxLength={WORK_ORDER_MAX} onChange={e => setWo(e.target.value)} autoFocus
+              onKeyDown={e => { if (e.key === 'Enter') saveWo(); }} />
+          </Field>
+        </Modal>
+      )}
 
       {dialog && (
         <Modal title={dialog === 'approve' ? t('insp.approve') : t('insp.reject')} onClose={() => setDialog(null)} footer={<>
