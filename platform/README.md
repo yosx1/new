@@ -4,6 +4,9 @@ Cold run tests of the yearly shutdown: each team checks the parts of its own dis
 
 > This system documents readiness only. It never authorizes operation, bypasses interlocks, or replaces LOTO, permits and formal operating authorization.
 
+
+Live: **https://kcml-coldrun.web.app** (Firebase project `kcp-coldrun-2026`; the old address `kcp-coldrun-2026.web.app` is a second Hosting site, `redirect/`, that forwards to it and retires the old offline copy of the app).
+
 ## What it does
 
 | Area | Highlights |

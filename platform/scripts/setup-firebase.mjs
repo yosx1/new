@@ -61,7 +61,7 @@ try {
   const projects = json(['projects:list']);
   if (!(projects.result ?? []).some(p => p.projectId === projectId)) {
     console.log('Creating project (free Spark plan)…');
-    run(['projects:create', projectId, '--display-name', 'KCP Cold Run']);
+    run(['projects:create', projectId, '--display-name', 'KCML Cold Run']);
   } else console.log('Project exists — reusing it.');
 
   step('Web app');

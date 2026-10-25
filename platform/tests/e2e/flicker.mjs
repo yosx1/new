@@ -9,7 +9,7 @@ const cdp = await ctx.newCDPSession(page);
 await page.goto(url);
 await page.waitForSelector('.login-card form');
 const i = page.locator('.login-card form input');
-await i.nth(0).fill('admin@kcp.iq'); await i.nth(1).fill('Admin12345');
+await i.nth(0).fill('admin@kcml.iq'); await i.nth(1).fill('Admin12345');
 await page.click('.login-card form button.primary');
 await page.waitForSelector('.sidebar .brand', { timeout: 30000 });
 // ~3G: 300 ms latency, 1.6 Mbit/s down

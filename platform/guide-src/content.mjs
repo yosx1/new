@@ -3,7 +3,7 @@ export const META = {
   title: { en: 'Cold Run Readiness', ar: 'جاهزية التشغيل البارد' },
   sub: { en: 'User & Administrator Guide — from A to Z', ar: 'دليل المستخدم ومدير النظام — من الألف إلى الياء' },
   plant: { en: 'Karbala Cement Plant · Yearly shutdown', ar: 'معمل سمنت كربلاء · التوقف السنوي' },
-  url: 'https://kcp-coldrun-2026.web.app',
+  url: 'https://kcml-coldrun.web.app',
   contents: { en: 'Contents', ar: 'المحتويات' },
   part: { en: 'English', ar: 'العربية' },
   tip: { en: 'Tip', ar: 'نصيحة' },
@@ -37,8 +37,8 @@ export const CHAPTERS = [
     id: 'access', title: T('Getting access', 'الدخول إلى المنصة'),
     body: [
       who('Everyone', 'الجميع'),
-      p('Open <b>https://kcp-coldrun-2026.web.app</b> in Chrome, Edge or Safari. The administrator adds you first; you then receive an e-mail to set your password.',
-        'افتح <b dir="ltr">https://kcp-coldrun-2026.web.app</b> في متصفح Chrome أو Edge أو Safari. يضيفك مدير النظام أولاً، ثم يصلك بريد لتعيين كلمة المرور.'),
+      p('Open <b>https://kcml-coldrun.web.app</b> in Chrome, Edge or Safari. The administrator adds you first; you then receive an e-mail to set your password.',
+        'افتح <b dir="ltr">https://kcml-coldrun.web.app</b> في متصفح Chrome أو Edge أو Safari. يضيفك مدير النظام أولاً، ثم يصلك بريد لتعيين كلمة المرور.'),
       img('login', 'The sign-in page', 'صفحة الدخول'),
       steps(
         T('<b>With a password:</b> open the e-mail "Reset your password", choose a password of at least 8 characters, then sign in with your e-mail and that password.', '<b>بكلمة مرور:</b> افتح بريد "إعادة تعيين كلمة المرور"، واختر كلمة مرور لا تقل عن 8 أحرف، ثم ادخل ببريدك وكلمة المرور.'),

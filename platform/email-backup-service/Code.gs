@@ -1,5 +1,5 @@
 /**
- * KCP Cold Run Readiness — e-mail & weekly backup service (Google Apps Script).
+ * KCML Cold Run Readiness — e-mail & weekly backup service (Google Apps Script).
  *
  * The free Firebase (Spark) plan has no server, so this script, running in the platform owner's
  * Google account, does the two jobs that need one:
@@ -14,7 +14,7 @@
  * (Execute as: Me, Who has access: Anyone) and paste the /exec URL into Settings in the platform.
  */
 const PROJECT_ID = 'kcp-coldrun-2026';
-const APP_URL = 'https://' + PROJECT_ID + '.web.app';
+const APP_URL = 'https://kcml-coldrun.web.app';
 const WEB_API_KEY = 'PASTE_FIREBASE_WEB_API_KEY'; // the VITE_FIREBASE_API_KEY value from .env.local
 const KEEP_BACKUPS = 12;
 const MAX_SENDS_PER_INSPECTION = 3;
@@ -51,8 +51,8 @@ function doPost(e) {
       if (n >= 10) return json_({ ok: false, error: 'too many tests today' });
       const list = recipients_(getDoc_('config/settings') || {});
       const ar = req.lang !== 'en';
-      MailApp.sendEmail({ to: caller.email, name: 'KCP Cold Run Readiness',
-        subject: ar ? 'اختبار خدمة البريد — KCP Cold Run' : 'E-mail service test — KCP Cold Run',
+      MailApp.sendEmail({ to: caller.email, name: 'KCML Cold Run Readiness',
+        subject: ar ? 'اختبار خدمة البريد — KCML Cold Run' : 'E-mail service test — KCML Cold Run',
         body: (ar ? 'خدمة البريد تعمل. عند اعتماد أي فحص يُرسل ملف Excel إلى:\n' : 'The e-mail service works. When an inspection is approved, the Excel file is sent to:\n')
           + (list.length ? list.join('\n') : (ar ? '(لا يوجد مستلمون)' : '(no recipients)')) + '\n\n' + APP_URL });
       tp.setProperty(day, String(n + 1));
@@ -95,7 +95,7 @@ function doPost(e) {
       + '</table><p>' + (ar ? 'النتائج الكاملة مرفقة بملف Excel.' : 'The full results are attached as an Excel file.') + '</p>'
       + '<p><a href="' + link + '" style="background:#1565d8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">'
       + (ar ? 'فتح الفحص' : 'Open the inspection') + '</a></p></div>';
-    MailApp.sendEmail({ to: to.join(','), subject: subject, htmlBody: html, body: subject + '\n' + link, attachments: [file], name: 'KCP Cold Run Readiness' });
+    MailApp.sendEmail({ to: to.join(','), subject: subject, htmlBody: html, body: subject + '\n' + link, attachments: [file], name: 'KCML Cold Run Readiness' });
     props.setProperty(key, String(sent + 1));
     return json_({ ok: true, sent: to.length });
   } catch (err) {
@@ -103,12 +103,15 @@ function doPost(e) {
   }
 }
 
-function doGet() { return json_({ ok: true, service: 'kcp-coldrun' }); }
+function doGet() { return json_({ ok: true, service: 'kcml-coldrun' }); }
 
 /* ---------------- weekly backup ---------------- */
 
 function weeklyBackup() {
-  const root = folder_(DriveApp.getRootFolder(), 'KCP Cold Run backups');
+  // the folder was called "KCP Cold Run backups" before the rename; keep using it under the new name
+  const old = DriveApp.getRootFolder().getFoldersByName('KCP Cold Run backups');
+  if (old.hasNext() && !DriveApp.getRootFolder().getFoldersByName('KCML Cold Run backups').hasNext()) old.next().setName('KCML Cold Run backups');
+  const root = folder_(DriveApp.getRootFolder(), 'KCML Cold Run backups');
   const stamp = Utilities.formatDate(new Date(), 'UTC', 'yyyy-MM-dd HH-mm');
   const dir = root.createFolder(stamp);
   const counts = {};
@@ -122,7 +125,7 @@ function weeklyBackup() {
       dir.createFile(c + (parts > 1 ? '-' + (p + 1) : '') + '.json', JSON.stringify(docs.slice(p * size, (p + 1) * size)), MimeType.PLAIN_TEXT);
     }
   });
-  dir.createFile('README.txt', 'KCP Cold Run Readiness backup ' + stamp + ' (UTC)\nProject: ' + PROJECT_ID + '\n\n'
+  dir.createFile('README.txt', 'KCML Cold Run Readiness backup ' + stamp + ' (UTC)\nProject: ' + PROJECT_ID + '\n\n'
     + Object.keys(counts).map(function (k) { return k + ': ' + counts[k]; }).join('\n')
     + '\n\nEach file holds Firestore documents in REST format ({name, fields, createTime, updateTime}).', MimeType.PLAIN_TEXT);
 
@@ -138,8 +141,8 @@ function weeklyBackup() {
   if (email) {
     try { if (root.getViewers().map(function (u) { return u.getEmail(); }).indexOf(email) < 0) root.addViewer(email); } catch (e) { /* not a Google account */ }
     const total = Object.keys(counts).reduce(function (n, k) { return n + counts[k]; }, 0);
-    MailApp.sendEmail({ to: email, name: 'KCP Cold Run Readiness', subject: 'Weekly backup completed · ' + stamp,
-      body: 'The weekly backup of KCP Cold Run Readiness is complete (' + total + ' records).\n\nFolder: ' + root.getUrl()
+    MailApp.sendEmail({ to: email, name: 'KCML Cold Run Readiness', subject: 'Weekly backup completed · ' + stamp,
+      body: 'The weekly backup of KCML Cold Run Readiness is complete (' + total + ' records).\n\nFolder: ' + root.getUrl()
         + '\nThis backup: ' + dir.getUrl() + '\n\n' + Object.keys(counts).map(function (k) { return k + ': ' + counts[k]; }).join('\n') });
   }
   return counts;
@@ -191,7 +194,7 @@ function usageCheck() {
       return '<tr><td style="color:#667085">' + esc_(LABELS[r.key][ar ? 1 : 0]) + '</td><td><b style="color:' + colour(r.pct) + '">' + r.pct + '%</b></td><td>' + esc_(fmt(r)) + '</td><td>' + (r.isNew ? '⚠' : '') + '</td></tr>';
     }).join('') + '</table>';
   };
-  const subject = 'KCP Cold Run · ' + LABELS[top.key][0] + ' ' + top.pct + '% / ' + LABELS[top.key][1] + ' ' + top.pct + '%';
+  const subject = 'KCML Cold Run · ' + LABELS[top.key][0] + ' ' + top.pct + '% / ' + LABELS[top.key][1] + ' ' + top.pct + '%';
   const html = '<div style="font-family:Arial,sans-serif;font-size:14px;color:#142036">'
     + '<h2 style="color:#0b2a5b;margin:0 0 8px">Free plan usage alert</h2>'
     + '<p>One or more free limits of the platform passed a new level. Daily limits reset at midnight Pacific time (about 10–11 am in Baghdad). At 100% the platform pauses that kind of operation until the reset; add a payment method (Settings → Plan &amp; billing) to avoid it.</p>'
@@ -201,7 +204,7 @@ function usageCheck() {
     + '<p>تجاوز حدٌّ أو أكثر من الحدود المجانية للمنصة مستوى جديداً. تبدأ الحدود اليومية من جديد عند منتصف الليل بتوقيت المحيط الهادئ (نحو 10–11 صباحاً بتوقيت بغداد). عند 100% يتوقف هذا النوع من العمليات حتى بدء اليوم الجديد؛ أضف وسيلة دفع (الإعدادات ← الخطة والدفع) لتجنب ذلك.</p>'
     + table(true) + '</div>'
     + '<p><a href="' + APP_URL + '/settings" style="background:#1565d8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none">Open Settings / فتح الإعدادات</a></p></div>';
-  MailApp.sendEmail({ to: admins.join(','), subject: subject, htmlBody: html, body: subject + '\n' + APP_URL + '/settings', name: 'KCP Cold Run Readiness' });
+  MailApp.sendEmail({ to: admins.join(','), subject: subject, htmlBody: html, body: subject + '\n' + APP_URL + '/settings', name: 'KCML Cold Run Readiness' });
   return rows;
 }
 

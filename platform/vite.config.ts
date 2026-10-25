@@ -9,7 +9,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'KCP Cold Run Readiness',
+        name: 'KCML Cold Run Readiness',
         short_name: 'Cold Run',
         description: 'Cold Run inspection and readiness management – Karbala Cement Plant',
         theme_color: '#0b2a5b',

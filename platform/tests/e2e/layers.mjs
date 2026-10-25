@@ -9,7 +9,7 @@ for (const lang of ['en', 'ar']) {
   const page = await ctx.newPage();
   await page.goto(url); await page.waitForSelector('.login-card form');
   const i = page.locator('.login-card form input');
-  await i.nth(0).fill('admin@kcp.iq'); await i.nth(1).fill('Admin12345'); await page.click('.login-card form button.primary');
+  await i.nth(0).fill('admin@kcml.iq'); await i.nth(1).fill('Admin12345'); await page.click('.login-card form button.primary');
   await page.waitForSelector('.sidebar .brand');
   await page.goto(new URL('/users', url).href); await page.waitForSelector('.content .lrow');
   await page.locator('.page-head .btn.primary').click(); await page.waitForSelector('.modal');

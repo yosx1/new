@@ -44,7 +44,7 @@ const confirmModal = async () => { await page.locator('.modal .btn.success, .mod
 await page.goto(url);
 await page.waitForSelector('.login-card form');
 const inp = page.locator('.login-card form input');
-await inp.nth(0).fill('Admin'); await inp.nth(1).fill('admin@kcp.iq'); await inp.nth(2).fill('Admin12345');
+await inp.nth(0).fill('Admin'); await inp.nth(1).fill('admin@kcml.iq'); await inp.nth(2).fill('Admin12345');
 await page.click('.login-card form button.primary');
 await page.waitForSelector('.sidebar .brand', { timeout: 20000 });
 const depts = await wait(async () => { const d = await list('departments'); return d.length === 10 && d; });
@@ -100,16 +100,16 @@ const addUser = async (name, email, role, disc, dept, pw) => {
   await m.locator('.btn.primary').click();
   await toast(); await page.waitForTimeout(1200);
 };
-await addUser('Maha Manager', 'maha@kcp.iq', 'manager', null, null, 'Manager123!');
-await addUser('Ali Electric', 'ali@kcp.iq', 'member', 'electrical', 'KLN1', 'Member123!');
-await addUser('Omar Mech', 'omar@kcp.iq', 'member', 'mechanical', 'KLN1', 'Member123!');
+await addUser('Maha Manager', 'maha@kcml.iq', 'manager', null, null, 'Manager123!');
+await addUser('Ali Electric', 'ali@kcml.iq', 'member', 'electrical', 'KLN1', 'Member123!');
+await addUser('Omar Mech', 'omar@kcml.iq', 'member', 'mechanical', 'KLN1', 'Member123!');
 const users = await list('users');
-const ali = users.find(u => u.email === 'ali@kcp.iq');
-check(users.find(u => u.email === 'maha@kcp.iq')?.role === 'manager' && ali?.discipline === 'electrical' && ali?.departmentId === 'KLN1', 'manager and team members (discipline + department) added');
+const ali = users.find(u => u.email === 'ali@kcml.iq');
+check(users.find(u => u.email === 'maha@kcml.iq')?.role === 'manager' && ali?.discipline === 'electrical' && ali?.departmentId === 'KLN1', 'manager and team members (discipline + department) added');
 await page.screenshot({ path: `${OUT}/users.png` });
 
 // ---- 4. electrical engineer (Kiln) ----
-await signOut(); await signIn('ali@kcp.iq', 'Member123!');
+await signOut(); await signIn('ali@kcml.iq', 'Member123!');
 await go('/tasks');
 const startRows = await page.locator('.lrow:has(button.primary)').allTextContents();
 check(startRows.length === 2 && startRows.every(r => /Kiln/.test(r) && /Electrical|كهرباء/.test(r)), `pool lists only Kiln equipment with electrical parts (${startRows.length})`);
@@ -172,7 +172,7 @@ check((await getDoc(`inspections/${inspId}`)).status === 'waiting_approval', 'la
 check(!(await page.isVisible('.action-bar button:has-text("Approve")')), 'a team member cannot approve');
 
 // ---- 5. mechanical engineer: read-only on electrical, does their own ----
-await signOut(); await signIn('omar@kcp.iq', 'Member123!');
+await signOut(); await signIn('omar@kcml.iq', 'Member123!');
 await go(`/inspections/${inspId}`);
 check(!(await page.locator('.qbtn').count()), 'mechanical engineer cannot change the electrical inspection');
 await go('/tasks');
@@ -185,7 +185,7 @@ await page.getByRole('button', { name: 'Submit inspection' }).click();
 check(await page.locator('.toast', { hasText: /Submitted — waiting approval/ }).first().waitFor({ timeout: 10000 }).then(() => true, () => false), 'all OK → Waiting approval');
 
 // ---- 6. manager approves and closes the shutdown ----
-await signOut(); await signIn('maha@kcp.iq', 'Manager123!');
+await signOut(); await signIn('maha@kcml.iq', 'Manager123!');
 await go('/tasks');
 check((await page.locator('.lrow').count()) === 2, 'manager sees the 2 inspections waiting approval');
 for (const id of [inspId, mechId]) {
@@ -247,7 +247,7 @@ for (const p of ['/', '/tasks', '/inspections', '/inspections/new', '/equipment'
   await go(p);
   check(!!(await page.textContent('.content h1')), `page ${p} renders`);
 }
-await signOut(); await signIn('admin@kcp.iq', 'Admin12345');
+await signOut(); await signIn('admin@kcml.iq', 'Admin12345');
 for (const p of ['/users', '/devices', '/settings']) { await go(p); check(!!(await page.textContent('.content h1')), `admin page ${p} renders`); }
 check(await page.isVisible('table.priv') && (await page.locator('table.priv thead th').count()) === 4, 'roles table: Administrator, Cold Run Test Manager, Team Member');
 
@@ -258,7 +258,7 @@ const pp = await phone.newPage();
 pp.on('pageerror', e => errors.push('phone ' + e.message));
 await pp.goto(url); await pp.waitForSelector('.login-card form');
 const pi = pp.locator('.login-card form input');
-await pi.nth(0).fill('ali@kcp.iq'); await pi.nth(1).fill('Member123!'); await pp.click('.login-card form button.primary');
+await pi.nth(0).fill('ali@kcml.iq'); await pi.nth(1).fill('Member123!'); await pp.click('.login-card form button.primary');
 await pp.waitForSelector('.bottombar', { timeout: 20000 });
 await pp.goto(new URL(`/inspections/${inspId}`, url).href); await pp.waitForSelector('.part-row');
 check(!(await pp.evaluate(() => document.documentElement.scrollWidth > innerWidth)), 'phone (Arabic): inspection page has no sideways scroll');

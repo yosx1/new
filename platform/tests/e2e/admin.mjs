@@ -34,7 +34,7 @@ const open = before.find(s => s.status === 'open');
 const archived = (await list('inspections')).filter(i => i.shutdownId === closed.id);
 
 // ---- managers and members get no admin controls ----
-await signIn('maha@kcp.iq', 'Manager123!');
+await signIn('maha@kcml.iq', 'Manager123!');
 await go('/');
 check(!(await page.isVisible('.shutdown-card button:has-text("Edit")')), 'manager: no Edit on the shutdown card');
 await go(`/inspections/${archived[0].id}`);
@@ -42,7 +42,7 @@ check(!(await page.isVisible('button:has-text("Delete")')), 'manager: no Delete 
 await signOut();
 
 // ---- administrator renames the past shutdown from Settings ----
-await signIn('admin@kcp.iq', 'Admin12345');
+await signIn('admin@kcml.iq', 'Admin12345');
 await go('/settings');
 const card = page.locator('.card', { hasText: 'Shutdowns & projects' });
 check((await card.locator('.lrow').count()) === 2, 'Settings lists both shutdowns (current and past)');

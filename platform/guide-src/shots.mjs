@@ -22,7 +22,7 @@ const sdId = (await getDoc('config/shutdown')).currentId;
 const sd = await getDoc(`shutdowns/${sdId}`);
 const users = await list('users');
 const U = e => users.find(u => u.email === e);
-const ali = U('ali@kcp.iq'), omar = U('omar@kcp.iq'), maha = U('maha@kcp.iq');
+const ali = U('ali@kcml.iq'), omar = U('omar@kcml.iq'), maha = U('maha@kcml.iq');
 const eqs = await list('equipment');
 const E = n => eqs.find(e => e.name === n);
 const now = new Date();
@@ -57,7 +57,7 @@ async function pageFor(lang, who) {
   const page = await ctx.newPage();
   await page.goto(url); await page.waitForSelector('.login-card form');
   const i = page.locator('.login-card form input');
-  const pw = who === 'admin@kcp.iq' ? 'Admin12345' : who === 'maha@kcp.iq' ? 'Manager123!' : 'Member123!';
+  const pw = who === 'admin@kcml.iq' ? 'Admin12345' : who === 'maha@kcml.iq' ? 'Manager123!' : 'Member123!';
   await i.nth(0).fill(who); await i.nth(1).fill(pw); await page.click('.login-card form button.primary');
   await page.waitForSelector('.sidebar .brand', { timeout: 20000 });
   await page.waitForTimeout(1200);
@@ -76,7 +76,7 @@ for (const lang of ['en', 'ar']) {
   const pp = await ph.newPage(); await pp.goto(url); await pp.waitForSelector('.install-prompt', { timeout: 8000 }).catch(() => {});
   await pp.waitForTimeout(800); await pp.screenshot({ path: `${OUT}/${lang}-phone-install.png` }); await ph.close();
 
-  const a = await pageFor(lang, 'ali@kcp.iq');
+  const a = await pageFor(lang, 'ali@kcml.iq');
   await go(a, '/'); await shot(a, 'member', lang);
   await go(a, '/tasks'); await shot(a, 'pool', lang);
   await go(a, '/inspections/new'); await a.locator('select').nth(1).selectOption({ index: 2 }); await shot(a, 'new', lang);
@@ -85,24 +85,24 @@ for (const lang of ['en', 'ar']) {
   await a.locator('.action-bar .btn.primary').click(); await a.locator('.modal input').fill('WO-2026-0153'); await shot(a, 'workorder', lang);
   await a.locator('.modal').getByRole('button', { name: /Cancel|إلغاء/ }).click();
 
-  const o = await pageFor(lang, 'omar@kcp.iq');
+  const o = await pageFor(lang, 'omar@kcml.iq');
   await go(o, `/inspections/${corrective}`); await o.waitForSelector('.part-row');
   await o.locator('.part-row').nth(1).locator('.btn.outline').click(); await o.locator('.part-row').nth(1).locator('textarea').fill(lang === 'ar' ? 'تم تبديل مانع التسرب' : 'Seal replaced, no leak after test run');
   await shot(o, 'corrective', lang);
 
-  const m = await pageFor(lang, 'maha@kcp.iq');
+  const m = await pageFor(lang, 'maha@kcml.iq');
   await go(m, '/'); await shot(m, 'dashboard', lang);
   await go(m, `/inspections/${waiting}`); await m.locator('.action-bar .btn.success').click(); await m.waitForSelector('.modal');
   await m.locator('.modal textarea').fill(lang === 'ar' ? 'جاهز للتشغيل البارد' : 'Ready for the cold run'); await shot(m, 'approve', lang);
   await m.keyboard.press('Escape');
   await go(m, '/reports'); await shot(m, 'reports', lang);
 
-  const ad = await pageFor(lang, 'admin@kcp.iq');
+  const ad = await pageFor(lang, 'admin@kcml.iq');
   await go(ad, '/equipment'); await shot(ad, 'equipment', lang);
   await ad.locator('input[type=file][accept=".csv,text/csv"]').setInputFiles(CSV); await ad.waitForSelector('.modal'); await shot(ad, 'csv', lang);
   await ad.keyboard.press('Escape');
   await go(ad, '/users'); await ad.locator('.page-head .btn.primary').click(); const um = ad.locator('.modal'); await um.waitFor();
-  await um.locator('input').nth(0).fill(lang === 'ar' ? 'حسين مهندس سيطرة' : 'Hussein Instrumentation'); await um.locator('input[type=email]').fill('hussein@kcp.iq');
+  await um.locator('input').nth(0).fill(lang === 'ar' ? 'حسين مهندس سيطرة' : 'Hussein Instrumentation'); await um.locator('input[type=email]').fill('hussein@kcml.iq');
   await um.locator('select').nth(0).selectOption('member'); await um.locator('select').nth(1).selectOption('instrumentation'); await um.locator('select').nth(2).selectOption('CLR1');
   await shot(ad, 'user-add', lang); await ad.keyboard.press('Escape');
   await go(ad, '/settings'); await ad.locator('table.priv').evaluate(e => e.closest('.card').scrollIntoView({ block: 'start' })); await shot(ad, 'roles', lang);
@@ -119,10 +119,10 @@ for (const i of await list('inspections')) {
   doc.summary = { ...doc.summary, fixed: doc.summary.notok, pending: 0 };
   await put(`inspections/${id}`, { ...doc, status: 'approved', approval: { by: maha.id, byName: maha.name, at: now, comment: '' } });
 }
-for (const lang of ['en', 'ar']) { const m = await pageFor(lang, 'maha@kcp.iq'); await go(m, '/inspections?status=approved'); await shot(m, 'archive', lang); }
-const m = await pageFor('en', 'maha@kcp.iq');
+for (const lang of ['en', 'ar']) { const m = await pageFor(lang, 'maha@kcml.iq'); await go(m, '/inspections?status=approved'); await shot(m, 'archive', lang); }
+const m = await pageFor('en', 'maha@kcml.iq');
 await m.getByRole('button', { name: /Close shutdown & archive/ }).click(); await m.locator('.modal .btn.primary').click();
 await m.waitForSelector('.toast'); await m.waitForTimeout(1500);
-for (const lang of ['en', 'ar']) { const p = await pageFor(lang, 'maha@kcp.iq'); await go(p, '/inspections?status=archived'); await shot(p, 'done', lang); }
+for (const lang of ['en', 'ar']) { const p = await pageFor(lang, 'maha@kcml.iq'); await go(p, '/inspections?status=archived'); await shot(p, 'done', lang); }
 await browser.close();
 console.log('done');

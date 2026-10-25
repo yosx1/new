@@ -5,7 +5,7 @@ import { initializeTestEnvironment, assertFails, assertSucceeds } from '@firebas
 import { doc, setDoc, getDoc, updateDoc, writeBatch, serverTimestamp, addDoc, collection, deleteDoc, increment } from 'firebase/firestore';
 
 let env;
-const user = (uid, role, extra = {}) => ({ name: uid, email: `${uid}@kcp.iq`, role, discipline: null, departmentId: null, active: true, ...extra });
+const user = (uid, role, extra = {}) => ({ name: uid, email: `${uid}@kcml.iq`, role, discipline: null, departmentId: null, active: true, ...extra });
 const SD = 'SD-2026-A';
 const summary = (o = {}) => ({ total: 2, ok: 0, notok: 0, fixed: 0, pending: 2, ...o });
 const inspection = (o = {}) => ({
@@ -194,24 +194,24 @@ test('notifications: only well-formed in-app messages to existing users', async 
 
 test('invitations: admin invites by email; only that verified email can claim, once, with the invited role and team', async () => {
   const adb = as('admin');
-  const inv = { email: 'new@kcp.iq', name: 'New', role: 'member', discipline: 'electrical', departmentId: 'KLN', phone: '', invitedBy: 'admin', createdAt: 1 };
-  await assertFails(setDoc(doc(as('mgr'), 'invites/new@kcp.iq'), { ...inv, invitedBy: 'mgr' }));
-  await assertFails(setDoc(doc(adb, 'invites/New@kcp.iq'), { ...inv, email: 'New@kcp.iq' }));
-  await assertFails(setDoc(doc(adb, 'invites/new@kcp.iq'), { ...inv, role: 'owner' }));
-  await assertSucceeds(setDoc(doc(adb, 'invites/new@kcp.iq'), inv));
+  const inv = { email: 'new@kcml.iq', name: 'New', role: 'member', discipline: 'electrical', departmentId: 'KLN', phone: '', invitedBy: 'admin', createdAt: 1 };
+  await assertFails(setDoc(doc(as('mgr'), 'invites/new@kcml.iq'), { ...inv, invitedBy: 'mgr' }));
+  await assertFails(setDoc(doc(adb, 'invites/New@kcml.iq'), { ...inv, email: 'New@kcml.iq' }));
+  await assertFails(setDoc(doc(adb, 'invites/new@kcml.iq'), { ...inv, role: 'owner' }));
+  await assertSucceeds(setDoc(doc(adb, 'invites/new@kcml.iq'), inv));
 
-  const profile = { name: 'New', email: 'new@kcp.iq', role: 'member', discipline: 'electrical', departmentId: 'KLN', phone: '', active: true, lang: 'ar', createdAt: serverTimestamp(), createdBy: 'admin' };
-  const claim = (db, uid, p = profile) => { const b = writeBatch(db); b.set(doc(db, 'users', uid), p); b.delete(doc(db, 'invites/new@kcp.iq')); return b.commit(); };
+  const profile = { name: 'New', email: 'new@kcml.iq', role: 'member', discipline: 'electrical', departmentId: 'KLN', phone: '', active: true, lang: 'ar', createdAt: serverTimestamp(), createdBy: 'admin' };
+  const claim = (db, uid, p = profile) => { const b = writeBatch(db); b.set(doc(db, 'users', uid), p); b.delete(doc(db, 'invites/new@kcml.iq')); return b.commit(); };
   const ctx = (uid, email, verified = true) => env.authenticatedContext(uid, { email, email_verified: verified }).firestore();
 
-  await assertFails(claim(ctx('x1', 'other@kcp.iq'), 'x1'));                         // different email
-  await assertFails(claim(ctx('x2', 'new@kcp.iq', false), 'x2'));                    // unverified email
-  await assertFails(claim(ctx('x3', 'new@kcp.iq'), 'x3', { ...profile, role: 'admin' }));          // role escalation
-  await assertFails(claim(ctx('x3', 'new@kcp.iq'), 'x3', { ...profile, discipline: 'mechanical' })); // other team
-  await assertFails(setDoc(doc(ctx('x4', 'new@kcp.iq'), 'users/x4'), profile));      // must consume the invitation
-  await assertSucceeds(getDoc(doc(ctx('x5', 'NEW@kcp.iq'), 'invites/new@kcp.iq')));
-  await assertSucceeds(claim(ctx('x5', 'NEW@kcp.iq'), 'x5'));
-  await assertFails(claim(ctx('x6', 'new@kcp.iq'), 'x6'));                           // already used
+  await assertFails(claim(ctx('x1', 'other@kcml.iq'), 'x1'));                         // different email
+  await assertFails(claim(ctx('x2', 'new@kcml.iq', false), 'x2'));                    // unverified email
+  await assertFails(claim(ctx('x3', 'new@kcml.iq'), 'x3', { ...profile, role: 'admin' }));          // role escalation
+  await assertFails(claim(ctx('x3', 'new@kcml.iq'), 'x3', { ...profile, discipline: 'mechanical' })); // other team
+  await assertFails(setDoc(doc(ctx('x4', 'new@kcml.iq'), 'users/x4'), profile));      // must consume the invitation
+  await assertSucceeds(getDoc(doc(ctx('x5', 'NEW@kcml.iq'), 'invites/new@kcml.iq')));
+  await assertSucceeds(claim(ctx('x5', 'NEW@kcml.iq'), 'x5'));
+  await assertFails(claim(ctx('x6', 'new@kcml.iq'), 'x6'));                           // already used
 });
 
 test('administrator: delete any inspection, rename a shutdown and the name on its inspections', async () => {

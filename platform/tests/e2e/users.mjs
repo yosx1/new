@@ -12,7 +12,7 @@ await fetch(`${AUTH}/emulator/v1/projects/${P}/accounts`, { method: 'DELETE' });
 await fetch(`http://127.0.0.1:8080/emulator/v1/projects/${P}/databases/(default)/documents`, { method: 'DELETE' });
 // Someone who already has a (verified) login before the administrator adds them, e.g. via Google.
 const su = await (await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/accounts:signUp?key=x`, {
-  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'pre@kcp.iq', password: 'PreExist123', returnSecureToken: true }),
+  method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'pre@kcml.iq', password: 'PreExist123', returnSecureToken: true }),
 })).json();
 await fetch(`${AUTH}/identitytoolkit.googleapis.com/v1/projects/${P}/accounts:update`, {
   method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer owner' }, body: JSON.stringify({ localId: su.localId, emailVerified: true }),
@@ -29,7 +29,7 @@ page.on('console', m => { if (m.type() === 'error' && !/apis\.google\.com|ERR_TU
 await page.goto(url);
 await page.waitForSelector('.login-card form');
 const inp = page.locator('.login-card form input');
-await inp.nth(0).fill('Admin'); await inp.nth(1).fill('admin@kcp.iq'); await inp.nth(2).fill('Admin12345');
+await inp.nth(0).fill('Admin'); await inp.nth(1).fill('admin@kcml.iq'); await inp.nth(2).fill('Admin12345');
 await page.click('.login-card form button.primary');
 await page.waitForSelector('.sidebar .brand', { timeout: 20000 });
 
@@ -57,33 +57,33 @@ await page.waitForSelector('.content .lrow', { timeout: 20000 });
 await page.getByRole('button', { name: 'Add user' }).click();
 const mm = page.locator('.modal');
 await mm.locator('input').nth(0).click(); await page.keyboard.type('Sara Typed', { delay: 30 });
-await mm.locator('input[type=email]').click(); await page.keyboard.type('sara@kcp.iq', { delay: 30 });
+await mm.locator('input[type=email]').click(); await page.keyboard.type('sara@kcml.iq', { delay: 30 });
 await mm.locator('input[type=tel]').click(); await page.keyboard.type('07700000000', { delay: 30 });
 const vals = await mm.locator('input').evaluateAll(els => els.map(e => e.value));
-check(vals[0] === 'Sara Typed' && vals[1] === 'sara@kcp.iq' && vals.includes('07700000000'), `typing stays in each field (${JSON.stringify(vals)})`);
+check(vals[0] === 'Sara Typed' && vals[1] === 'sara@kcml.iq' && vals.includes('07700000000'), `typing stays in each field (${JSON.stringify(vals)})`);
 await mm.getByRole('button', { name: 'Cancel' }).click();
 
-const t1 = await addUser('Ali Electric', 'Ali@KCP.iq', 'member:electrical');
+const t1 = await addUser('Ali Electric', 'Ali@KCML.iq', 'member:electrical');
 check(/e-mail to set their password/.test(t1), `new person: account created + set-password e-mail (${t1})`);
 await page.waitForTimeout(800);
-check(await page.locator('.lrow', { hasText: 'ali@kcp.iq' }).first().waitFor({ timeout: 8000 }).then(() => true, () => false), 'new person listed with lower-case e-mail');
+check(await page.locator('.lrow', { hasText: 'ali@kcml.iq' }).first().waitFor({ timeout: 8000 }).then(() => true, () => false), 'new person listed with lower-case e-mail');
 const oob = await (await fetch(`${AUTH}/emulator/v1/projects/${P}/oobCodes`)).json();
-check(oob.oobCodes.some(c => c.email === 'ali@kcp.iq' && c.requestType === 'PASSWORD_RESET'), 'set-password e-mail was sent');
+check(oob.oobCodes.some(c => c.email === 'ali@kcml.iq' && c.requestType === 'PASSWORD_RESET'), 'set-password e-mail was sent');
 
 await page.waitForTimeout(3500);
-const t2 = await addUser('Pre Existing', 'pre@kcp.iq', 'member:mechanical');
+const t2 = await addUser('Pre Existing', 'pre@kcml.iq', 'member:mechanical');
 check(/Invitation saved/.test(t2), `existing login: invitation saved (${t2})`);
 await page.waitForTimeout(800);
 check(await page.isVisible('text=Pending invitations (1)'), 'pending invitation listed');
 await page.waitForTimeout(3500);
-const t3 = await addUser('Dup', 'pre@kcp.iq', 'manager');
+const t3 = await addUser('Dup', 'pre@kcml.iq', 'manager');
 check(/already exists/.test(t3), 'duplicate e-mail refused');
 await page.locator('.modal').getByRole('button', { name: 'Cancel' }).click();
 
 // The invited person signs in with their existing login and gets in with the invited role.
 await page.locator('.side-user button').first().click();
 await page.waitForSelector('.login-card form');
-await inp.nth(0).fill('pre@kcp.iq'); await inp.nth(1).fill('PreExist123');
+await inp.nth(0).fill('pre@kcml.iq'); await inp.nth(1).fill('PreExist123');
 await page.click('.login-card form button.primary');
 await page.waitForSelector('.sidebar .brand', { timeout: 20000 }).catch(() => {});
 const roleText = await page.textContent('.side-user small').catch(() => '');
@@ -91,7 +91,7 @@ check(/Team Member/.test(roleText ?? ''), `invited person signed in with invited
 // Wait until the server has the new profile (the screen updates from the local copy first).
 let onServer = false;
 for (let k = 0; k < 20 && !onServer; k++) {
-  const r = await (await fetch(`http://127.0.0.1:8080/v1/projects/${P}/databases/(default)/documents/invites/pre@kcp.iq`, { headers: { Authorization: 'Bearer owner' } })).json();
+  const r = await (await fetch(`http://127.0.0.1:8080/v1/projects/${P}/databases/(default)/documents/invites/pre@kcml.iq`, { headers: { Authorization: 'Bearer owner' } })).json();
   onServer = !!r.error; if (!onServer) await page.waitForTimeout(250);
 }
 check(onServer, 'invitation consumed on the server');
@@ -99,13 +99,13 @@ check(onServer, 'invitation consumed on the server');
 // Invitation consumed; admin sees them as a normal user.
 await page.locator('.side-user button').first().click();
 await page.waitForSelector('.login-card form');
-await inp.nth(0).fill('admin@kcp.iq'); await inp.nth(1).fill('Admin12345');
+await inp.nth(0).fill('admin@kcml.iq'); await inp.nth(1).fill('Admin12345');
 await page.click('.login-card form button.primary');
 await page.waitForSelector('.sidebar .brand');
 await page.goto(new URL('/users', url).href);
 await page.waitForTimeout(1500);
 check(await page.locator('text=Pending invitations').waitFor({ state: 'hidden', timeout: 10000 }).then(() => true, () => false), 'invitation consumed');
-check(await page.isVisible('text=pre@kcp.iq'), 'invited person now in the user list');
+check(await page.isVisible('text=pre@kcml.iq'), 'invited person now in the user list');
 await page.screenshot({ path: process.env.OUT + '/users.png', fullPage: true });
 
 await browser.close();

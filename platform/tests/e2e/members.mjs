@@ -19,8 +19,8 @@ async function person(email, name, discipline, departmentId) {
     departmentId: departmentId ? { stringValue: departmentId } : { nullValue: null }, phone: { stringValue: '' }, active: { booleanValue: true }, lang: { stringValue: 'en' } };
   await fetch(`${FS}/users/${r.localId}`, { method: 'PATCH', headers: owner, body: JSON.stringify({ fields: f }) });
 }
-await person('zaid@kcp.iq', 'Zaid RM Electric', 'electrical', 'RML1');
-await person('noor@kcp.iq', 'Noor All Electric', 'electrical', null);
+await person('zaid@kcml.iq', 'Zaid RM Electric', 'electrical', 'RML1');
+await person('noor@kcml.iq', 'Noor All Electric', 'electrical', null);
 
 // ---- current-shutdown inspections for three teams (cloned from an archived one) ----
 const cur = (await (await fetch(`${FS}/config/shutdown`, { headers: owner })).json()).fields.currentId.stringValue;
@@ -56,10 +56,10 @@ const titles = async () => (await page.locator('.content .lrow b, .content .lrow
 const redirected = async p => { await page.goto(new URL(p, url).href); await page.waitForTimeout(1500); return new URL(page.url()).pathname === '/'; };
 
 const MEMBERS = [
-  ['ali@kcp.iq', 'electrical KLN1', ['Kiln test A'], ['Kiln test B', 'Raw mill test C'], doneBy('electrical', 'KLN1')],
-  ['omar@kcp.iq', 'mechanical KLN1', ['Kiln test B'], ['Kiln test A', 'Raw mill test C'], doneBy('mechanical', 'KLN1')],
-  ['zaid@kcp.iq', 'electrical RML1', ['Raw mill test C'], ['Kiln test A', 'Kiln test B'], doneBy('electrical', 'RML1')],
-  ['noor@kcp.iq', 'electrical, all departments', ['Kiln test A', 'Raw mill test C'], ['Kiln test B'], doneBy('electrical')],
+  ['ali@kcml.iq', 'electrical KLN1', ['Kiln test A'], ['Kiln test B', 'Raw mill test C'], doneBy('electrical', 'KLN1')],
+  ['omar@kcml.iq', 'mechanical KLN1', ['Kiln test B'], ['Kiln test A', 'Raw mill test C'], doneBy('mechanical', 'KLN1')],
+  ['zaid@kcml.iq', 'electrical RML1', ['Raw mill test C'], ['Kiln test A', 'Kiln test B'], doneBy('electrical', 'RML1')],
+  ['noor@kcml.iq', 'electrical, all departments', ['Kiln test A', 'Raw mill test C'], ['Kiln test B'], doneBy('electrical')],
 ];
 for (const [email, who, mine, others, done] of MEMBERS) {
   await signIn(email);
@@ -91,7 +91,7 @@ for (const [email, who, mine, others, done] of MEMBERS) {
 }
 
 // ---- the manager: everything of the cold run, no administration ----
-await signIn('maha@kcp.iq');
+await signIn('maha@kcml.iq');
 const mn = await nav();
 check(mn.some(x => /Reports/.test(x)) && mn.some(x => /Audit/.test(x)) && !mn.some(x => /Users|Devices/.test(x)), `manager: Reports + Audit, no Users/Devices (${mn.join(', ')})`);
 await go('/inspections?status=pool'); const mp = await titles();
