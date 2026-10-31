@@ -47,8 +47,8 @@ const inp = page.locator('.login-card form input');
 await inp.nth(0).fill('Admin'); await inp.nth(1).fill('admin@kcml.iq'); await inp.nth(2).fill('Admin12345');
 await page.click('.login-card form button.primary');
 await page.waitForSelector('.sidebar .brand', { timeout: 20000 });
-const depts = await wait(async () => { const d = await list('departments'); return d.length === 10 && d; });
-check(depts && depts.length === 10 && depts.some(d => d.name.en === 'Cement Mill 4'), 'the ten departments are created (Raw Mill 1–2, Kiln 1–2, Cooler 1–2, Cement Mill 1–4)');
+const depts = await wait(async () => { const d = await list('departments'); return d.length === 13 && d; });
+check(depts && depts.length === 13 && ['Crusher', 'Raw Mill 1', 'Kiln 1', 'Cooler 1', 'Cement Mill 4', 'Packing', 'Water Station'].every(n => depts.some(d => d.name.en === n)), 'the plant departments are created (Crusher … Water Station, 13)');
 const cfg = await wait(() => getDoc('config/shutdown'));
 const sd1 = cfg && await getDoc(`shutdowns/${cfg.currentId}`);
 check(sd1?.status === 'open' && /Annual shutdown \d{4}/.test(sd1.name), `the yearly shutdown starts automatically (${sd1?.name})`);
@@ -63,7 +63,7 @@ await go('/equipment');
 const [dl] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /Download CSV|تنزيل CSV/ }).click()]);
 const tmpl = `${OUT}/template.csv`; await dl.saveAs(tmpl);
 const head = execFileSync('head', ['-c', '200', tmpl]).toString();
-check(/Department,Equipment,Part type,Part/.test(head), 'CSV template downloads with the right columns');
+check(/Department,Code,Equipment,Part type,Part/.test(head), 'CSV template downloads with the right columns (incl. Code)');
 const csv = '﻿Department;Equipment;Part type;Part\n'
   + 'Kiln 1;Kiln main drive;Electrical;Main motor\nKiln 1;Kiln main drive;Electrical;MCC panel\nKiln 1;Kiln main drive;Mechanical;Gearbox\n'
   + 'Kiln 1;Kiln main drive;Mechanical;"Girth gear; pinion"\nالفرن 1;Kiln ID fan;كهرباء;Fan motor\nRaw Mill 1;Raw mill separator;Electrical;Separator motor\n'

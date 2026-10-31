@@ -62,4 +62,18 @@ export const STATUS_TONE: Record<InspectionStatus, 'gray' | 'blue' | 'orange' | 
 export const completion = (s: InspectionSummary) => (s.total ? Math.round(((s.total - s.pending) / s.total) * 100) : 0);
 
 /** Deterministic id: one inspection per equipment and discipline in each shutdown. */
+/** "K1M011 — ID fan": how an equipment is named everywhere (and the title of its inspections). */
+export const equipmentTitle = (e: Pick<Equipment, 'code' | 'name'>) => (e.code ? `${e.code} — ${e.name}` : e.name);
+
+/** Document id for an equipment: its code when it has one (codes are unique in the plant). */
+export const equipmentDocId = (code: string) => code.trim().replace(/[^A-Za-z0-9_-]+/g, '-').slice(0, 60);
+
+/** Matches an equipment against a search: code, name or any checklist item. */
+export function matchesEquipment(e: Pick<Equipment, 'code' | 'name' | 'parts'>, q: string, withParts = true) {
+  const s = q.trim().toLowerCase();
+  if (!s) return true;
+  if ((e.code ?? '').toLowerCase().includes(s) || e.name.toLowerCase().includes(s)) return true;
+  return withParts && Object.values(e.parts ?? {}).some(list => list.some(p => p.toLowerCase().includes(s)));
+}
+
 export const inspectionId = (shutdownId: string, equipmentId: string, d: Discipline) => `${shutdownId}_${equipmentId}_${d}`;

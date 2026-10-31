@@ -1,4 +1,4 @@
-/** Settings defaults and the four fixed departments of the cold run. */
+/** Settings defaults and the plant's departments (KCML equipment list 2026), created on first start. */
 import { doc, serverTimestamp } from 'firebase/firestore';
 import { getDocs, writeBatch } from '../lib/fs';
 import { db } from '../firebase';
@@ -10,16 +10,19 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export const DEPARTMENTS = [
+  ['CRS', 'Crusher', 'الكسارة'],
   ['RML1', 'Raw Mill 1', 'طاحونة المواد الأولية 1'],
-  ['RML2', 'Raw Mill 2', 'طاحونة المواد الأولية 2'],
+  ['HOM1', 'Homogenizing', 'التجانس'],
   ['KLN1', 'Kiln 1', 'الفرن 1'],
-  ['KLN2', 'Kiln 2', 'الفرن 2'],
   ['CLR1', 'Cooler 1', 'المبرّد 1'],
-  ['CLR2', 'Cooler 2', 'المبرّد 2'],
   ['CML1', 'Cement Mill 1', 'طاحونة السمنت 1'],
   ['CML2', 'Cement Mill 2', 'طاحونة السمنت 2'],
   ['CML3', 'Cement Mill 3', 'طاحونة السمنت 3'],
   ['CML4', 'Cement Mill 4', 'طاحونة السمنت 4'],
+  ['CMX', 'Cement Mills — common', 'طواحين السمنت — مشترك'],
+  ['PCK', 'Packing', 'التعبئة'],
+  ['BLR', 'Boiler', 'المرجل'],
+  ['WTR', 'Water Station', 'محطة المياه'],
 ] as const;
 
 /** First start only: creates the standard departments when there are none (afterwards the administrator manages them). */

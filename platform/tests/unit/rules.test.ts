@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { can, completion, inMyPool, inspectionId, myTeam, statusAfterWork, summarize } from '../../src/lib/rules';
+import { can, completion, equipmentDocId, equipmentTitle, inMyPool, inspectionId, matchesEquipment, myTeam, statusAfterWork, summarize } from '../../src/lib/rules';
 import type { Inspection, PartResult, UserProfile } from '../../src/types';
 
 const u = (o: Partial<UserProfile>) => ({ id: 'u', name: 'u', email: 'u@x', role: 'member', active: true, discipline: 'electrical', departmentId: 'KLN1', ...o }) as UserProfile;
@@ -57,5 +57,26 @@ describe('roles', () => {
   });
   it('one inspection id per shutdown, equipment and discipline', () => {
     expect(inspectionId('SD-2026-A', 'E1', 'electrical')).toBe('SD-2026-A_E1_electrical');
+  });
+});
+
+describe('equipment codes and search', () => {
+  const fan = { code: 'K1M011', name: 'ID Fan', parts: { mechanical: ['Impeller clean'], electrical: ['Motor insulation resistance'], instrumentation: [], production: [] } };
+  it('titles carry the code', () => {
+    expect(equipmentTitle(fan)).toBe('K1M011 — ID Fan');
+    expect(equipmentTitle({ code: '', name: 'Compressor' })).toBe('Compressor');
+  });
+  it('finds by code, name or checklist item, ignoring case', () => {
+    expect(matchesEquipment(fan, 'k1m0')).toBe(true);
+    expect(matchesEquipment(fan, 'id fan')).toBe(true);
+    expect(matchesEquipment(fan, 'insulation')).toBe(true);
+    expect(matchesEquipment(fan, 'insulation', false)).toBe(false);
+    expect(matchesEquipment(fan, 'conveyor')).toBe(false);
+    expect(matchesEquipment(fan, '  ')).toBe(true);
+  });
+  it('document ids are safe and readable', () => {
+    expect(equipmentDocId('K1M011')).toBe('K1M011');
+    expect(equipmentDocId('MDS 1')).toBe('MDS-1');
+    expect(equipmentDocId('WellNo.1')).toBe('WellNo-1');
   });
 });

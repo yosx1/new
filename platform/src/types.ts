@@ -52,6 +52,8 @@ export interface Department {
 
 export interface Equipment {
   id: string;
+  /** Plant tag, e.g. K1M011 (empty for the few items the plant list gives without one). */
+  code?: string;
   name: string;
   departmentId: string;
   parts: Record<Discipline, string[]>;

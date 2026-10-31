@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAllInspections, useData } from '../data/DataProvider';
+import { equipmentTitle } from '../lib/rules';
 import { useI18n } from '../i18n/I18n';
 import { Card, Empty, PageHead } from '../components/ui';
 import { InspectionRow } from '../components/InspectionRow';
@@ -19,7 +20,7 @@ export default function EquipmentHistory() {
 
   return (
     <>
-      <PageHead back={() => nav(-1)} title={eq.name} sub={b(data.dept(eq.departmentId)?.name)} />
+      <PageHead back={() => nav(-1)} title={equipmentTitle(eq)} sub={b(data.dept(eq.departmentId)?.name)} />
       <div className="grid g2">
         {DISCIPLINES.map(d => (
           <Card key={d} title={`${t('disc.' + d)} · ${eq.parts?.[d]?.length ?? 0}`}>

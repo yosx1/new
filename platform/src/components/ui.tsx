@@ -147,5 +147,6 @@ export function errMsg(e: unknown, t: (k: string) => string) {
   if (code.includes('permission-denied')) return t('c.permission');
   if ((e as Error)?.message === 'too-big') return t('c.fileTooBig');
   if ((e as Error)?.message === 'work-order') return t('wo.required');
+  if ((e as Error)?.message === 'no-items') return t('insp.noItems');
   return t('c.error') + (code ? ` (${code})` : '');
 }

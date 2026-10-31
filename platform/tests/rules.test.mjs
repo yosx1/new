@@ -274,3 +274,29 @@ test('usage: everyone adds to the daily counts, only upwards; only the administr
   if (s.data().reads !== 20 || s.data().writes !== 4) throw new Error('counts ' + JSON.stringify(s.data()));
   await assertFails(deleteDoc(doc(as('admin'), 'usage/2026-10-21')));
 });
+
+test('equipment codes: inspection title is "CODE — Name"; the checklist can be adjusted but not emptied', async () => {
+  await env.withSecurityRulesDisabled(async ctx => setDoc(doc(ctx.firestore(), 'equipment/K1M011'),
+    { code: 'K1M011', name: 'ID Fan', departmentId: 'KLN', parts: { electrical: ['Motor insulation'] }, active: true }));
+  const id = `${SD}_K1M011_electrical`;
+  const base = inspection({ equipmentId: 'K1M011', title: 'K1M011 — ID Fan', parts: [{ id: 'p1', name: 'Motor insulation' }, { id: 'p2', name: 'Added on site' }] });
+  await assertFails(setDoc(doc(as('elec'), 'inspections', id), { ...base, title: 'ID Fan' }));          // title without the code
+  await assertFails(setDoc(doc(as('elec'), 'inspections', id), { ...base, parts: [] }));               // empty checklist
+  await assertSucceeds(setDoc(doc(as('elec'), 'inspections', id), base));                              // adjusted checklist (an item added)
+  // equipment: code is optional, at most 40 characters
+  const eq = { name: 'Fan', departmentId: 'KLN', parts: {}, active: true };
+  await assertSucceeds(setDoc(doc(as('mgr'), 'equipment/X1'), { ...eq, code: 'L1M107A' }));
+  await assertFails(setDoc(doc(as('mgr'), 'equipment/X2'), { ...eq, code: 'x'.repeat(41) }));
+  await assertFails(setDoc(doc(as('elec'), 'equipment/X3'), { ...eq, code: 'L1M999' }));
+});
+
+test('catalog version: only leads bump it, one step at a time, in their own name', async () => {
+  const bump = (uid, v) => setDoc(doc(as(uid), 'config/catalog'), { v, by: uid, updatedAt: serverTimestamp() });
+  await assertFails(bump('elec', 1));
+  await assertFails(bump('mgr', 5));
+  await assertSucceeds(bump('mgr', 1));
+  await assertSucceeds(updateDoc(doc(as('admin'), 'config/catalog'), { v: increment(1), by: 'admin', updatedAt: serverTimestamp() }));
+  await assertFails(updateDoc(doc(as('admin'), 'config/catalog'), { v: 1, by: 'admin', updatedAt: serverTimestamp() })); // never backwards
+  await assertFails(updateDoc(doc(as('admin'), 'config/catalog'), { v: increment(1), by: 'mgr', updatedAt: serverTimestamp() }));
+  await assertSucceeds(getDoc(doc(as('elec'), 'config/catalog')));
+});

@@ -425,3 +425,15 @@ a.lrow:hover, button.lrow:hover { border-color: #c6d3e6; }
   .login-hero { padding-bottom: calc(30vw + 12px); }
 }
 @media print { .plant-scene { display: none !important; } }
+
+/* ---------- equipment codes, search and editable checklist ---------- */
+.eq-code { display: inline-block; font-size: 12.5px; font-weight: 600; color: var(--primary-dark); background: var(--primary-soft);
+  border-radius: 6px; padding: 1px 6px; margin-inline-end: 4px; direction: ltr; unicode-bidi: isolate; }
+.eq-results { max-height: 340px; overflow-y: auto; border: 1px solid var(--line); border-radius: 10px; padding: 4px; }
+.eq-hit { width: 100%; text-align: start; background: none; border: 0; font: inherit; color: inherit; cursor: pointer; }
+.eq-hit:hover, .eq-hit:focus-visible { background: var(--gray-soft); }
+.part-preview.editable { list-style: none; padding-inline-start: 0; counter-reset: item; }
+.part-preview.editable li { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px dashed var(--line); counter-increment: item; }
+.part-preview.editable li::before { content: counter(item) '.'; color: var(--muted); min-width: 26px; text-align: end; }
+.icon-btn.sm { width: 30px; height: 30px; flex: none; }
+.add-item { min-width: 0; }

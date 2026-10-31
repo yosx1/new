@@ -1,0 +1,244 @@
+# KCML equipment import — review
+
+814 equipment from 9 sheets.
+
+## Equipment per department
+
+- BLR: 24
+- CLR1: 132
+- CML1: 65
+- CML2: 62
+- CML3: 12
+- CML4: 9
+- CMX: 3
+- CRS: 104
+- HOM1: 28
+- KLN1: 101
+- PCK: 165
+- RML1: 76
+- WTR: 33
+
+## Codes listed more than once (kept once)
+
+- Raw Mill: E1M252 (Weigh feeder for iron ore)
+- Raw Mill: E1M253 (Belt conveyor)
+- Raw Mill: E1M254 (Belt conveyor)
+- Raw Mill: E1M255 (Weigh feeder for raw mix)
+- Cooler1: L1M183 (Motor for cleaning unit)
+- Cooler1: L1M183 (Motor for cleaning unit)
+- Cooler1: L1M186 (Motor for cooling fan)
+- Cement: N2M160 (Air slide)
+- Cement: N2M184 (Cooling fan)
+- Cement: N2M251 (Dynamic separator)
+- Cement: N1M178 (Screw conveyor)
+- Cement: N1M159 (Ventilation fan)
+- Cement: N2M187 (Cooling fan)
+- Cement: N1M159 (Ventilation fan)
+- Paking: R1M802 (Gear motor)
+- Boiler: MDS 1 (Equipment — type to be confirmed)
+
+## No type in the list (#N/A or empty) — please send the description
+
+- Crusher: B1M118
+- Crusher: B1M119
+- Crusher: B1M183
+- Crusher: B1M198
+- Crusher: B1M261
+- Crusher: B1M263
+- Crusher: B1M264
+- Crusher: B1M265
+- Crusher: B1M266
+- Crusher: B1M267
+- Crusher: B1M268
+- Crusher: B1M288
+- Crusher: B1M294
+- Crusher: B1M295
+- Crusher: B1M296
+- Crusher: B1M297
+- Crusher: B1M298
+- Crusher: B1M299
+- Crusher: B1M300
+- Crusher: B1M343
+- Crusher: B1M462
+- Crusher: B1M471
+- Kiln1: K1M515
+- Kiln1: K1M516
+- Kiln1: K1M517
+- Kiln1: K1M518
+- Kiln1: K1M519
+- Kiln1: K1M520
+- Kiln1: K1M521
+- Kiln1: K1M522
+- Kiln1: K1M544
+- Kiln1: K1M545
+- Kiln1: K1M546
+- Kiln1: K1M547
+- Cement: N2M252
+- Cement: N2N167
+- Cement: N2N168
+- Cement: N2N169
+- Cement: N2N256
+- Cement: N2N257
+- Cement: N1M281
+- Cement: N1M283
+- Cement: N1M284
+- Cement: N2M281
+- Cement: N2M283
+- Cement: N2M284
+- Cement: N3M280
+- Cement: N3M281
+- Cement: N3M283
+- Cement: N3M284
+- Cement: N4M280
+- Cement: N4M281
+- Cement: N4M283
+- Cement: N4M284
+- Cement: N2M195
+- Cement: N3M206
+- Cement: N3M207
+- Cement: N3M165
+- Cement: N4M163
+- Cement: NxA139
+- Paking: R1M253
+- Paking: R1M254
+- Paking: R1M269
+- Paking: R1M278
+- Paking: R1M279
+- Paking: R1M382
+- Paking: R1M390
+- Paking: R1M468
+- Paking: R1M469
+- Paking: R1M582
+- Paking: R1M590
+- Paking: R1M604
+- Paking: R1M605
+- Paking: R1M668
+- Paking: R1M669
+- Paking: R1M782
+- Paking: R1M790
+- Paking: R1M804
+- Paking: R1M805
+- Paking: R1M868
+- Paking: R1M869
+- Paking: R2M295
+- Paking: R2M296
+- Paking: R2M406
+- Paking: R2M407
+- Boiler: L1M527
+- Boiler: L1M530
+- Boiler: L1M531
+- Boiler: L1M532
+- Boiler: L1M533
+- Boiler: L1M545
+- Boiler: L1M546
+- Boiler: MDS 1
+- Boiler: MDS 1
+- Water Station: W1M209
+- Water Station: W1M210
+- Water Station: W1M130
+- Water Station: W1M131
+- Water Station: W1M133
+- Water Station: W1M206
+- Water Station: W1M207
+- Water Station: W1M208
+
+## Rows without a plant code
+
+- Boiler: "MDS 1" → Equipment — type to be confirmed
+- Water Station: "WellNo.1" → Water well No. 1
+- Water Station: "WellNo.2" → Water well No. 2
+- Water Station: "WellNo.3" → Water well No. 3
+- Water Station: "WellNo.4" → Water well No. 4
+
+## Spelling corrected (code unchanged)
+
+- B1M147: "Feiter Vibrator to Cooling Fan for main drives" → "Filter Vibrator to Cooling Fan for main drives"
+- B1M151: "Feiter Vibrator to Cooling Fan for main drives" → "Filter Vibrator to Cooling Fan for main drives"
+- B1M169: "Gear motor for magnetic seperator" → "Gear motor for magnetic separator"
+- E1M106: "Air compressore" → "Air compressor"
+- E1M114: "Lubrication system for ouylet trunnion bearing" → "Lubrication system for outlet trunnion bearing"
+- E1M164: "Gas serculation gate" → "Gas circulation gate"
+- E1M165: "Gas serculation gate" → "Gas circulation gate"
+- E1M190: "Dust colletor" → "Dust collector"
+- E1M251: "weigh feeder for limestone" → "Weigh feeder for limestone"
+- H1M153: "Slid vane" → "Slide vane"
+- H1M154: "Slid vane" → "Slide vane"
+- K1M185: "Motor sepertor air fan" → "Motor separator air fan"
+- K1M186: "Motor sepertor air fan" → "Motor separator air fan"
+- K1M240: "Motor Auxilary kiln drive" → "Motor Auxiliary kiln drive"
+- K1M304: "Motor sepertor air fan" → "Motor separator air fan"
+- K1M310: "Lubracten pump" → "Lubrication pump"
+- L1M137: "Motor air blowr" → "Motor air blower"
+- L1M182: "motor for cleaning unit" → "Motor for cleaning unit"
+- L1M310: "Screw conveyor foe dust collector" → "Screw conveyor for dust collector"
+- N1M121: "Bucket elevetor" → "Bucket elevator"
+- N2M121: "Bucket elevetor" → "Bucket elevator"
+- N2M204: "Gtae" → "Gate"
+- N1M280: "Cooling fan shift bearing" → "Cooling fan shaft bearing"
+- N1CM31: "Serivce  compressor" → "Service compressor"
+- N2CM33: "Serivce  compressor" → "Service compressor"
+- R1M166: "Auxilary drive" → "Auxiliary drive"
+- R1M167: "Auxilary drive" → "Auxiliary drive"
+- R1M401: "Bag shifter ( divator ) Gear motor 1" → "Bag shifter (diverter) Gear motor 1"
+- R1M402: "Bag shifter ( divator ) Gear motor 2" → "Bag shifter (diverter) Gear motor 2"
+- R1M661: "drive unit" → "Drive unit"
+- R1M861: "drive unit" → "Drive unit"
+- R2M178: "Slid gate to packer 3" → "Slide gate to packer 3"
+- R2M179: "Slid gate to packer 4" → "Slide gate to packer 4"
+- W1M119: "Firing fighting pump" → "Fire fighting pump"
+- W1M120: "Firing fighting pump" → "Fire fighting pump"
+- W1M121: "Firing fighting pump" → "Fire fighting pump"
+- W1M122: "Firing fighting pump" → "Fire fighting pump"
+
+## Checklist type used
+
+- air_slide (28): Air slide, Air slide from vibrator to packer 1 & 2, Air slide from vibrator to packer 3 & 4
+- airlock (26): Airlock dust Collector, Gear motor for rotary airlock feeder, Rotary air lock, Rotary air lock feeder Gear motor, Rotary airlock
+- apron_feeder (8): Apron feeder, Feeder Apron, Gear motor for scraper apron feeder, Gearbox 1 for apron feeder, Gearbox 2 for apron feeder, Scraper apron feeder
+- aux_drive (7): Auxiliary drive, Auxiliary drive gear motor, Motor Auxiliary kiln drive
+- bag_handling (13): Bag Feeder, Cutting roller, Motor for Roller Press (For Belt Conveyor), Roller Press(For Belt Conveyor)
+- belt_conveyor (51): Belt Conveyor Motor 1, Belt Conveyor Motor 2, Belt conveyor, Gear motor for belt, Gear motor for belt conveyor, Motor for belt conveyor, Motor with brake for belt conveyor
+- blower (46): Aeration blower, Air blower, Air blower for air slide, Air blower grate No.1, Air blower grate No.2, Air slide blower, Blower, Fan for Air slide, Motor air blower, Motor for aeration fan, Rotary air blower
+- brake (5): Brake lifter kiln drive, Motor brake unit, Motor for brake, Motor for brake lift
+- bucket_elevator (7): Bucket elevator, Bucket elevator 1, Bucket elevator 2
+- burner_carriage (1): Gear motor for burner carriage
+- cabinet (1): Electrical cabinet
+- chute_2way (17): 2-Way gate, 2-way Chute, 2-way chute, 2-way gate, 2-way gate from airslides to bucket elevators, Bag shifter (diverter) Gear motor 1, Bag shifter (diverter) Gear motor 2, Diverter gate
+- cleaning_unit (2): Motor for cleaning unit
+- compressor (15): Air Compressor, Air compressor, Compressor, Motor for compressor, Screw compressor, Service compressor
+- cooling_air_fan (21): Motor cooler air fan, Motor for cooling air fan.1, Motor for cooling air fan.10, Motor for cooling air fan.11, Motor for cooling air fan.12, Motor for cooling air fan.13, Motor for cooling air fan.14, Motor for cooling air fan.15, Motor for cooling air fan.16, Motor for cooling air fan.17, Motor for cooling air fan.18, Motor for cooling air fan.19, Motor for cooling air fan.2, Motor for cooling ai
+- cooling_tower (3): Cooling tower
+- crane (8): Motor for crane
+- crusher (5): Clinker crusher, Gear motor for lump breaker, Roller press (small crusher) Motor 1, Roller press (small crusher) Motor 2
+- drag_chain (1): Drive unit for drag chain
+- dust_collector (23): Dust collector, Gear motor for dust collector, Motor for dust collector
+- fan (86): Bag cleaning fan, Circulation fan, Cooling Fan for main drives, Cooling fan, Cooling fan shaft bearing, Cooling system for main motor, Cooling system for the motor, Fan Motor, Fan for Vacuum system, Fan for dust Collector, Fan for dust collector, Fan for vacuum system, Filter Vibrator to Cooling Fan for main drives, Motor (Cleaning fan), Motor fan, Motor fan for hot gas, Motor for Vacuum system, M
+- gate (82): Air slide gate (slide vane), Gas circulation gate, Gate, Gear motor for Valve, Gear motor for damper, Gear motor for valve, Motor For Flapper valve, Motor for Isolating valve for air blaster, Motor for Valve, Motorized rotary gate, Motorized rotary gate for silo 1 to bulk loader 1, Motorized rotary gate for silo 1 to bulk loader 2, Motorized rotary gate for silo 1 to packing, Motorized rotary gate
+- gear_motor (14): Gear motor, Gearbox no-drive side, Hot gas Motor reducer 5, Hot gas Motor reducer 6
+- girth_lube (3): Girth gear lubrication
+- hfo_pump (16): HFO pump 1 for Kiln line FA, HFO pump 1 for Kiln line VER, HFO pump 2 for Kiln line FA, HFO pump 2 for Kiln line VER, Low pressure pump 1, Low pressure pump 2, Thermal oil lifting pump 1, Thermal oil lifting pump 2, Thermal oil pump 1, Thermal oil pump 2, Unloading pump 1, Unloading pump 2, Unloading pump 3, Unloading pump 4, Unloading pump 5, Unloading pump 6
+- hydraulic (10): Hydraulic unit, Hydraulic unit Motor for pump No. 1, Hydraulic unit Motor for pump No. 2, Motor For hydraulic pump
+- large_fan (9): By-pass fan, Calciner burner fan, EP fan, ID Fan, Main burner fan, Motor main drive RM fan
+- level_sensor (2): Level sensor silo 1, Level sensor silo 2
+- lube_unit (10): Gear box lubrication system, Lubrication pump, Lubrication system for gear box, Lubrication system for inlet trunnion bearing, Lubrication system for outlet trunnion bearing, Lubrication unit, Lubrication unit Motor
+- magnetic_separator (1): Gear motor for magnetic separator
+- main_drive (9): Crusher Main drive, Main drive 1, Main drive 2, Main motor for kiln, Raw Mill main drive
+- motor (109): Equipment — type to be confirmed, Grading aid, Hot gas Motor 1, Hot gas Motor 3, Main Motor, Motor, Motor (belt iron detector), Motor — type to be confirmed, Starter motor
+- packer (4): Drive unit, Packing machine NO 3, Packing machine NO 4
+- pan_conveyor (2): Pan conveyor
+- pump (24): Fire fighting pump, Industrial water pump 1, Industrial water pump 2, Industrial water pump 3, Industrial water pump 4, Motor For Water pump, Motor starter oil pump, Potable water pump 1, Potable water pump 2, Pump from RO tank to cooling water tank, Pump from cooling water tank to plant, Pump from hot water tank to cooling tower, R.O reject pump, Water pump
+- rapping (21): Motor For Rapping system, Rapping system for collecting plates, Rapping system for discharge electrodes
+- roller_conveyor (4): Roller conveyor
+- sampler (2): Motor for sampler
+- screen (1): Motor for Screen
+- screw_conveyor (39): Motor screw conveyor, Screw conveyor, Screw conveyor for dust collector, Screw for sampler
+- separator (9): Dynamic separator, Separator Motor 1, Separator Motor 2, Separator Motor 3, Separator Motor 4, Separator Motor 5, Separator Motor 6, Separator Motor 7
+- solenoid_valve (2): Solenoid Valve, Solenoid valve
+- spout (24): Cement spout 1 for Packer 1, Cement spout 2 for Packer 1, Cement spout 3 for Packer 1, Cement spout 4 for Packer 1, Cement spout 5 for Packer 1, Cement spout 6 for Packer 1
+- starter (7): Liquid Starter, Motor Starter drive side, Motor starter, Starter
+- travel_drive (1): Travel drive
+- valve (9): Damper, Pneumatic flap gate, Valve (SHUT OFF FLAP GAS), Valve for cooling fan, Valve for cooling fan for first stage
+- vibrator (16): Motor Vibrator, Motor filter vibrator, Motor for Vibrator, Motor for vibrator cooling drive, Motor vibrator, Motor vibrator kiln drive, Vibrator, Vibrator 2
+- weigh_feeder (5): Motor for Weigh Feeder, Motor for weigh feeder, Weigh feeder for iron ore, Weigh feeder for limestone, Weigh feeder for raw mix
+- well_pump (4): Water well No. 1, Water well No. 2, Water well No. 3, Water well No. 4
+- winch (1): Electrical Rope Winch for pan conveyor

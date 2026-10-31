@@ -22,6 +22,17 @@ const depts = [
 const eqs = [{ id: 'E1', name: 'Main drive', departmentId: 'KLN1', active: true, parts: { mechanical: ['Gearbox'], electrical: ['Motor'], instrumentation: [], production: [] } }] as unknown as Equipment[];
 
 describe('equipment CSV', () => {
+  it('reads the Code column and matches equipment by code (renaming it if the name changed)', () => {
+    const coded = [{ ...eqs[0], id: 'K1M011', code: 'K1M011', name: 'ID fan' }] as Equipment[];
+    const csv = 'Department,Code,Equipment,Part type,Part\nKiln 1,k1m011,ID Fan (main),Electrical,Motor insulation\nKiln 1,K1M012,By-pass fan,Mechanical,Impeller clean\n';
+    const plan = planCsvImport(csv, coded, depts);
+    expect(plan.errors).toEqual([]);
+    expect(plan.items.map(i => [i.id, i.code, i.name])).toEqual([['K1M011', 'K1M011', 'ID Fan (main)'], [null, 'K1M012', 'By-pass fan']]);
+  });
+  it('refuses the same code for two different equipment', () => {
+    const plan = planCsvImport('Department,Code,Equipment,Part type,Part\nKiln 1,K1M011,ID fan,Electrical,A\nKiln 1,K1M011,EP fan,Electrical,B\n', eqs, depts);
+    expect(plan.errors.map(e => [e.line, e.reason])).toEqual([[3, 'code']]);
+  });
   it('round-trips: download then upload changes nothing', () => {
     const plan = planCsvImport(equipmentToCsv(eqs, depts), eqs, depts);
     expect(plan.errors).toEqual([]);

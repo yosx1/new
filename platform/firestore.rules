@@ -33,6 +33,13 @@ service cloud.firestore {
       allow read: if active();
       allow write: if hasRole(['admin']);
     }
+    // Bumped whenever the equipment list changes, so devices refresh their cached copy (only what changed).
+    match /config/catalog {
+      allow read: if active();
+      allow write: if hasRole(leads()) && request.resource.data.keys().hasOnly(['v', 'updatedAt', 'by'])
+        && request.resource.data.v == (resource == null ? 1 : resource.data.v + 1)
+        && request.resource.data.by == request.auth.uid;
+    }
     // The current yearly shutdown.
     match /config/shutdown {
       allow read: if active();
@@ -116,7 +123,8 @@ service cloud.firestore {
     match /equipment/{id} {
       allow read: if active();
       allow create, update: if hasRole(leads())
-        && request.resource.data.keys().hasOnly(['name', 'departmentId', 'parts', 'active', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['code', 'name', 'departmentId', 'parts', 'active', 'updatedAt'])
+        && request.resource.data.get('code', '') is string && request.resource.data.get('code', '').size() <= 40
         && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 200
         && exists(/databases/$(database)/documents/departments/$(request.resource.data.departmentId))
         && request.resource.data.parts is map && request.resource.data.parts.keys().hasOnly(disciplines())
@@ -168,7 +176,11 @@ service cloud.firestore {
       allow create: if active() && team(d())
         && id == d().shutdownId + '_' + d().equipmentId + '_' + d().discipline
         && d().shutdownId == get(/databases/$(database)/documents/config/shutdown).data.currentId
-        && equipment().departmentId == d().departmentId && equipment().name == d().title
+        && equipment().departmentId == d().departmentId
+        // the title is the equipment as the plant names it: "CODE — Name" (just the name when it has no code)
+        && d().title == (equipment().get('code', '') == '' ? equipment().name : equipment().code + ' — ' + equipment().name)
+        // the checklist comes from the equipment and may be adjusted when the inspection is created
+        && d().parts is list && d().parts.size() >= 1 && d().parts.size() <= 150
         && d().discipline in disciplines()
         && d().status == 'pool' && d().docVersion == 1 && d().createdBy == request.auth.uid
         && d().approval == null && d().results.size() == 0;

@@ -19,7 +19,7 @@ export const GUIDE: GuideSection[] = [
   {
     id: 'flow', icon: 'checklist', title: ['How the cold run works', 'كيف يسير اختبار التشغيل البارد'],
     steps: [
-      ['New Inspection: choose the equipment — the title is the equipment name and the parts of your discipline are listed automatically.', 'فحص جديد: اختر المعدة — يكون العنوان اسم المعدة وتُدرج أجزاء اختصاصك تلقائياً.'],
+      ['New Inspection: find the equipment by its code (e.g. K1M011), name or a checklist item. The title is "code — name" and the checklist of your discipline is listed; remove or add items before creating it.', 'فحص جديد: ابحث عن المعدة برمزها (مثلاً K1M011) أو اسمها أو أحد بنود الفحص. العنوان هو "الرمز — الاسم" وتُدرج قائمة فحص اختصاصك؛ احذف أو أضف بنوداً قبل إنشائه.'],
       ['Waiting in your pool: your team checks every part and marks it OK or Not OK, then presses Submit.', 'بانتظار فريقك: يفحص فريقك كل جزء ويحدده سليم أو غير سليم، ثم يضغط إرسال.'],
       ['Active — Corrective maintenance: a work order number is required; parts that were Not OK are repaired and marked Fixed.', 'نشط — صيانة تصحيحية: رقم أمر العمل إلزامي؛ وتُصلح الأجزاء غير السليمة ويُؤشَّر عليها "تم الإصلاح".'],
       ['Active — Waiting approval: the Cold Run Test Manager or Administrator approves it, or sends it back with a reason.', 'نشط — بانتظار الموافقة: يعتمده مدير اختبار التشغيل البارد أو مدير النظام، أو يعيده مع ذكر السبب.'],
@@ -49,7 +49,7 @@ export const GUIDE: GuideSection[] = [
   {
     id: 'equipment', icon: 'factory', title: ['Equipment and parts', 'المعدات والأجزاء'], roles: LEADS,
     steps: [
-      ['Equipment → Download CSV. Open it in Excel and fill one row per part: Department, Equipment, Part type (Mechanical, Electrical, Instrumentation or Production), Part.', 'المعدات ← تنزيل CSV. افتحه في Excel واملأ صفاً لكل جزء: القسم، المعدة، نوع الجزء (ميكانيك، كهرباء، سيطرة، إنتاج)، الجزء.'],
+      ['Equipment → Download CSV. Open it in Excel and fill one row per checklist item: Department, Code, Equipment, Part type (Mechanical, Electrical, Instrumentation or Production), Part. The code identifies the equipment.', 'المعدات ← تنزيل CSV. افتحه في Excel واملأ صفاً لكل بند فحص: القسم، الرمز، المعدة، نوع الجزء (ميكانيك، كهرباء، سيطرة، إنتاج)، الجزء. الرمز يحدد المعدة.'],
       ['Save it as CSV and press Upload CSV. Check the preview, then Import. Equipment in the file get exactly the parts listed; others are not touched.', 'احفظه بصيغة CSV واضغط رفع CSV. راجع المعاينة ثم استيراد. المعدات الموجودة في الملف تأخذ الأجزاء المدرجة بالضبط؛ ولا تتغير غيرها.'],
       ['For a single change use the pencil next to the equipment: one part per line.', 'لتعديل واحد استخدم القلم بجانب المعدة: جزء في كل سطر.'],
     ],

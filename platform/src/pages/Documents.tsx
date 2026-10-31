@@ -6,7 +6,7 @@ import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { audit, col, ref } from '../lib/db';
-import { isLead } from '../lib/rules';
+import { equipmentTitle, isLead } from '../lib/rules';
 import { loadAttachment, openDataUrl, saveAttachment } from '../lib/files';
 import { Badge, Card, Empty, Field, Modal, PageHead, errMsg, useFeedback } from '../components/ui';
 import { Icon } from '../components/Icon';
@@ -100,7 +100,7 @@ export default function Documents() {
           <Field label={t('c.addFile')} hint="≤ 650 KB"><input type="file" accept="application/pdf,image/*" onChange={e => setForm({ ...form, file: e.target.files?.[0] ?? null })} /></Field>
           <div className="grid g2">
             <Field label={t('c.department')}><select value={form.departmentId} onChange={e => setForm({ ...form, departmentId: e.target.value })}><option value="">—</option>{data.departments.map(d => <option key={d.id} value={d.id}>{b(d.name)}</option>)}</select></Field>
-            <Field label={t('c.equipment')}><select value={form.equipmentId} onChange={e => setForm({ ...form, equipmentId: e.target.value })}><option value="">—</option>{data.equipment.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}</select></Field>
+            <Field label={t('c.equipment')}><select value={form.equipmentId} onChange={e => setForm({ ...form, equipmentId: e.target.value })}><option value="">—</option>{data.equipment.map(e => <option key={e.id} value={e.id}>{equipmentTitle(e)}</option>)}</select></Field>
           </div>
           <Field label={t('doc.visible')}>
             <div className="chips">

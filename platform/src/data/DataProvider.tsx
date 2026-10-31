@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { getDocsFromCache, limit, orderBy, query, where, type Query } from 'firebase/firestore';
+import { Timestamp, getDocsFromCache, limit, orderBy, query, where, type Query } from 'firebase/firestore';
 import { getCountFromServer, getDocs, onSnapshot, startMeter } from '../lib/fs';
 import { col, ref } from '../lib/db';
 import { auth } from '../firebase';
@@ -58,6 +58,62 @@ function useLive<T>(q: Query | null, deps: unknown[], onPending?: (p: boolean) =
   return [rows, loaded];
 }
 
+const byCode = (a: Equipment, b: Equipment) => (a.code || '~' + a.name).localeCompare(b.code || '~' + b.name, 'en', { numeric: true });
+
+/**
+ * The equipment list (~800 items) is cached on the device. On start, and whenever config/catalog says the list
+ * changed, only equipment updated since the last sync are read; the whole list is read only the first time
+ * (or when the cache was cleared). This keeps daily reads far below the free plan's limit.
+ */
+function useCatalog(uid: string): [Equipment[], boolean] {
+  const [rows, setRows] = useState<Equipment[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  const [version, setVersion] = useState<number | null | undefined>(undefined);
+  useEffect(() => onSnapshot(ref('config', 'catalog'), s => setVersion(s.exists() ? Number(s.data().v) : 0), () => setVersion(null)), []);
+  useEffect(() => {
+    if (version === undefined) return;
+    let stop = false;
+    const key = 'eqSync:' + uid;
+    const all = query(col('equipment'));
+    const done = (docs: { id: string; data: () => object }[]) => {
+      if (stop) return;
+      setRows(docs.map(d => ({ id: d.id, ...d.data() }) as Equipment).sort(byCode));
+      setLoaded(true);
+    };
+    const newest = (docs: { data: () => { updatedAt?: Timestamp } }[], from = 0) =>
+      docs.reduce((m, d) => Math.max(m, d.data().updatedAt?.toMillis?.() ?? 0), from);
+    (async () => {
+      let saved: { at: number; n: number } | null = null;
+      try { saved = JSON.parse(localStorage.getItem(key) || 'null'); } catch { /* private mode */ }
+      const save = (v: { at: number; n: number }) => { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* private mode */ } };
+      try {
+        if (saved) {
+          const cached = await getDocsFromCache(all);
+          if (cached.size === saved.n) {
+            done(cached.docs);
+            // only what changed since the last sync (a single read when nothing did)
+            const changed = await getDocs(query(col('equipment'), where('updatedAt', '>', Timestamp.fromMillis(saved.at))));
+            if (changed.size) {
+              const merged = await getDocsFromCache(all);
+              done(merged.docs);
+              save({ at: newest(changed.docs, saved.at), n: merged.size });
+            }
+            return;
+          }
+        }
+        const full = await getDocs(all);
+        done(full.docs);
+        save({ at: newest(full.docs), n: full.size });
+      } catch {
+        // offline: whatever the device has
+        try { done((await getDocsFromCache(all)).docs); } catch { if (!stop) setLoaded(true); }
+      }
+    })();
+    return () => { stop = true; };
+  }, [version, uid]);
+  return [rows, loaded];
+}
+
 export function DataProvider({ children }: { children: ReactNode }) {
   const me = useUser();
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
@@ -83,7 +139,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const [allDepartments, l1] = useLive<Department>(query(col('departments'), orderBy('order')), []);
   const departments = useMemo(() => allDepartments.filter(d => d.active !== false), [allDepartments]);
-  const [allEquipment, l2] = useLive<Equipment>(query(col('equipment'), orderBy('name')), []);
+  const [allEquipment, l2] = useCatalog(me.id);
   // Equipment of a retired department drops out of pools, menus and reports (old inspections still find it via eq()).
   const equipment = useMemo(() => { const on = new Set(departments.map(d => d.id)); return allEquipment.filter(e => on.has(e.departmentId)); }, [allEquipment, departments]);
   const [users, l3] = useLive<UserProfile>(query(col('users'), orderBy('name')), []);

@@ -2,7 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useAllInspections, useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
-import { inspectionId } from '../lib/rules';
+import { equipmentTitle, inspectionId } from '../lib/rules';
 import { downloadXlsx } from '../lib/xlsx';
 import { Card, Empty, PageHead, StatusBadge } from '../components/ui';
 import { EMPTY_FILTERS, Filters, applyFilters, type FilterState } from '../components/Filters';
@@ -59,7 +59,7 @@ export default function Reports() {
         const sd = f.shutdown || data.shutdown?.id || '';
         const have = new Set(data.inspections.map(i => i.id));
         const rows: Cell[][] = [];
-        for (const e of eqs) for (const d of discs) if (e.parts?.[d]?.length && !have.has(inspectionId(sd, e.id, d))) rows.push([e.name, b(data.dept(e.departmentId)?.name), t('disc.' + d), e.parts[d].length]);
+        for (const e of eqs) for (const d of discs) if (e.parts?.[d]?.length && !have.has(inspectionId(sd, e.id, d))) rows.push([equipmentTitle(e), b(data.dept(e.departmentId)?.name), t('disc.' + d), e.parts[d].length]);
         return { cols: [t('c.equipment'), t('c.department'), t('c.discipline'), t('insp.parts')], rows };
       }
       case 'inspections': return {
@@ -84,7 +84,7 @@ export default function Reports() {
   const filterText = [
     f.shutdown && `${t('sd.title')}: ${data.shutdowns.find(s => s.id === f.shutdown)?.name ?? ''}`,
     f.dept && `${t('c.department')}: ${b(data.dept(f.dept)?.name)}`,
-    f.eq && `${t('c.equipment')}: ${data.eq(f.eq)?.name ?? ''}`,
+    f.eq && `${t('c.equipment')}: ${data.eq(f.eq) ? equipmentTitle(data.eq(f.eq)!) : ''}`,
     f.disc && `${t('c.discipline')}: ${t('disc.' + f.disc)}`,
     f.status && `${t('c.status')}: ${t('st.' + f.status)}`,
   ].filter(Boolean).join(' · ');

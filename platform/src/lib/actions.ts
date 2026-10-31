@@ -1,8 +1,8 @@
-import { getDocFromCache, query, serverTimestamp, where, type DocumentData } from 'firebase/firestore';
+import { getDocFromCache, increment, query, serverTimestamp, where, type DocumentData } from 'firebase/firestore';
 import { addDoc, deleteDoc, getDoc, getDocs, runTransaction, setDoc, updateDoc, writeBatch } from './fs';
 import { db } from '../firebase';
 import { audit, col, nextCode, ref } from './db';
-import { inspectionId, statusAfterWork, summarize } from './rules';
+import { equipmentTitle, inspectionId, statusAfterWork, summarize } from './rules';
 import type { Discipline, Equipment, Inspection, PartResult, Shutdown, UserProfile } from '../types';
 
 const online = () => navigator.onLine;
@@ -123,19 +123,22 @@ export async function renameShutdown(user: UserProfile, sd: Shutdown, name: stri
 /* ---------------- inspections ---------------- */
 
 /** One inspection per equipment and discipline in a shutdown; the title is the equipment name. */
-export async function createInspection(user: UserProfile, sd: Shutdown, e: Equipment, d: Discipline): Promise<string> {
+export async function createInspection(user: UserProfile, sd: Shutdown, e: Equipment, d: Discipline, checklist?: string[]): Promise<string> {
   const id = inspectionId(sd.id, e.id, d);
   const existing = await getDoc(ref('inspections', id)).catch(() => null);
   if (existing?.exists()) return id;
-  const parts = (e.parts[d] ?? []).map((name, k) => ({ id: `p${k + 1}`, name }));
+  // the equipment's checklist for this discipline, or the one adjusted on the New Inspection page
+  const items = [...new Set((checklist ?? e.parts[d] ?? []).map(x => x.trim()).filter(Boolean))].slice(0, 150);
+  if (!items.length) throw new Error('no-items');
+  const parts = items.map((name, k) => ({ id: `p${k + 1}`, name }));
   const code = await nextCode('CR');
   const insp = {
-    code, shutdownId: sd.id, shutdownName: sd.name, title: e.name, equipmentId: e.id, departmentId: e.departmentId, discipline: d,
+    code, shutdownId: sd.id, shutdownName: sd.name, title: equipmentTitle(e), equipmentId: e.id, departmentId: e.departmentId, discipline: d,
     parts, results: {}, summary: summarize(parts, {}), status: 'pool', createdBy: user.id, createdByName: user.name,
     createdAt: serverTimestamp(), updatedAt: serverTimestamp(), approval: null, rejection: null, docVersion: 1,
   };
   await commit(setDoc(ref('inspections', id), insp), 'create inspection');
-  audit(user, 'inspection.create', 'inspection', id, { label: `${code} · ${e.name}` });
+  audit(user, 'inspection.create', 'inspection', id, { label: `${code} · ${equipmentTitle(e)}`, note: checklist ? `checklist adjusted: ${items.length} items` : '' });
   return id;
 }
 
@@ -212,4 +215,11 @@ export async function rejectInspection(user: UserProfile, insp: Inspection, reas
 /* ---------------- notifications ---------------- */
 export function notify(toUid: string, title: { en: string; ar: string }, link: string) {
   return addDoc(col('notifications'), { toUid, title, link, read: false, createdAt: serverTimestamp() }).catch(() => {});
+}
+
+/* ---------------- equipment ---------------- */
+
+/** Tells every device that the equipment list changed (they then load only the changed equipment). */
+export function bumpCatalog(user: UserProfile) {
+  return setDoc(ref('config', 'catalog'), { v: increment(1), by: user.id, updatedAt: serverTimestamp() }, { merge: true });
 }

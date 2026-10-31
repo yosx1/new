@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useData } from '../data/DataProvider';
 import { useI18n } from '../i18n/I18n';
 import { useUser } from '../auth/Auth';
 import { createInspection } from '../lib/actions';
-import { can, inMyPool, inspectionId } from '../lib/rules';
+import { can, equipmentTitle, inMyPool, inspectionId, matchesEquipment } from '../lib/rules';
 import { Card, Empty, PageHead, errMsg, useFeedback } from '../components/ui';
 import { InspectionRow } from '../components/InspectionRow';
 import { Tip } from '../components/Tips';
@@ -18,6 +18,7 @@ export default function Tasks() {
   const nav = useNavigate();
   const { toast } = useFeedback();
   const [busy, setBusy] = useState('');
+  const [q, setQ] = useState('');
   const sd = data.shutdown;
 
   const g = useMemo(() => {
@@ -53,13 +54,19 @@ export default function Tasks() {
           {g.approve.length > 0 && <Card title={<>{t('st.waiting_approval')} <span className="badge tone-purple">{g.approve.length}</span></>}><div className="list">{g.approve.map(i => <InspectionRow key={i.id} i={i} />)}</div></Card>}
           {g.notStarted.length > 0 && (
             <Card title={<>{t('tasks.notStarted')} <span className="badge tone-gray">{g.notStarted.length}</span></>}>
-              <div className="list">{g.notStarted.map(({ e, d }) => (
+              {g.notStarted.length > 10 && (
+                <div className="search mb"><Icon name="search" size={18} />
+                  <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder={t('eq.searchHint')} aria-label={t('eq.searchHint')} /></div>
+              )}
+              <div className="list">{g.notStarted.filter(({ e }) => matchesEquipment(e, q)).slice(0, 200).map(({ e, d }) => (
                 <div key={e.id + d} className="lrow">
-                  <div className="grow"><b>{e.name}</b> · <span className="muted">{t('disc.' + d)}</span>
+                  <div className="grow">{e.code && <span className="mono eq-code">{e.code}</span>} <b>{e.name}</b> · <span className="muted">{t('disc.' + d)}</span>
                     <div className="meta">{b(data.dept(e.departmentId)?.name)} · {e.parts[d].length} {t('eq.parts')}</div></div>
+                  <Link className="btn sm ghost" to={`/inspections/new?eq=${encodeURIComponent(e.id)}&d=${d}`} title={t('tasks.adjust')} aria-label={`${t('tasks.adjust')}: ${equipmentTitle(e)}`}><Icon name="edit" size={15} /></Link>
                   <button className="btn sm primary" disabled={busy === e.id + d} onClick={() => start(e.id, d)}><Icon name="plus" size={15} />{t('tasks.start')}</button>
                 </div>
               ))}</div>
+              {g.notStarted.filter(({ e }) => matchesEquipment(e, q)).length > 200 && <p className="muted small mt">{t('tasks.more')}</p>}
             </Card>
           )}
         </div>
