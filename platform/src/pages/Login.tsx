@@ -6,10 +6,11 @@ import { auth, db, isConfigured } from '../firebase';
 import { useI18n } from '../i18n/I18n';
 import { Field, Spinner, useFeedback, errMsg } from '../components/ui';
 import { Icon } from '../components/Icon';
+import type { SignOutReason } from '../auth/Auth';
 import { NetworkBackground } from '../components/NetworkBackground';
 import { PlantScene } from '../components/PlantScene';
 
-export function Login({ reason }: { reason?: 'inactive' | 'revoked' | 'noProfile' }) {
+export function Login({ reason }: { reason?: SignOutReason }) {
   const { t, lang, setLang } = useI18n();
   const { toast } = useFeedback();
   const [needsSetup, setNeedsSetup] = useState<boolean | null>(null);
@@ -65,7 +66,7 @@ export function Login({ reason }: { reason?: 'inactive' | 'revoked' | 'noProfile
     try { await sendPasswordResetEmail(auth, email.trim()); toast(t('auth.resetSent')); } catch (err) { setError(errMsg(err, t)); }
   };
 
-  const reasonMsg = reason === 'inactive' ? t('auth.inactive') : reason === 'revoked' ? t('auth.revoked') : reason === 'noProfile' ? t('auth.noProfile') : '';
+  const reasonMsg = reason === 'inactive' ? t('auth.inactive') : reason === 'revoked' ? t('auth.revoked') : reason === 'noProfile' ? t('auth.noProfile') : reason === 'profileError' ? t('auth.profileError') : '';
 
   return (
     <div className="login">

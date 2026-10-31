@@ -8,7 +8,7 @@ import type { UserProfile } from '../types';
 
 type State =
   | { phase: 'loading' }
-  | { phase: 'signedOut'; reason?: 'inactive' | 'revoked' | 'noProfile' }
+  | { phase: 'signedOut'; reason?: SignOutReason }
   | { phase: 'ready'; fbUser: User; user: UserProfile; deviceDocId: string };
 
 const Ctx = createContext<State>({ phase: 'loading' });
@@ -71,6 +71,20 @@ async function claimInvite(fbUser: User) {
   await b.commit();
 }
 
+export type SignOutReason = 'inactive' | 'revoked' | 'noProfile' | 'profileError';
+const REASON_KEY = 'signedOutReason';
+
+/** Signs out and reloads, so the next sign-in starts with a clean connection; the reason is shown after the reload. */
+let ending = false;
+function endSession(reason: SignOutReason) {
+  ending = true; // the reason is read after the reload, not by the sign-out that happens just before it
+  try { sessionStorage.setItem(REASON_KEY, reason); } catch { /* private mode */ }
+  signOut(auth).catch(() => {}).finally(() => location.replace('/'));
+}
+function takeReason(): SignOutReason | undefined {
+  try { const r = sessionStorage.getItem(REASON_KEY) as SignOutReason | null; sessionStorage.removeItem(REASON_KEY); return r ?? undefined; } catch { return undefined; }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<State>({ phase: 'loading' });
 
@@ -81,7 +95,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const unsubAuth = onAuthStateChanged(auth, fbUser => {
       cleanup();
-      if (!fbUser) { setState(s => (s.phase === 'signedOut' ? s : { phase: 'signedOut' })); return; }
+      if (!fbUser && ending) return;
+      if (!fbUser) { const reason = takeReason(); setState(s => (s.phase === 'signedOut' && !reason ? s : { phase: 'signedOut', reason })); return; }
       const devId = `${fbUser.uid}_${deviceId()}`;
       let deviceRegistered = false;
 
@@ -90,13 +105,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       let ready = false;
       let last = '';
       // metadata changes too, so a profile written on this sign-in (an invitation) is seen once the server has it
-      unsubProfile = onSnapshot(ref('users', fbUser.uid), { includeMetadataChanges: true }, snap => {
+      const listen = (attempt: number) => { unsubProfile = onSnapshot(ref('users', fbUser.uid), { includeMetadataChanges: true }, snap => {
         clearTimeout(noProfileTimer);
         if (!snap.exists()) {
           if (snap.metadata.fromCache) return; // wait for the server before deciding
           if (!claimTried) { claimTried = true; claimInvite(fbUser).catch(e => console.warn('invite claim', e)); }
           // First-time setup writes the profile right after creating the account; give it a moment.
-          noProfileTimer = setTimeout(() => { cleanup(); signOut(auth); setState({ phase: 'signedOut', reason: 'noProfile' }); }, 6000);
+          noProfileTimer = setTimeout(() => { cleanup(); endSession('noProfile'); }, 6000);
           return;
         }
         if (!ready && snap.metadata.hasPendingWrites) return; // not saved on the server yet: its rules would refuse the data
@@ -105,21 +120,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (json === last) return; // only the sync state changed
         last = json;
         const user = { id: snap.id, ...snap.data() } as UserProfile;
-        if (!user.active) { cleanup(); signOut(auth); setState({ phase: 'signedOut', reason: 'inactive' }); return; }
+        if (user.active !== true) {
+          // decide only on the server's copy: a cached profile can be out of date (e.g. re-activated since)
+          if (snap.metadata.fromCache) { last = ''; return; }
+          cleanup(); endSession('inactive'); return;
+        }
         setState({ phase: 'ready', fbUser, user, deviceDocId: devId });
 
         if (!deviceRegistered) {
           deviceRegistered = true;
           registerDevice(user, devId).catch(e => console.warn('device registration', e)).finally(() => {
             unsubDevice = onSnapshot(ref('devices', devId), d => {
-              if (d.exists() && d.data().revoked) { cleanup(); signOut(auth); setState({ phase: 'signedOut', reason: 'revoked' }); }
+              if (d.exists() && d.data().revoked) { cleanup(); endSession('revoked'); }
             }, () => { /* offline / permission: ignore */ });
           });
         }
       }, err => {
+        // A refused or failed read is not a deactivated account: refresh the sign-in and try again a few times
+        // (right after switching accounts the first request can still carry the previous sign-in).
         console.warn('profile', err);
-        cleanup(); signOut(auth); setState({ phase: 'signedOut', reason: 'inactive' });
-      });
+        unsubProfile?.(); unsubProfile = undefined;
+        if (attempt < 3) {
+          setTimeout(() => {
+            if (auth.currentUser?.uid !== fbUser.uid) return;
+            fbUser.getIdToken(true).catch(() => {}).finally(() => { if (auth.currentUser?.uid === fbUser.uid) listen(attempt + 1); });
+          }, 700 * (attempt + 1));
+        } else { cleanup(); endSession('profileError'); }
+      }); };
+      listen(0);
     });
     return () => { cleanup(); unsubAuth(); };
   }, []);
