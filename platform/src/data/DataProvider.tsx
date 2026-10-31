@@ -141,7 +141,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const departments = useMemo(() => allDepartments.filter(d => d.active !== false), [allDepartments]);
   const [allEquipment, l2] = useCatalog(me.id);
   // Equipment of a retired department drops out of pools, menus and reports (old inspections still find it via eq()).
-  const equipment = useMemo(() => { const on = new Set(departments.map(d => d.id)); return allEquipment.filter(e => on.has(e.departmentId)); }, [allEquipment, departments]);
+  // Lists show active equipment of active departments only; retired equipment stay reachable through eq(id)
+  // so old inspections and reports still show their names.
+  const equipment = useMemo(() => { const on = new Set(departments.map(d => d.id)); return allEquipment.filter(e => e.active !== false && on.has(e.departmentId)); }, [allEquipment, departments]);
   const [users, l3] = useLive<UserProfile>(query(col('users'), orderBy('name')), []);
   // Only the current shutdown is kept live: this is what keeps daily reads low on the free plan.
   // Team members load only their own discipline (and department): less to read, and nothing of other teams.

@@ -77,6 +77,16 @@ check(seen, 'new equipment appears on an open device after the catalog changes')
 await page.fill('.content input[type=search]', 'k1m011');
 check(await page.locator('.lrow .eq-code', { hasText: 'K1M011' }).count() === 1 && await page.locator('.lrow .eq-code', { hasText: 'K1M012' }).count() === 0, 'equipment page search by code shows only that equipment');
 
+// ---- a retired equipment disappears from the lists (the Inspections filter included) ----
+await page.goto(new URL('/inspections?status=pool', url).href); await page.waitForSelector('.filters select');
+const opts = async () => (await page.locator('.filters select').allTextContents()).join(' ');
+check(await (async () => { for (let k = 0; k < 25; k++) { if (/K1M012/.test(await opts())) return true; await page.waitForTimeout(400); } return false; })(), 'the Inspections filter lists active equipment (K1M012)');
+await fetch(`${FS}/equipment/K1M012?updateMask.fieldPaths=active&updateMask.fieldPaths=updatedAt`, { method: 'PATCH', headers: owner,
+  body: JSON.stringify({ fields: { active: { booleanValue: false }, updatedAt: now() } }) });
+await bump();
+const hidden = await (async () => { for (let k = 0; k < 25; k++) { if (!/K1M012/.test(await opts())) return true; await page.waitForTimeout(400); } return false; })();
+check(hidden, 'a retired equipment no longer appears in the Inspections filter');
+
 await browser.close();
 check(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 4).join(' | ') : ''));
 console.log(ok ? 'ALL PASSED' : 'SOME CHECKS FAILED');
