@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { orderBy, query, serverTimestamp } from 'firebase/firestore';
-import { deleteDoc, onSnapshot, setDoc, updateDoc } from '../lib/fs';
+import { arrayRemove, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
+import { deleteDoc, getDocs, onSnapshot, setDoc, updateDoc } from '../lib/fs';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import { auth, createAuthAccount } from '../firebase';
 import { useData } from '../data/DataProvider';
@@ -82,6 +82,20 @@ export default function Users() {
     } catch (e) { toast(errMsg(e, t), 'err'); }
   };
 
+  // Removes the person from the platform: profile and devices go, they disappear from every list and can no
+  // longer sign in; what they did stays in the records under their name. They can be added again later.
+  const removeUser = async (u: UserProfile) => {
+    if (u.id === me.id) return;
+    if (!(await confirm(t('usr.deleteTitle'), t('usr.deleteDesc', { name: `${u.name} (${u.email})` }), true))) return;
+    try {
+      for (const d of (await getDocs(query(col('devices'), where('uid', '==', u.id)))).docs) await deleteDoc(d.ref);
+      if (data.settings.reportRecipientUids?.includes(u.id)) await updateDoc(ref('config', 'settings'), { reportRecipientUids: arrayRemove(u.id) });
+      await deleteDoc(ref('users', u.id));
+      audit(me, 'user.delete', 'user', u.id, { label: `${u.name} <${u.email}>`, before: { role: u.role, discipline: u.discipline ?? null, departmentId: u.departmentId ?? null } });
+      toast(t('usr.deleted', { name: u.name }));
+    } catch (e) { toast(errMsg(e, t), 'err'); }
+  };
+
   const cancelInvite = async (i: Invite) => {
     if (!(await confirm(t('usr.cancelInvite'), i.email, true))) return;
     try { await deleteDoc(ref('invites', i.id)); audit(me, 'user.uninvite', 'user', i.id, { label: i.email }); } catch (e) { toast(errMsg(e, t), 'err'); }
@@ -133,6 +147,7 @@ export default function Users() {
                 <div className="row gap wrap" style={{ justifyContent: 'flex-end' }}>
                   <button className="btn sm ghost" onClick={() => setForm({ id: u.id, name: u.name, email: u.email, role: u.role, discipline: u.discipline ?? '', departmentId: u.departmentId ?? '', phone: u.phone ?? '', active: u.active, password: '' })}><Icon name="edit" size={15} /></button>
                   {u.id !== me.id && <button className={'btn sm ' + (u.active ? 'ghost' : 'outline')} onClick={() => toggleActive(u)}>{u.active ? t('usr.deactivate') : t('usr.activate')}</button>}
+                  {u.id !== me.id && <button className="btn sm ghost danger-text" onClick={() => removeUser(u)} aria-label={`${t('c.delete')}: ${u.name}`} title={t('c.delete')}><Icon name="trash" size={15} /></button>}
                 </div>
               </div>
             );

@@ -55,6 +55,27 @@ await fetch(`${dev.name.replace('projects/demo-coldrun/databases/(default)/docum
 await signIn('omar@kcml.iq', 'Member123!');
 check(await page.waitForSelector('.sidebar .brand', { timeout: 20000 }).then(() => true, () => false), 'after re-activation the member signs in normally');
 
+// an administrator deletes a person: gone from the list, and they cannot get in any more
+const r = await (await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/accounts:signUp?key=fake', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ email: 'leaver@kcml.iq', password: 'Leaver123!', returnSecureToken: true }) })).json();
+const P = (f) => Object.fromEntries(Object.entries(f).map(([k, v]) => [k, v === null ? { nullValue: null } : typeof v === 'boolean' ? { booleanValue: v } : { stringValue: v }]));
+await fetch(`${FS}/users/${r.localId}`, { method: 'PATCH', headers: owner, body: JSON.stringify({ fields: P({ name: 'Leaving Person', email: 'leaver@kcml.iq', role: 'member', discipline: 'electrical', departmentId: 'KLN1', phone: '', active: true, lang: 'en' }) }) });
+await page.locator('.side-user button').first().click(); await page.waitForSelector('.login-card form');
+await signIn('admin@kcml.iq', 'Admin12345'); await page.waitForSelector('.sidebar .brand', { timeout: 20000 });
+await page.goto(new URL('/users', url).href); await page.waitForSelector('.content h1'); await page.waitForTimeout(1000);
+check(await page.isVisible('text=Leaving Person'), 'the person is in the user list');
+check(!(await page.locator('.lrow', { hasText: 'Admin' }).first().locator('button[aria-label^="Delete"]').count()), 'an administrator has no Delete button on their own account');
+await page.getByRole('button', { name: 'Delete: Leaving Person' }).click();
+await page.locator('.modal .btn.danger').click();
+const gone = await page.locator('text=Leaving Person').waitFor({ state: 'detached', timeout: 10000 }).then(() => true, () => false);
+check(gone, 'after Delete the person is no longer listed');
+const waitFor = async (fn, ms = 10000) => { const end = Date.now() + ms; for (;;) { if (await fn()) return true; if (Date.now() > end) return false; await new Promise(x => setTimeout(x, 400)); } };
+check(await waitFor(async () => !(await list('users')).some(u => u.name.endsWith(r.localId))), 'their profile is removed on the server');
+check(await waitFor(async () => (await list('audit')).some(a => a.fields.action.stringValue === 'user.delete')), 'the deletion is in the audit log');
+await page.locator('.side-user button').first().click(); await page.waitForSelector('.login-card form');
+await signIn('leaver@kcml.iq', 'Leaver123!');
+check(/not registered/.test(await message()), 'the deleted person cannot get in (not registered)');
+
 await browser.close();
 check(errors.length === 0, 'no page errors' + (errors.length ? ': ' + errors.slice(0, 4).join(' | ') : ''));
 console.log(ok ? 'ALL PASSED' : 'SOME CHECKS FAILED');

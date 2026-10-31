@@ -83,7 +83,8 @@ service cloud.firestore {
       }
       allow update: if (hasRole(['admin']) && validProfile(request.resource.data))
         || (uid == request.auth.uid && active() && changed().hasOnly(['lang', 'phone', 'name']));
-      allow delete: if false;
+      // an administrator removes someone (never themselves, so an administrator always remains)
+      allow delete: if hasRole(['admin']) && uid != request.auth.uid;
     }
 
     function invitePath(email) { return /databases/$(database)/documents/invites/$(email); }

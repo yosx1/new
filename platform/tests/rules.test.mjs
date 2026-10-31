@@ -300,3 +300,11 @@ test('catalog version: only leads bump it, one step at a time, in their own name
   await assertFails(updateDoc(doc(as('admin'), 'config/catalog'), { v: increment(1), by: 'mgr', updatedAt: serverTimestamp() }));
   await assertSucceeds(getDoc(doc(as('elec'), 'config/catalog')));
 });
+
+test('deleting a user: administrators only, never themselves', async () => {
+  await assertFails(deleteDoc(doc(as('mgr'), 'users/elec')));
+  await assertFails(deleteDoc(doc(as('elec'), 'users/elec')));
+  await assertFails(deleteDoc(doc(as('admin'), 'users/admin')));
+  await assertSucceeds(deleteDoc(doc(as('admin'), 'users/elec')));
+  await assertFails(getDoc(doc(as('elec'), 'equipment/E1')));   // a deleted person has no access any more
+});
