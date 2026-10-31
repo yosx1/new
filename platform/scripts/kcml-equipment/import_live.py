@@ -11,9 +11,12 @@ PROJECT = 'kcp-coldrun-2026'
 DB = f'projects/{PROJECT}/databases/(default)/documents'
 BASE = f'https://firestore.googleapis.com/v1/{DB}'
 DEPTS = [  # id, English, Arabic — in plant order
-    ('CRS', 'Crusher', 'الكسارة'), ('RML1', 'Raw Mill 1', 'طاحونة المواد الأولية 1'), ('HOM1', 'Homogenizing', 'التجانس'),
-    ('KLN1', 'Kiln 1', 'الفرن 1'), ('CLR1', 'Cooler 1', 'المبرّد 1'), ('CML1', 'Cement Mill 1', 'طاحونة السمنت 1'),
-    ('CML2', 'Cement Mill 2', 'طاحونة السمنت 2'), ('CML3', 'Cement Mill 3', 'طاحونة السمنت 3'), ('CML4', 'Cement Mill 4', 'طاحونة السمنت 4'),
+    ('CRS', 'Crusher 1', 'الكسارة 1'), ('CRS2', 'Crusher 2', 'الكسارة 2'),
+    ('RML1', 'Raw Mill 1', 'طاحونة المواد الأولية 1'), ('RML2', 'Raw Mill 2', 'طاحونة المواد الأولية 2'),
+    ('KLN1', 'Kiln 1', 'الفرن 1'),
+    ('CLR1', 'Cooler 1', 'المبرّد 1'), ('CLR2', 'Cooler 2', 'المبرّد 2'),
+    ('CML1', 'Cement Mill 1', 'طاحونة السمنت 1'), ('CML2', 'Cement Mill 2', 'طاحونة السمنت 2'),
+    ('CML3', 'Cement Mill 3', 'طاحونة السمنت 3'), ('CML4', 'Cement Mill 4', 'طاحونة السمنت 4'),
     ('CMX', 'Cement Mills — common', 'طواحين السمنت — مشترك'), ('PCK', 'Packing', 'التعبئة'), ('BLR', 'Boiler', 'المرجل'),
     ('WTR', 'Water Station', 'محطة المياه'),
 ]
@@ -59,7 +62,7 @@ def main(path, go):
                        'updateMask': {'fieldPaths': ['active', 'order']}, 'updateTransforms': [NOW('updatedAt')]})
     new_ids = set()
     for x in items:
-        i = doc_id(x['code']) if x['code'] else slug(x['name'])
+        i = doc_id(x['code']) if x['code'] else slug(x['name']) + ('' if x['departmentId'] in ('CRS', 'RML1', 'CLR1', 'WTR', 'BLR') else '-' + x['departmentId'])
         assert i not in new_ids, i
         new_ids.add(i)
         parts = {'mapValue': {'fields': {d: {'arrayValue': {'values': [S(p) for p in v]}} for d, v in x['parts'].items()}}}

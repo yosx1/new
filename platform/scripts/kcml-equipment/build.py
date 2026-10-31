@@ -14,9 +14,13 @@ DISCIPLINES = ['mechanical', 'electrical', 'instrumentation', 'production']
 LABEL = {'mechanical': 'Mechanical', 'electrical': 'Electrical', 'instrumentation': 'Instrumentation', 'production': 'Production'}
 
 # sheet → department id (the cement-mill sheet is split by the code: N1 → mill 1 … Nx → common)
-SHEETS = {'Crusher': 'CRS', 'Raw Mill': 'RML1', 'Homigenuos1': 'HOM1', 'Kiln1': 'KLN1', 'Cooler1': 'CLR1',
+# (the Homogenizing sheet belongs to the raw-mill department)
+SHEETS = {'Crusher': 'CRS', 'Raw Mill': 'RML1', 'Homigenuos1': 'RML1', 'Kiln1': 'KLN1', 'Cooler1': 'CLR1',
           'Cement': None, 'Paking': 'PCK', 'Boiler ': 'BLR', 'Water Station': 'WTR'}
 CEMENT = {'N1': 'CML1', 'N2': 'CML2', 'N3': 'CML3', 'N4': 'CML4', 'Nx': 'CMX'}
+
+# second production lines: same equipment and checklists, code prefix of line 1 → line 2
+LINE2 = {'CRS': ('CRS2', {'B1': 'B2'}), 'RML1': ('RML2', {'E1': 'E2', 'H1': 'H2'}), 'CLR1': ('CLR2', {'L1': 'L2'})}
 
 # spelling in the source list → corrected (the code is never changed)
 FIX = [(r'\bTyip\b', 'Type'), (r'compressore\b', 'compressor'), (r'\bouylet\b', 'outlet'), (r'seperator', 'separator'),
@@ -70,6 +74,20 @@ def main(src, out):
             if tagless and code: notes['no_code'].append((sheet.strip(), code, name))
             kind = classify(name if not name.endswith('to be confirmed') else '', code)
             items[key] = {'code': code, 'name': name, 'departmentId': d, 'kind': kind, 'parts': TEMPLATES[kind], 'sheet': sheet.strip()}
+    # line 2 of the crusher, raw mill and cooler
+    line2 = OrderedDict()
+    for key, x in items.items():
+        if x['departmentId'] not in LINE2: continue
+        dept2, prefixes = LINE2[x['departmentId']]
+        a = x['code'][:2]
+        if x['code'] and a not in prefixes:
+            notes['no_code'].append((x['sheet'], x['code'], x['name'] + ' — not copied to line 2 (unexpected code prefix)'))
+            continue
+        code2 = prefixes[a] + x['code'][2:] if x['code'] else ''
+        k2 = code2 or f"{x['name']}@{dept2}"
+        assert k2 not in items and k2 not in line2, k2
+        line2[k2] = {**x, 'code': code2, 'departmentId': dept2}
+    items.update(line2)
     os.makedirs(out, exist_ok=True)
     data = [{k: x[k] for k in ('code', 'name', 'departmentId', 'kind', 'parts')} for x in items.values()]
     json.dump(data, open(os.path.join(out, 'equipment.json'), 'w'), ensure_ascii=False, indent=1)

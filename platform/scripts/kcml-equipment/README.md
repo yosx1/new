@@ -6,7 +6,7 @@ Source: the plant's `Equipment-KCML 2026.xlsx` (one sheet per area: No., Code, T
 |---|---|
 | `checklists.py` | The checklist library: checks per equipment type for the four disciplines, and the rules that pick a type from the description and the code (M = motor/drive, Y = valve/actuator, A = cabinet). |
 | `build.py` | Reads the Excel file, corrects spelling (never the code), merges codes listed twice, splits the cement-mill sheet by code (N1…N4, Nx = common) and writes `data/`. |
-| `data/equipment.json` | 814 equipment with code, name, department and checklist — what was imported. |
+| `data/equipment.json` | 1,154 equipment with code, name, department and checklist — what was imported: the 814 of the list (Homogenizing in Raw Mill 1) + line 2 of the crusher, raw mill and cooler (B1→B2, E1→E2, H1→H2, L1→L2). |
 | `data/kcml-equipment.csv` | The same in the platform's CSV format (Department, Code, Equipment, Part type, Part) — can be edited in Excel and uploaded on the Equipment page. |
 | `data/review.md` | What needs the plant's attention: codes with no type in the list (#N/A), rows without a code, merged duplicates, spelling corrections, and which checklist each type got. |
 | `import_live.py` | Applies `equipment.json` to the live project (owner credentials): departments, equipment (id = code), retires what is not in the list, bumps `config/catalog`. Dry run without `--go`. |

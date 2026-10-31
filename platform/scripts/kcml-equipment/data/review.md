@@ -1,21 +1,23 @@
 # KCML equipment import — review
 
-814 equipment from 9 sheets.
+1154 equipment from 9 sheets.
 
 ## Equipment per department
 
 - BLR: 24
 - CLR1: 132
+- CLR2: 132
 - CML1: 65
 - CML2: 62
 - CML3: 12
 - CML4: 9
 - CMX: 3
 - CRS: 104
-- HOM1: 28
+- CRS2: 104
 - KLN1: 101
 - PCK: 165
-- RML1: 76
+- RML1: 104
+- RML2: 104
 - WTR: 33
 
 ## Codes listed more than once (kept once)
@@ -192,53 +194,53 @@
 
 ## Checklist type used
 
-- air_slide (28): Air slide, Air slide from vibrator to packer 1 & 2, Air slide from vibrator to packer 3 & 4
-- airlock (26): Airlock dust Collector, Gear motor for rotary airlock feeder, Rotary air lock, Rotary air lock feeder Gear motor, Rotary airlock
-- apron_feeder (8): Apron feeder, Feeder Apron, Gear motor for scraper apron feeder, Gearbox 1 for apron feeder, Gearbox 2 for apron feeder, Scraper apron feeder
-- aux_drive (7): Auxiliary drive, Auxiliary drive gear motor, Motor Auxiliary kiln drive
+- air_slide (34): Air slide, Air slide from vibrator to packer 1 & 2, Air slide from vibrator to packer 3 & 4
+- airlock (41): Airlock dust Collector, Gear motor for rotary airlock feeder, Rotary air lock, Rotary air lock feeder Gear motor, Rotary airlock
+- apron_feeder (16): Apron feeder, Feeder Apron, Gear motor for scraper apron feeder, Gearbox 1 for apron feeder, Gearbox 2 for apron feeder, Scraper apron feeder
+- aux_drive (9): Auxiliary drive, Auxiliary drive gear motor, Motor Auxiliary kiln drive
 - bag_handling (13): Bag Feeder, Cutting roller, Motor for Roller Press (For Belt Conveyor), Roller Press(For Belt Conveyor)
-- belt_conveyor (51): Belt Conveyor Motor 1, Belt Conveyor Motor 2, Belt conveyor, Gear motor for belt, Gear motor for belt conveyor, Motor for belt conveyor, Motor with brake for belt conveyor
-- blower (46): Aeration blower, Air blower, Air blower for air slide, Air blower grate No.1, Air blower grate No.2, Air slide blower, Blower, Fan for Air slide, Motor air blower, Motor for aeration fan, Rotary air blower
-- brake (5): Brake lifter kiln drive, Motor brake unit, Motor for brake, Motor for brake lift
-- bucket_elevator (7): Bucket elevator, Bucket elevator 1, Bucket elevator 2
-- burner_carriage (1): Gear motor for burner carriage
+- belt_conveyor (83): Belt Conveyor Motor 1, Belt Conveyor Motor 2, Belt conveyor, Gear motor for belt, Gear motor for belt conveyor, Motor for belt conveyor, Motor with brake for belt conveyor
+- blower (68): Aeration blower, Air blower, Air blower for air slide, Air blower grate No.1, Air blower grate No.2, Air slide blower, Blower, Fan for Air slide, Motor air blower, Motor for aeration fan, Rotary air blower
+- brake (7): Brake lifter kiln drive, Motor brake unit, Motor for brake, Motor for brake lift
+- bucket_elevator (9): Bucket elevator, Bucket elevator 1, Bucket elevator 2
+- burner_carriage (2): Gear motor for burner carriage
 - cabinet (1): Electrical cabinet
-- chute_2way (17): 2-Way gate, 2-way Chute, 2-way chute, 2-way gate, 2-way gate from airslides to bucket elevators, Bag shifter (diverter) Gear motor 1, Bag shifter (diverter) Gear motor 2, Diverter gate
-- cleaning_unit (2): Motor for cleaning unit
-- compressor (15): Air Compressor, Air compressor, Compressor, Motor for compressor, Screw compressor, Service compressor
-- cooling_air_fan (21): Motor cooler air fan, Motor for cooling air fan.1, Motor for cooling air fan.10, Motor for cooling air fan.11, Motor for cooling air fan.12, Motor for cooling air fan.13, Motor for cooling air fan.14, Motor for cooling air fan.15, Motor for cooling air fan.16, Motor for cooling air fan.17, Motor for cooling air fan.18, Motor for cooling air fan.19, Motor for cooling air fan.2, Motor for cooling ai
+- chute_2way (23): 2-Way gate, 2-way Chute, 2-way chute, 2-way gate, 2-way gate from airslides to bucket elevators, Bag shifter (diverter) Gear motor 1, Bag shifter (diverter) Gear motor 2, Diverter gate
+- cleaning_unit (4): Motor for cleaning unit
+- compressor (25): Air Compressor, Air compressor, Compressor, Motor for compressor, Screw compressor, Service compressor
+- cooling_air_fan (41): Motor cooler air fan, Motor for cooling air fan.1, Motor for cooling air fan.10, Motor for cooling air fan.11, Motor for cooling air fan.12, Motor for cooling air fan.13, Motor for cooling air fan.14, Motor for cooling air fan.15, Motor for cooling air fan.16, Motor for cooling air fan.17, Motor for cooling air fan.18, Motor for cooling air fan.19, Motor for cooling air fan.2, Motor for cooling ai
 - cooling_tower (3): Cooling tower
 - crane (8): Motor for crane
-- crusher (5): Clinker crusher, Gear motor for lump breaker, Roller press (small crusher) Motor 1, Roller press (small crusher) Motor 2
-- drag_chain (1): Drive unit for drag chain
-- dust_collector (23): Dust collector, Gear motor for dust collector, Motor for dust collector
-- fan (86): Bag cleaning fan, Circulation fan, Cooling Fan for main drives, Cooling fan, Cooling fan shaft bearing, Cooling system for main motor, Cooling system for the motor, Fan Motor, Fan for Vacuum system, Fan for dust Collector, Fan for dust collector, Fan for vacuum system, Filter Vibrator to Cooling Fan for main drives, Motor (Cleaning fan), Motor fan, Motor fan for hot gas, Motor for Vacuum system, M
-- gate (82): Air slide gate (slide vane), Gas circulation gate, Gate, Gear motor for Valve, Gear motor for damper, Gear motor for valve, Motor For Flapper valve, Motor for Isolating valve for air blaster, Motor for Valve, Motorized rotary gate, Motorized rotary gate for silo 1 to bulk loader 1, Motorized rotary gate for silo 1 to bulk loader 2, Motorized rotary gate for silo 1 to packing, Motorized rotary gate
-- gear_motor (14): Gear motor, Gearbox no-drive side, Hot gas Motor reducer 5, Hot gas Motor reducer 6
-- girth_lube (3): Girth gear lubrication
+- crusher (10): Clinker crusher, Gear motor for lump breaker, Roller press (small crusher) Motor 1, Roller press (small crusher) Motor 2
+- drag_chain (2): Drive unit for drag chain
+- dust_collector (36): Dust collector, Gear motor for dust collector, Motor for dust collector
+- fan (130): Bag cleaning fan, Circulation fan, Cooling Fan for main drives, Cooling fan, Cooling fan shaft bearing, Cooling system for main motor, Cooling system for the motor, Fan Motor, Fan for Vacuum system, Fan for dust Collector, Fan for dust collector, Fan for vacuum system, Filter Vibrator to Cooling Fan for main drives, Motor (Cleaning fan), Motor fan, Motor fan for hot gas, Motor for Vacuum system, M
+- gate (138): Air slide gate (slide vane), Gas circulation gate, Gate, Gear motor for Valve, Gear motor for damper, Gear motor for valve, Motor For Flapper valve, Motor for Isolating valve for air blaster, Motor for Valve, Motorized rotary gate, Motorized rotary gate for silo 1 to bulk loader 1, Motorized rotary gate for silo 1 to bulk loader 2, Motorized rotary gate for silo 1 to packing, Motorized rotary gate
+- gear_motor (21): Gear motor, Gearbox no-drive side, Hot gas Motor reducer 5, Hot gas Motor reducer 6
+- girth_lube (4): Girth gear lubrication
 - hfo_pump (16): HFO pump 1 for Kiln line FA, HFO pump 1 for Kiln line VER, HFO pump 2 for Kiln line FA, HFO pump 2 for Kiln line VER, Low pressure pump 1, Low pressure pump 2, Thermal oil lifting pump 1, Thermal oil lifting pump 2, Thermal oil pump 1, Thermal oil pump 2, Unloading pump 1, Unloading pump 2, Unloading pump 3, Unloading pump 4, Unloading pump 5, Unloading pump 6
-- hydraulic (10): Hydraulic unit, Hydraulic unit Motor for pump No. 1, Hydraulic unit Motor for pump No. 2, Motor For hydraulic pump
-- large_fan (9): By-pass fan, Calciner burner fan, EP fan, ID Fan, Main burner fan, Motor main drive RM fan
+- hydraulic (20): Hydraulic unit, Hydraulic unit Motor for pump No. 1, Hydraulic unit Motor for pump No. 2, Motor For hydraulic pump
+- large_fan (11): By-pass fan, Calciner burner fan, EP fan, ID Fan, Main burner fan, Motor main drive RM fan
 - level_sensor (2): Level sensor silo 1, Level sensor silo 2
-- lube_unit (10): Gear box lubrication system, Lubrication pump, Lubrication system for gear box, Lubrication system for inlet trunnion bearing, Lubrication system for outlet trunnion bearing, Lubrication unit, Lubrication unit Motor
-- magnetic_separator (1): Gear motor for magnetic separator
-- main_drive (9): Crusher Main drive, Main drive 1, Main drive 2, Main motor for kiln, Raw Mill main drive
-- motor (109): Equipment — type to be confirmed, Grading aid, Hot gas Motor 1, Hot gas Motor 3, Main Motor, Motor, Motor (belt iron detector), Motor — type to be confirmed, Starter motor
+- lube_unit (15): Gear box lubrication system, Lubrication pump, Lubrication system for gear box, Lubrication system for inlet trunnion bearing, Lubrication system for outlet trunnion bearing, Lubrication unit, Lubrication unit Motor
+- magnetic_separator (2): Gear motor for magnetic separator
+- main_drive (13): Crusher Main drive, Main drive 1, Main drive 2, Main motor for kiln, Raw Mill main drive
+- motor (137): Equipment — type to be confirmed, Grading aid, Hot gas Motor 1, Hot gas Motor 3, Main Motor, Motor, Motor (belt iron detector), Motor — type to be confirmed, Starter motor
 - packer (4): Drive unit, Packing machine NO 3, Packing machine NO 4
-- pan_conveyor (2): Pan conveyor
+- pan_conveyor (4): Pan conveyor
 - pump (24): Fire fighting pump, Industrial water pump 1, Industrial water pump 2, Industrial water pump 3, Industrial water pump 4, Motor For Water pump, Motor starter oil pump, Potable water pump 1, Potable water pump 2, Pump from RO tank to cooling water tank, Pump from cooling water tank to plant, Pump from hot water tank to cooling tower, R.O reject pump, Water pump
 - rapping (21): Motor For Rapping system, Rapping system for collecting plates, Rapping system for discharge electrodes
 - roller_conveyor (4): Roller conveyor
 - sampler (2): Motor for sampler
 - screen (1): Motor for Screen
-- screw_conveyor (39): Motor screw conveyor, Screw conveyor, Screw conveyor for dust collector, Screw for sampler
-- separator (9): Dynamic separator, Separator Motor 1, Separator Motor 2, Separator Motor 3, Separator Motor 4, Separator Motor 5, Separator Motor 6, Separator Motor 7
+- screw_conveyor (46): Motor screw conveyor, Screw conveyor, Screw conveyor for dust collector, Screw for sampler
+- separator (16): Dynamic separator, Separator Motor 1, Separator Motor 2, Separator Motor 3, Separator Motor 4, Separator Motor 5, Separator Motor 6, Separator Motor 7
 - solenoid_valve (2): Solenoid Valve, Solenoid valve
 - spout (24): Cement spout 1 for Packer 1, Cement spout 2 for Packer 1, Cement spout 3 for Packer 1, Cement spout 4 for Packer 1, Cement spout 5 for Packer 1, Cement spout 6 for Packer 1
-- starter (7): Liquid Starter, Motor Starter drive side, Motor starter, Starter
-- travel_drive (1): Travel drive
-- valve (9): Damper, Pneumatic flap gate, Valve (SHUT OFF FLAP GAS), Valve for cooling fan, Valve for cooling fan for first stage
-- vibrator (16): Motor Vibrator, Motor filter vibrator, Motor for Vibrator, Motor for vibrator cooling drive, Motor vibrator, Motor vibrator kiln drive, Vibrator, Vibrator 2
-- weigh_feeder (5): Motor for Weigh Feeder, Motor for weigh feeder, Weigh feeder for iron ore, Weigh feeder for limestone, Weigh feeder for raw mix
+- starter (10): Liquid Starter, Motor Starter drive side, Motor starter, Starter
+- travel_drive (2): Travel drive
+- valve (13): Damper, Pneumatic flap gate, Valve (SHUT OFF FLAP GAS), Valve for cooling fan, Valve for cooling fan for first stage
+- vibrator (21): Motor Vibrator, Motor filter vibrator, Motor for Vibrator, Motor for vibrator cooling drive, Motor vibrator, Motor vibrator kiln drive, Vibrator, Vibrator 2
+- weigh_feeder (10): Motor for Weigh Feeder, Motor for weigh feeder, Weigh feeder for iron ore, Weigh feeder for limestone, Weigh feeder for raw mix
 - well_pump (4): Water well No. 1, Water well No. 2, Water well No. 3, Water well No. 4
-- winch (1): Electrical Rope Winch for pan conveyor
+- winch (2): Electrical Rope Winch for pan conveyor

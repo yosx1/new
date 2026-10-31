@@ -4,7 +4,7 @@ import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { preview } from 'vite';
 
-const SUITES = ['coldrun', 'admin', 'members', 'checklist', 'session', 'users', 'flicker', 'layers'];
+const SUITES = ['coldrun', 'admin', 'members', 'checklist', 'session', 'offline', 'users', 'flicker', 'layers'];
 const OUT = new URL('./out/', import.meta.url).pathname;
 mkdirSync(OUT, { recursive: true });
 

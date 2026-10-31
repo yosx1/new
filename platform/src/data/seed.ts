@@ -10,11 +10,13 @@ export const DEFAULT_SETTINGS: Settings = {
 };
 
 export const DEPARTMENTS = [
-  ['CRS', 'Crusher', 'الكسارة'],
+  ['CRS', 'Crusher 1', 'الكسارة 1'],
+  ['CRS2', 'Crusher 2', 'الكسارة 2'],
   ['RML1', 'Raw Mill 1', 'طاحونة المواد الأولية 1'],
-  ['HOM1', 'Homogenizing', 'التجانس'],
+  ['RML2', 'Raw Mill 2', 'طاحونة المواد الأولية 2'],
   ['KLN1', 'Kiln 1', 'الفرن 1'],
   ['CLR1', 'Cooler 1', 'المبرّد 1'],
+  ['CLR2', 'Cooler 2', 'المبرّد 2'],
   ['CML1', 'Cement Mill 1', 'طاحونة السمنت 1'],
   ['CML2', 'Cement Mill 2', 'طاحونة السمنت 2'],
   ['CML3', 'Cement Mill 3', 'طاحونة السمنت 3'],
